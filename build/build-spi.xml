@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." default="all" name="JMAC SPI">
+
+  <target name="all" description="build JMAC SPI" depends="jar" />
+
+  <!-- make sure we have all the dirs we need -->
+  <target name="init" description="==> initialization" >
+    <property name="jars" value="${basedir}/distributables"/>
+    <property name="lib" value="${basedir}/lib"/>
+    <property name="tritonuslib" value="${lib}/tritonus_share.jar"/>
+    <property name="firstlib"  value="${jars}/jmacspi.jar"/>
+    <property name="secondlib"  value="${jars}/jmactritonusspi.jar"/>
+  </target>
+
+  <!-- build JMAC classes -->
+  <target name="java-compile" depends="init" description="==> compiles all JMAC SPI java classes">
+    <mkdir dir="${basedir}/core/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/core/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <mkdir dir="${basedir}/spi/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/spi/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <javac srcdir="${basedir}/core/src"
+	   destdir="${basedir}/core/classes"
+	   debug="true"
+	   optimize="true"
+	   includes="**/*.java"
+       encoding="UTF-8"
+       source="1.3">
+    </javac>
+    <javac srcdir="${basedir}/spi/src"
+       destdir="${basedir}/spi/classes"
+       debug="true"
+       optimize="true"
+       includes="davaguine/jmac/spi/*.java,davaguine/jmac/spi/tritonus/*.java"
+       encoding="UTF-8"
+       source="1.3">
+      <classpath>
+        <pathelement location="${tritonuslib}"/>
+        <pathelement path="${basedir}/core/classes"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- build jarfiles of classes -->
+  <target name="jar" depends="java-compile" description="==> jars all JMAC SPI java classes">
+    <!-- first jarfile is decoder only version (smallest size) -->
+    <!-- third jarfile is spi only version -->
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/spi/classes">
+        <include name="META-INF/services/*"/>
+      </fileset>
+    </delete>
+    <copy todir="${basedir}/spi/classes">
+       <fileset dir="${basedir}/spi/src/spi" >
+           <include name="META-INF/services/javax.sound.sampled.spi.AudioFileReader"/>
+           <include name="META-INF/services/javax.sound.sampled.spi.FormatConversionProvider"/>
+       </fileset>
+     </copy>
+     <jar jarfile="${firstlib}">
+       <fileset dir="${basedir}/spi/classes"
+                includes="davaguine/jmac/spi/*.class,META-INF/services/*"
+                excludes="davaguine/jmac/spi/APEPropertiesHelper.class"/>
+       <fileset dir="${basedir}/core/classes"
+                includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+                davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class" />
+     </jar>
+
+    <!-- forth jarfile is tritonus based spi only version -->
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/spi/classes">
+        <include name="META-INF/services/*"/>
+      </fileset>
+    </delete>
+    <copy todir="${basedir}/spi/classes">
+       <fileset dir="${basedir}/spi/src/spi/tritonus" >
+           <include name="META-INF/services/javax.sound.sampled.spi.AudioFileReader"/>
+           <include name="META-INF/services/javax.sound.sampled.spi.FormatConversionProvider"/>
+       </fileset>
+    </copy>
+    <jar jarfile="${secondlib}">
+      <fileset dir="${basedir}/spi/classes"
+               includes="davaguine/jmac/spi/APEAudioFileFormatType.class,
+               davaguine/jmac/spi/APEEncoding.class,davaguine/jmac/spi/APEPropertiesHelper.class,
+               davaguine/jmac/spi/tritonus/*.class,META-INF/services/*" />
+      <fileset dir="${basedir}/core/classes"
+               includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+               davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class" />
+    </jar>
+
+  </target>
+
+</project>

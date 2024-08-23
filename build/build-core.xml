@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." default="all" name="JMAC Core">
+
+  <target name="all" description="build JMAC Core" depends="jar" />
+
+  <!-- make sure we have all the dirs we need -->
+  <target name="init" description="==> initialization" >
+    <property name="jars" value="${basedir}/distributables"/>
+    <property name="firstlib"  value="${jars}/jmacdecoder.jar"/>
+    <property name="secondlib" value="${jars}/jmac.jar"/>
+    <property name="thirdlib"  value="${jars}/jmacplayer.jar"/>
+  </target>
+
+  <!-- build JMAC classes -->
+  <target name="java-compile" depends="init" description="==> compiles all JMAC Core java classes">
+    <mkdir dir="${basedir}/core/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/core/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <mkdir dir="${basedir}/test/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/test/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <javac srcdir="${basedir}/core/src"
+	   destdir="${basedir}/core/classes"
+	   debug="true"
+	   optimize="true"
+	   includes="**/*.java"
+       encoding="UTF-8"
+       source="1.3">
+    </javac>
+    <javac srcdir="${basedir}/test/src"
+       destdir="${basedir}/test/classes"
+       debug="true"
+       optimize="true"
+       includes="**/*.java"
+       encoding="UTF-8"
+       source="1.3">
+      <classpath>
+        <pathelement path="${basedir}/core/classes"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- build jarfiles of classes -->
+  <target name="jar" depends="java-compile" description="==> jars all JMAC Core java classes">
+    <!-- first jarfile is decoder only version (smallest size) -->
+    <jar jarfile="${firstlib}"
+         basedir="${basedir}/core/classes"
+         includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+         davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class"/>
+
+    <!-- second jarfile is full jmac lib version -->
+    <jar jarfile="${secondlib}"
+         basedir="${basedir}/core/classes"
+         includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+         davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class,
+         davaguine/jmac/encoder/*.class,davaguine/jmac/core/*.class">
+        <manifest>
+            <attribute name="Class-Path" value="."/>
+            <attribute name="Main-Class" value="davaguine.jmac.core.jmacu"/>
+        </manifest>
+    </jar>
+
+    <!-- fifth jarfile is player only version -->
+    <jar jarfile="${thirdlib}"
+         basedir="${basedir}/core/classes"
+         includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+         davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class,
+         davaguine/jmac/player/*.class"/>
+  </target>
+
+</project>

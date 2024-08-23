@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." default="all" name="JMAC SPI 1.5">
+
+  <target name="all" description="build JMAC SPI 1.5" depends="jar" />
+
+  <!-- make sure we have all the dirs we need -->
+  <target name="init" description="==> initialization" >
+    <property name="jars" value="${basedir}/distributables"/>
+    <property name="firstlib"  value="${jars}/jmacspi15.jar"/>
+  </target>
+
+  <!-- build JMAC classes -->
+  <target name="java-compile" depends="init" description="==> compiles all JMAC SPI 1.5 java classes">
+    <mkdir dir="${basedir}/core/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/core/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <mkdir dir="${basedir}/spi/classes" />
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/spi/classes">
+        <include name="**/*.*"/>
+      </fileset>
+    </delete>
+    <javac srcdir="${basedir}/core/src"
+	   destdir="${basedir}/core/classes"
+	   debug="true"
+	   optimize="true"
+	   includes="**/*.java"
+       encoding="UTF-8"
+       source="1.3">
+    </javac>
+    <javac srcdir="${basedir}/spi/src"
+       destdir="${basedir}/spi/classes"
+       debug="true"
+       optimize="true"
+       includes="davaguine/jmac/spi/*.java,davaguine/jmac/spi/jdk15/*.java"
+       excludes="davaguine/jmac/spi/APEAudioFileFormat.java,
+       davaguine/jmac/spi/APEAudioFileReader.java,
+       davaguine/jmac/spi/APEAudioFormat.java"
+       encoding="UTF-8"
+       source="1.5">
+      <classpath>
+        <pathelement path="${basedir}/core/classes"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- build jarfiles of classes -->
+  <target name="jar" depends="java-compile" description="==> jars all JMAC SPI 1.5 java classes">
+    <!-- first jarfile is spi 15 version -->
+    <delete includeEmptyDirs="yes">
+      <fileset dir="${basedir}/spi/classes">
+        <include name="META-INF/services/*"/>
+      </fileset>
+    </delete>
+    <copy todir="${basedir}/spi/classes">
+       <fileset dir="${basedir}/spi/src/spi/jdk15" >
+           <include name="META-INF/services/javax.sound.sampled.spi.AudioFileReader"/>
+           <include name="META-INF/services/javax.sound.sampled.spi.FormatConversionProvider"/>
+       </fileset>
+     </copy>
+     <jar jarfile="${firstlib}">
+       <fileset dir="${basedir}/spi/classes"
+                includes="davaguine/jmac/spi/jdk15/*.class,davaguine/jmac/spi/*.class,
+                META-INF/services/*"
+                excludes="davaguine/jmac/spi/APEAudioFileFormat.class,
+                davaguine/jmac/spi/APEAudioFileReader.class,
+                davaguine/jmac/spi/APEAudioFormat.class"/>
+       <fileset dir="${basedir}/core/classes"
+                includes="davaguine/jmac/decoder/*.class,davaguine/jmac/info/*.class,
+                davaguine/jmac/prediction/*.class,davaguine/jmac/tools/*.class" />
+     </jar>
+  </target>
+
+</project>
