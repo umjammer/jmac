@@ -21,11 +21,13 @@ package davaguine.jmac.player;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class FactoryRegistry extends AudioDeviceFactory {
+
     static private FactoryRegistry instance = null;
 
     static synchronized public FactoryRegistry systemRegistry() {

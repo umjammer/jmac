@@ -23,6 +23,7 @@ package davaguine.jmac.prediction;
  * @version 04.03.2004 14:51:31
  */
 public abstract class IPredictorDecompress {
+
     public IPredictorDecompress(int nCompressionLevel, int nVersion) {
     }
 

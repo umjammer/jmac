@@ -20,11 +20,13 @@ package davaguine.jmac.player;
 
 import davaguine.jmac.decoder.IAPEDecompress;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public abstract class AudioDeviceBase implements AudioDevice {
+
     private boolean open = false;
 
     private IAPEDecompress decoder = null;
@@ -61,7 +63,7 @@ public abstract class AudioDeviceBase implements AudioDevice {
      * Determines if this audio device is open or not.
      *
      * @return <code>true</code> if the audio device is open,
-     *         <code>false</code> if it is not.
+     * <code>false</code> if it is not.
      */
     public synchronized boolean isOpen() {
         return open;

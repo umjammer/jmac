@@ -15,21 +15,28 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.encoder;
+
+import java.io.IOException;
 
 import davaguine.jmac.info.SpecialFrame;
 import davaguine.jmac.info.WaveFormat;
 import davaguine.jmac.prediction.IPredictorCompress;
 import davaguine.jmac.prediction.PredictorCompressNormal;
-import davaguine.jmac.tools.*;
+import davaguine.jmac.tools.ByteArrayReader;
+import davaguine.jmac.tools.Crc32;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.IntegerPointer;
+import davaguine.jmac.tools.Prepare;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 08.05.2004 11:18:47
  */
 public class APECompressCore {
+
     public APECompressCore(File pIO, WaveFormat pwfeInput, int nMaxFrameBlocks, int nCompressionLevel) {
         m_spBitArray = new BitArray(pIO);
         m_spDataX = new int[nMaxFrameBlocks];

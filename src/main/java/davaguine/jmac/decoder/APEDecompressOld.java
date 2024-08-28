@@ -18,19 +18,25 @@
 
 package davaguine.jmac.decoder;
 
-import davaguine.jmac.info.*;
+import java.io.IOException;
+import java.util.Arrays;
+
+import davaguine.jmac.info.APEFileInfo;
+import davaguine.jmac.info.APEInfo;
+import davaguine.jmac.info.APETag;
+import davaguine.jmac.info.WaveFormat;
+import davaguine.jmac.info.WaveHeader;
 import davaguine.jmac.tools.ByteBuffer;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APEDecompressOld extends IAPEDecompress {
+
     public APEDecompressOld(APEInfo pAPEInfo) {
         this(pAPEInfo, -1, -1);
     }

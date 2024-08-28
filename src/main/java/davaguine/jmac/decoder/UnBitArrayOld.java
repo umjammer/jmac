@@ -20,6 +20,7 @@ package davaguine.jmac.decoder;
 
 import java.io.IOException;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
@@ -95,8 +96,8 @@ public class UnBitArrayOld extends UnBitArrayBase {
         long Max_Bits_Needed = Number_of_Elements * 50;
 
         if (Minimum_nCurrentBitIndex_Array_Bytes > 0)
-        //this is actually probably double what is really needed
-        //we can only calculate the space needed for both arrays in multichannel
+            //this is actually probably double what is really needed
+            //we can only calculate the space needed for both arrays in multichannel
             Max_Bits_Needed = ((Minimum_nCurrentBitIndex_Array_Bytes + 4) * 8);
 
         if (Max_Bits_Needed > GetBitsRemaining())
@@ -149,7 +150,8 @@ public class UnBitArrayOld extends UnBitArrayBase {
         for (p1 = 64, p2 = 0; p1 < Number_of_Elements; p1++, p2++) {
             // plug through the string of 0's (the overflow)
             long Bit_Initial = m_nCurrentBitIndex;
-            while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0) ;
+            while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0)
+                ;
 
             // if k = 0, your done
             if (k == 0)
@@ -220,7 +222,8 @@ public class UnBitArrayOld extends UnBitArrayBase {
 
         //plug through the string of 0's (the overflow)
         long BitInitial = m_nCurrentBitIndex;
-        while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0) ;
+        while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0)
+            ;
 
         //if k = 0, your done
         if (k == 0)
@@ -248,7 +251,8 @@ public class UnBitArrayOld extends UnBitArrayBase {
 
         //plug through the string of 0's (the overflow)
         long Bit_Initial = m_nCurrentBitIndex;
-        while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0) ;
+        while ((m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] & Powers_of_Two_Reversed[(int) (m_nCurrentBitIndex++ & 31)]) == 0)
+            ;
 
         int nOverflow = (int) (m_nCurrentBitIndex - Bit_Initial - 1);
 

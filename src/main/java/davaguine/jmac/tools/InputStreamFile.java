@@ -24,11 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 12.03.2004 13:35:13
  */
 public class InputStreamFile extends File {
+
     private DataInputStream stream = null;
     private String name = null;
 

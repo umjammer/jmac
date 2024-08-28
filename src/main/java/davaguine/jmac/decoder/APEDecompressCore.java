@@ -18,18 +18,20 @@
 
 package davaguine.jmac.decoder;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.info.SpecialFrame;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APEDecompressCore {
+
     public APEDecompressCore(IAPEDecompress pAPEDecompress) {
         m_pAPEDecompress = pAPEDecompress;
 
@@ -86,13 +88,12 @@ public class APEDecompressCore {
 
                 break;
 
-            case CompressionLevel.COMPRESSION_LEVEL_NORMAL:
-                {
-                    //get the array from the bitstream
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    pAntiPredictor.AntiPredict(m_pTempData, Input_Array, Number_of_Elements);
-                    break;
-                }
+            case CompressionLevel.COMPRESSION_LEVEL_NORMAL: {
+                //get the array from the bitstream
+                m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
+                pAntiPredictor.AntiPredict(m_pTempData, Input_Array, Number_of_Elements);
+                break;
+            }
 
             case CompressionLevel.COMPRESSION_LEVEL_HIGH:
                 //get the array from the bitstream

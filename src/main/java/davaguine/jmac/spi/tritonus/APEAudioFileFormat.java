@@ -18,10 +18,11 @@
 
 package davaguine.jmac.spi.tritonus;
 
+import java.util.Map;
+import javax.sound.sampled.AudioFormat;
+
 import org.tritonus.share.sampled.file.TAudioFileFormat;
 
-import javax.sound.sampled.AudioFormat;
-import java.util.Map;
 
 /**
  * An instance of the APEAudioFileFormat class describes MAC audio file, including the file type,

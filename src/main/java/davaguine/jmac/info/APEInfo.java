@@ -18,15 +18,16 @@
 
 package davaguine.jmac.info;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.InputStreamFile;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RandomAccessFile;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 
 /**
  * @author Dmitry Vaguine

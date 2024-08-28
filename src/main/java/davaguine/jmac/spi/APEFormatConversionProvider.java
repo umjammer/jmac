@@ -18,17 +18,18 @@
 
 package davaguine.jmac.spi;
 
-import davaguine.jmac.tools.Globals;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.spi.FormatConversionProvider;
 import java.io.PrintStream;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.spi.FormatConversionProvider;
+
+import davaguine.jmac.tools.Globals;
+
 
 /**
  * A format conversion provider for APE audio file format.
@@ -37,17 +38,18 @@ import java.util.Vector;
  * @version 12.03.2004 13:35:13
  */
 public class APEFormatConversionProvider extends FormatConversionProvider {
+
     /**
      * Source formats of provider.
      */
     protected static final AudioFormat[] SOURCE_FORMATS = {
-        // encoding, rate, bits, channels, frameSize, frameRate, big endian
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 8, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 8, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 16, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 16, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 24, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
-        new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 24, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false)};
+            // encoding, rate, bits, channels, frameSize, frameRate, big endian
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 8, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 8, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 16, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 16, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 24, 1, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false),
+            new AudioFormat(APEEncoding.APE, AudioSystem.NOT_SPECIFIED, 24, 2, AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false)};
 
     /**
      * Source encodings of provider.
@@ -58,13 +60,13 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * Target formats of provider.
      */
     protected static final AudioFormat[] TARGET_FORMATS = {
-        // rate, bits, channels, signed, big endian
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 8, 1, true, false),
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 8, 2, true, false),
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 16, 1, true, false),
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 16, 2, true, false),
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 24, 1, true, false),
-        new AudioFormat(AudioSystem.NOT_SPECIFIED, 24, 2, true, false)};
+            // rate, bits, channels, signed, big endian
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 8, 1, true, false),
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 8, 2, true, false),
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 16, 1, true, false),
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 16, 2, true, false),
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 24, 1, true, false),
+            new AudioFormat(AudioSystem.NOT_SPECIFIED, 24, 2, true, false)};
 
     /**
      * Target encodings of provider.
@@ -118,8 +120,8 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
                 // Depends on what streams can be decoded by the APE subsystem.
                 boolean conversionPossible =
                         (sourceFormat.getSampleRate() == targetFormat.getSampleRate()) &&
-                        (sourceFormat.getChannels() == targetFormat.getChannels()) &&
-                        (sourceFormat.getSampleSizeInBits() == targetFormat.getSampleSizeInBits());
+                                (sourceFormat.getChannels() == targetFormat.getChannels()) &&
+                                (sourceFormat.getSampleSizeInBits() == targetFormat.getSampleSizeInBits());
 
                 if (conversionPossible) {
                     AudioFormat.Encoding targetEncoding = targetFormat.getEncoding();
@@ -254,7 +256,8 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
     public AudioInputStream getAudioInputStream(AudioFormat targetFormat,
                                                 AudioInputStream audioInputStream) {
         if (isConversionSupported(targetFormat, audioInputStream.getFormat())) {
-            if (Globals.DEBUG) System.out.println("APEFormatConversionProvider.getAudioInputStream( targetEnc, audioInputStream )");
+            if (Globals.DEBUG)
+                System.out.println("APEFormatConversionProvider.getAudioInputStream( targetEnc, audioInputStream )");
             return new APEAudioInputStream(targetFormat, audioInputStream);
         }
         throw new IllegalArgumentException("conversion not supported");

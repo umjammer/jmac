@@ -18,15 +18,15 @@
 
 package davaguine.jmac.spi;
 
-import davaguine.jmac.decoder.IAPEDecompress;
-import davaguine.jmac.tools.File;
-import davaguine.jmac.tools.InputStreamFile;
-
+import java.io.IOException;
+import java.io.InputStream;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import java.io.IOException;
-import java.io.InputStream;
+
+import davaguine.jmac.decoder.IAPEDecompress;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.InputStreamFile;
 
 /**
  * @author Dmitry Vaguine
@@ -37,6 +37,7 @@ import java.io.InputStream;
  * Decoded APE audio input stream.
  */
 public class APEAudioInputStream extends AudioInputStream {
+
     private final static int BLOCKS_PER_DECODE = 9216;
     private IAPEDecompress m_decoder = null;
     private File file = null;

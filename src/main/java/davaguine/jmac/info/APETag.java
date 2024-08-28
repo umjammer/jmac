@@ -18,8 +18,6 @@
 
 package davaguine.jmac.info;
 
-import davaguine.jmac.tools.*;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,11 +25,19 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import davaguine.jmac.tools.ByteArrayReader;
+import davaguine.jmac.tools.ByteArrayWriter;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.JMACException;
+import davaguine.jmac.tools.RandomAccessFile;
+
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APETag implements Comparator {
+
     public final static String APE_TAG_FIELD_TITLE = "Title";
     public final static String APE_TAG_FIELD_ARTIST = "Artist";
     public final static String APE_TAG_FIELD_ALBUM = "Album";

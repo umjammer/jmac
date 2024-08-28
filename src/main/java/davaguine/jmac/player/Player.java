@@ -18,10 +18,11 @@
 
 package davaguine.jmac.player;
 
+import java.io.IOException;
+
 import davaguine.jmac.decoder.IAPEDecompress;
 import davaguine.jmac.tools.File;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
@@ -82,7 +83,7 @@ public class Player {
     /**
      * Plays all MAC audio blocks.
      *
-     * @return	true if the last block was played, or false if there are
+     * @return true if the last block was played, or false if there are
      * more blocks.
      */
     public boolean play() throws IOException {
@@ -140,7 +141,7 @@ public class Player {
     /**
      * Returns the completed status of this player.
      *
-     * @return	true if all available MAC audio blocks have been
+     * @return true if all available MAC audio blocks have been
      * decoded, or false otherwise.
      */
     public synchronized boolean isComplete() {

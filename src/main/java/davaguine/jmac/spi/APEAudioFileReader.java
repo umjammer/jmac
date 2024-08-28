@@ -18,23 +18,26 @@
 
 package davaguine.jmac.spi;
 
-import davaguine.jmac.decoder.IAPEDecompress;
-import davaguine.jmac.spi.APEAudioFileFormatType;
-import davaguine.jmac.spi.APEEncoding;
-import davaguine.jmac.spi.APEPropertiesHelper;
-import davaguine.jmac.tools.Globals;
-import davaguine.jmac.tools.InputStreamFile;
-import davaguine.jmac.tools.JMACException;
-
+import java.io.BufferedInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.sound.sampled.spi.AudioFileReader;
-import java.io.*;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+
+import davaguine.jmac.decoder.IAPEDecompress;
+import davaguine.jmac.tools.Globals;
+import davaguine.jmac.tools.InputStreamFile;
+import davaguine.jmac.tools.JMACException;
+
 
 /**
  * Provider for MAC audio file reading.
@@ -43,6 +46,7 @@ import java.util.Map;
  * @version 12.03.2004 13:35:13
  */
 public class APEAudioFileReader extends AudioFileReader {
+
     private final static int MAX_HEADER_SIZE = 16384;
 
     /**

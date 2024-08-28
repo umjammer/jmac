@@ -23,10 +23,11 @@ package davaguine.jmac.player;
  * @version 04.03.2004 14:51:31
  */
 public abstract class AudioDeviceFactory {
+
     /**
      * Creates a new <code>AudioDevice</code>.
      *
-     * @return	a new instance of a specific class of <code>AudioDevice</code>.
+     * @return a new instance of a specific class of <code>AudioDevice</code>.
      */
     public abstract AudioDevice createAudioDevice();
 
@@ -37,7 +38,7 @@ public abstract class AudioDeviceFactory {
      *               load the named class, or null to use the
      *               system class loader.
      * @param name   The name of the class to load.
-     * @return			A newly-created instance of the audio device class.
+     * @return A newly-created instance of the audio device class.
      */
     protected AudioDevice instantiate(ClassLoader loader, String name)
             throws ClassNotFoundException,

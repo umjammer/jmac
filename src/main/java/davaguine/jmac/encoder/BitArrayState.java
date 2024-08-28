@@ -23,6 +23,7 @@ package davaguine.jmac.encoder;
  * @version 04.03.2004 14:51:31
  */
 public class BitArrayState {
+
     public int k;
     public int nKSum;
 }

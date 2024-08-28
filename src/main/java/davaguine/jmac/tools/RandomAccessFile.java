@@ -20,12 +20,16 @@ package davaguine.jmac.tools;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 
 /**
  * @author Dmitry Vaguine
  * @version 12.03.2004 13:35:13
  */
 public class RandomAccessFile extends File {
+
     private java.io.RandomAccessFile file = null;
     private java.io.File f = null;
     private long markPosition = -1;

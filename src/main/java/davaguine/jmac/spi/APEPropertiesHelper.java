@@ -15,16 +15,17 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package davaguine.jmac.spi;
 
-import davaguine.jmac.decoder.IAPEDecompress;
-import davaguine.jmac.info.APETag;
-import davaguine.jmac.tools.Globals;
+package davaguine.jmac.spi;
 
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+
+import davaguine.jmac.decoder.IAPEDecompress;
+import davaguine.jmac.info.APETag;
+import davaguine.jmac.tools.Globals;
 
 /**
  * @author Dmitry Vaguine

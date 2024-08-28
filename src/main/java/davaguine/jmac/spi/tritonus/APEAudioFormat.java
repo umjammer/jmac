@@ -18,10 +18,10 @@
 
 package davaguine.jmac.spi.tritonus;
 
-import org.tritonus.share.sampled.TAudioFormat;
-
-import javax.sound.sampled.AudioFormat;
 import java.util.Map;
+import javax.sound.sampled.AudioFormat;
+
+import org.tritonus.share.sampled.TAudioFormat;
 
 /**
  * @author Dmitry Vaguine

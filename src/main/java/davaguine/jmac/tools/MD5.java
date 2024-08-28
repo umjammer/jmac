@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.tools;
 
 /**
@@ -22,6 +23,7 @@ package davaguine.jmac.tools;
  */
 
 class MD5State {
+
     /**
      * 128-byte state
      */
@@ -76,6 +78,7 @@ class MD5State {
  */
 
 public class MD5 {
+
     /**
      * MD5 state
      */
@@ -91,9 +94,9 @@ public class MD5 {
      * Padding for Final()
      */
     static byte padding[] = {
-        (byte) 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            (byte) 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
     /**
@@ -115,7 +118,7 @@ public class MD5 {
     /**
      * Initialize class, and update hash with ob.toString()
      *
-     * @param	ob	Object, ob.toString() is used to update hash
+     * @param    ob    Object, ob.toString() is used to update hash
      * after initialization
      */
     public MD5(Object ob) {
@@ -401,7 +404,7 @@ public class MD5 {
      * invalidate the hash object, it only creates a copy of the real
      * state which is finalized.
      *
-     * @return	Array of 16 bytes, the hash of all updated bytes
+     * @return Array of 16 bytes, the hash of all updated bytes
      */
     public synchronized byte[] Final() {
         byte bits[];
@@ -432,7 +435,7 @@ public class MD5 {
      * unsigned hex number.
      *
      * @param hash Array of bytes to convert to hex-string
-     * @return	Generated hex string
+     * @return Generated hex string
      */
     public static String asHex(byte hash[]) {
         StringBuffer buf = new StringBuffer(hash.length * 2);

@@ -18,6 +18,8 @@
 
 package davaguine.jmac.decoder;
 
+import java.io.IOException;
+
 import davaguine.jmac.info.APEHeader;
 import davaguine.jmac.info.SpecialFrame;
 import davaguine.jmac.info.WaveFormat;
@@ -26,13 +28,13 @@ import davaguine.jmac.tools.Crc32;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.Prepare;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class UnMAC {
+
     //construction/destruction
     public UnMAC() {
         //initialize member variables

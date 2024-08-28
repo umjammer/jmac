@@ -18,17 +18,19 @@
 
 package davaguine.jmac.decoder;
 
+import java.io.IOException;
+
 import davaguine.jmac.info.APEInfo;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APEDecompressNative extends APEDecompress {
+
     private final int ID;
     private int m_nRealFrame;
 

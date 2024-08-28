@@ -15,7 +15,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.prediction;
+
+import java.util.Arrays;
 
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.tools.Globals;
@@ -23,13 +26,13 @@ import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RollBufferFastInt;
 import davaguine.jmac.tools.ScaledFirstOrderFilter;
 
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 02.05.2004 13:08:34
  */
 public class PredictorCompressNormal extends IPredictorCompress {
+
     private final static int WINDOW_BLOCKS = 512;
 
     public PredictorCompressNormal(int nCompressionLevel) {

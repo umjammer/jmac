@@ -23,6 +23,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorExtraHighHelper {
+
     int ConventionalDotProduct(short[] bip, int indexbip, short[] bbm, int indexbbm, short[] pIPAdaptFactor, int indexap, int op, int nNumberOfIterations) {
         //dot product
         int nDotProduct = 0;

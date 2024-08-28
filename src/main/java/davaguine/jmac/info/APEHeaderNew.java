@@ -18,29 +18,31 @@
 
 package davaguine.jmac.info;
 
+import java.io.EOFException;
+import java.io.IOException;
+
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APEHeaderNew {
-    public int nCompressionLevel;	    // the compression level (unsigned short)
-    public int nFormatFlags;			// any format flags (for future use) (unsigned short)
 
-    public long nBlocksPerFrame;		// the number of audio blocks in one frame (unsigned int)
-    public long nFinalFrameBlocks;		// the number of audio blocks in the final frame (unsigned int)
-    public long nTotalFrames;			// the total number of frames (unsigned int)
+    public int nCompressionLevel;        // the compression level (unsigned short)
+    public int nFormatFlags;            // any format flags (for future use) (unsigned short)
 
-    public int nBitsPerSample;			// the bits per sample (typically 16) (unsigned short)
-    public int nChannels;				// the number of channels (1 or 2) (unsigned short)
-    public long nSampleRate;			// the sample rate (typically 44100) (unsigned int)
+    public long nBlocksPerFrame;        // the number of audio blocks in one frame (unsigned int)
+    public long nFinalFrameBlocks;        // the number of audio blocks in the final frame (unsigned int)
+    public long nTotalFrames;            // the total number of frames (unsigned int)
+
+    public int nBitsPerSample;            // the bits per sample (typically 16) (unsigned short)
+    public int nChannels;                // the number of channels (1 or 2) (unsigned short)
+    public long nSampleRate;            // the sample rate (typically 44100) (unsigned int)
 
     public final static int APE_HEADER_BYTES = 24;
 

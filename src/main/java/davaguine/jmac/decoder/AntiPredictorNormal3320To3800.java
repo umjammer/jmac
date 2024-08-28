@@ -24,6 +24,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorNormal3320To3800 extends AntiPredictor {
+
     public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
         //variable declares
         int q;

@@ -18,26 +18,28 @@
 
 package davaguine.jmac.info;
 
+import java.io.EOFException;
+import java.io.IOException;
+
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.File;
 
-import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class ID3Tag {
-    public String Header;		    // should equal 'TAG'
-    public String Title;			// title
-    public String Artist;		    // artist
-    public String Album;			// album
-    public String Year; 			// year
-    public String Comment;  		// comment
-    public short Track;	            // track
-    public short Genre;	            // genre
+
+    public String Header;            // should equal 'TAG'
+    public String Title;            // title
+    public String Artist;            // artist
+    public String Album;            // album
+    public String Year;            // year
+    public String Comment;        // comment
+    public short Track;                // track
+    public short Genre;                // genre
 
     public final static int ID3_TAG_BYTES = 128;
 

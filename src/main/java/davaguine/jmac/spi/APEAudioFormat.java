@@ -18,8 +18,9 @@
 
 package davaguine.jmac.spi;
 
-import javax.sound.sampled.AudioFormat;
 import java.util.Map;
+import javax.sound.sampled.AudioFormat;
+
 
 /**
  * APE audio format parameters.
@@ -41,6 +42,7 @@ import java.util.Map;
  * <li><b>ape.totalblocks</b> [Integer], total blocks
  * <li><b>ape.peaklevel</b> [Integer], peak level
  * </ul>
+ *
  * @author Dmitry Vaguine
  * @version 31.03.2004 19:09:05
  */

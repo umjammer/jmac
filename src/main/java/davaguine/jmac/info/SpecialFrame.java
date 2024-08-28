@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.info;
 
 /**
@@ -22,6 +23,7 @@ package davaguine.jmac.info;
  * @version 11.05.2004 16:30:43
  */
 public class SpecialFrame {
+
     public final static int SPECIAL_FRAME_MONO_SILENCE = 1;
     public final static int SPECIAL_FRAME_LEFT_SILENCE = 1;
     public final static int SPECIAL_FRAME_RIGHT_SILENCE = 2;

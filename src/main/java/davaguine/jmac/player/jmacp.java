@@ -20,11 +20,13 @@ package davaguine.jmac.player;
 
 import java.io.IOException;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class jmacp {
+
     private String fFilename = null;
 
     public static void main(String[] args) {

@@ -15,24 +15,27 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.encoder;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.MD5;
 
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.05.2004 16:41:39
  */
 public class BitArray {
-    private final static int BIT_ARRAY_ELEMENTS = 4096;						// the number of elements in the bit array (4 MB)
-    private final static int BIT_ARRAY_BYTES = BIT_ARRAY_ELEMENTS * 4;  	// the number of bytes in the bit array
-    private final static int BIT_ARRAY_BITS = BIT_ARRAY_BYTES * 8;	// the number of bits in the bit array
+
+    private final static int BIT_ARRAY_ELEMENTS = 4096;                        // the number of elements in the bit array (4 MB)
+    private final static int BIT_ARRAY_BYTES = BIT_ARRAY_ELEMENTS * 4;    // the number of bytes in the bit array
+    private final static int BIT_ARRAY_BITS = BIT_ARRAY_BYTES * 8;    // the number of bits in the bit array
     private final static int MAX_ELEMENT_BITS = 128;
     private final static int REFILL_BIT_THRESHOLD = BIT_ARRAY_BITS - MAX_ELEMENT_BITS;
 

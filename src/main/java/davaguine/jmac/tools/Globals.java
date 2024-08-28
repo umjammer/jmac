@@ -23,6 +23,7 @@ package davaguine.jmac.tools;
  * @version 04.03.2004 14:51:31
  */
 public class Globals {
+
     private static final boolean SHOW_ACCESS_CONTROL_EXCEPTIONS = false;
     private static final String PROPERTY_PREFIX = "jmac.";
 

@@ -23,6 +23,7 @@ package davaguine.jmac.player;
  * @version 04.03.2004 14:51:31
  */
 public class JavaSoundAudioDeviceFactory extends AudioDeviceFactory {
+
     private boolean tested = false;
 
     private static final String DEVICE_CLASS_NAME = "davaguine.jmac.player.JavaSoundAudioDevice";

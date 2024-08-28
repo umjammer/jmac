@@ -18,10 +18,11 @@
 
 package davaguine.jmac.info;
 
+import java.io.UnsupportedEncodingException;
+
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.UnsupportedEncodingException;
 
 /**
  * @author Dmitry Vaguine

@@ -18,14 +18,19 @@
 
 package davaguine.jmac.decoder;
 
-import davaguine.jmac.info.*;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import davaguine.jmac.info.APEFileInfo;
+import davaguine.jmac.info.APEInfo;
+import davaguine.jmac.info.APELink;
+import davaguine.jmac.info.APETag;
+import davaguine.jmac.info.WaveFormat;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.Globals;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 /**
  * @author Dmitry Vaguine
@@ -161,7 +166,7 @@ public abstract class IAPEDecompress {
 
             // take the appropriate action (based on the extension)
             if (pExtension.toLowerCase().equals(".mac") || pExtension.toLowerCase().equals(".ape"))
-            // plain .ape file
+                // plain .ape file
                 pAPEInfo = new APEInfo(in);
         } else
             pAPEInfo = new APEInfo(in);
@@ -199,7 +204,7 @@ public abstract class IAPEDecompress {
                     nFinishBlock = APELink.GetFinishBlock();
                 }
             } else if (pExtension.toLowerCase().equals(".mac") || pExtension.toLowerCase().equals(".ape"))
-            // plain .ape file
+                // plain .ape file
                 pAPEInfo = new APEInfo(in);
         } else
             pAPEInfo = new APEInfo(in);

@@ -15,19 +15,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.info;
+
+import java.io.IOException;
 
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.File;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 07.05.2004 16:59:37
  */
 public class RiffChunkHeader {
-    public int cChunkLabel;		// should equal "data" indicating the data chunk (4 chars)
+
+    public int cChunkLabel;        // should equal "data" indicating the data chunk (4 chars)
     public long nChunkBytes;        // the bytes of the chunk
 
     private final static int RIFF_CHUNK_HEADER_SIZE = 8;

@@ -18,13 +18,23 @@
 
 package davaguine.jmac.decoder;
 
-import davaguine.jmac.info.*;
+import java.io.IOException;
+
+import davaguine.jmac.info.APEFileInfo;
+import davaguine.jmac.info.APEInfo;
+import davaguine.jmac.info.APETag;
+import davaguine.jmac.info.SpecialFrame;
+import davaguine.jmac.info.WaveFormat;
+import davaguine.jmac.info.WaveHeader;
 import davaguine.jmac.prediction.IPredictorDecompress;
 import davaguine.jmac.prediction.PredictorDecompress3950toCurrent;
 import davaguine.jmac.prediction.PredictorDecompressNormal3930to3950;
-import davaguine.jmac.tools.*;
+import davaguine.jmac.tools.CircleBuffer;
+import davaguine.jmac.tools.Crc32;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.JMACException;
+import davaguine.jmac.tools.Prepare;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine

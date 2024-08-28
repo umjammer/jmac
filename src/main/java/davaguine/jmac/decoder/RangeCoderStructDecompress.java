@@ -23,6 +23,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class RangeCoderStructDecompress {
+
     public long low;       //low end of interval
     public long range;     //length of interval
     public long buffer;    //buffer for input/output

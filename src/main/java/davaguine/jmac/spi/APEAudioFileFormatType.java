@@ -20,6 +20,7 @@ package davaguine.jmac.spi;
 
 import javax.sound.sampled.AudioFileFormat;
 
+
 /**
  * An instance of the APEAudioFileFormatType class represents one of the standard types of
  * MAC audio file. Static instances are provided for the common types

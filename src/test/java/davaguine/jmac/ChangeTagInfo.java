@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac;
 
 import davaguine.jmac.decoder.IAPEDecompress;
@@ -22,6 +23,7 @@ import davaguine.jmac.info.APEInfo;
 import davaguine.jmac.info.APETag;
 import davaguine.jmac.info.ID3Tag;
 import davaguine.jmac.tools.File;
+
 
 /**
  * @author Dmitry Vaguine

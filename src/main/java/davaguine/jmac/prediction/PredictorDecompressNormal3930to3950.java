@@ -18,16 +18,18 @@
 
 package davaguine.jmac.prediction;
 
+import java.util.Arrays;
+
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.tools.JMACException;
 
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class PredictorDecompressNormal3930to3950 extends IPredictorDecompress {
+
     private final static int HISTORY_ELEMENTS = 8;
     private final static int WINDOW_BLOCKS = 512;
 

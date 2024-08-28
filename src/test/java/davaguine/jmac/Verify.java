@@ -21,6 +21,7 @@ package davaguine.jmac;
 import davaguine.jmac.core.APESimple;
 import davaguine.jmac.tools.ProgressCallback;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
@@ -47,7 +48,7 @@ public class Verify extends ProgressCallback {
             }
 
             // variable declares
-            String pFilename = args[0];		//the file to open
+            String pFilename = args[0];        //the file to open
 
             // attempt to verify the file
 

@@ -24,8 +24,9 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorExtraHigh3600To3700 extends AntiPredictor {
+
     public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements, int Iterations, long[] pOffsetValueArrayA, long[] pOffsetValueArrayB) {
-        for (int z = Iterations; z >= 0;) {
+        for (int z = Iterations; z >= 0; ) {
 
             AntiPredictorOffset(pInputArray, pOutputArray, NumberOfElements, (int) pOffsetValueArrayA[z], (int) pOffsetValueArrayB[z], 64);
             z--;

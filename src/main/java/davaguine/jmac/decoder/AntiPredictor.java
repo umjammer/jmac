@@ -20,11 +20,13 @@ package davaguine.jmac.decoder;
 
 import davaguine.jmac.info.CompressionLevel;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictor {
+
     //construction/destruction
     public AntiPredictor() {
     }

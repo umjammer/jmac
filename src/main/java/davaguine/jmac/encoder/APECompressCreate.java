@@ -15,19 +15,30 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package davaguine.jmac.encoder;
 
-import davaguine.jmac.info.*;
-import davaguine.jmac.tools.*;
+package davaguine.jmac.encoder;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import davaguine.jmac.info.APEDescriptor;
+import davaguine.jmac.info.APEHeader;
+import davaguine.jmac.info.APEHeaderNew;
+import davaguine.jmac.info.CompressionLevel;
+import davaguine.jmac.info.WaveFormat;
+import davaguine.jmac.tools.ByteArrayReader;
+import davaguine.jmac.tools.ByteArrayWriter;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.Globals;
+import davaguine.jmac.tools.JMACException;
+
 
 /**
  * @author Dmitry Vaguine
  * @version 08.05.2004 12:40:36
  */
 public class APECompressCreate {
+
     APECompressCreate() {
         m_nMaxFrames = 0;
     }

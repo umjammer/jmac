@@ -23,6 +23,7 @@ package davaguine.jmac.tools;
  * @version 04.03.2004 14:51:31
  */
 public class ScaledFirstOrderFilter {
+
     public ScaledFirstOrderFilter(int multiply, int shift) {
         this.multiply = multiply;
         this.shift = shift;

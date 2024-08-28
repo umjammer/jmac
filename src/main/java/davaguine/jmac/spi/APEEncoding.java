@@ -29,6 +29,7 @@ import javax.sound.sampled.AudioFormat;
  * The encoding of MAC audio.
  */
 public class APEEncoding extends AudioFormat.Encoding {
+
     /**
      * Static instance of APE Encoding.
      */

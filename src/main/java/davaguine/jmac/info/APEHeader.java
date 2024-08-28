@@ -18,12 +18,13 @@
 
 package davaguine.jmac.info;
 
+import java.io.EOFException;
+import java.io.IOException;
+
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
@@ -249,7 +250,7 @@ public class APEHeader {
         int nReadID = m_pIO.readInt();
 
         // Also, lets suppose that MAC header placed in beginning of file in case of external source of file
-        if(m_pIO.isLocal()) {
+        if (m_pIO.isLocal()) {
             int nScanBytes = 0;
             while (nGoalID != nReadID && nScanBytes < (1024 * 1024)) {
                 nReadID = (nReadID << 8) | m_pIO.readByte();

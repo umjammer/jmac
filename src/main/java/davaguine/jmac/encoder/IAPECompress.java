@@ -15,7 +15,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.encoder;
+
+import java.io.IOException;
 
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.info.InputSource;
@@ -24,13 +27,13 @@ import davaguine.jmac.tools.ByteBuffer;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.IntegerPointer;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 07.05.2004 13:10:46
  */
 public abstract class IAPECompress {
+
     public final static int CREATE_WAV_HEADER_ON_DECOMPRESSION = -1;
     public final static int MAX_AUDIO_BYTES_UNKNOWN = -1;
 

@@ -18,6 +18,20 @@
 
 package davaguine.jmac.spi.tritonus;
 
+import java.io.BufferedInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 import davaguine.jmac.decoder.IAPEDecompress;
 import davaguine.jmac.spi.APEAudioFileFormatType;
 import davaguine.jmac.spi.APEEncoding;
@@ -26,11 +40,6 @@ import davaguine.jmac.tools.InputStreamFile;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RandomAccessFile;
 import org.tritonus.share.sampled.file.TAudioFileReader;
-
-import javax.sound.sampled.*;
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Dmitry Vaguine
@@ -41,6 +50,7 @@ import java.util.Map;
  * Provider for MAC audio file reading.
  */
 public class APEAudioFileReader extends TAudioFileReader {
+
     private final static int MAX_HEADER_SIZE = 16384;
     private final static int MARK_LIMIT = MAX_HEADER_SIZE + 1;
 

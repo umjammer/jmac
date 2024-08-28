@@ -20,11 +20,13 @@ package davaguine.jmac.decoder;
 
 import java.util.Arrays;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorExtraHigh3800ToCurrent extends AntiPredictor {
+
     private short[] bm = new short[256];
     private AntiPredictorExtraHighHelper Helper = new AntiPredictorExtraHighHelper();
     private int[] FM = new int[9];

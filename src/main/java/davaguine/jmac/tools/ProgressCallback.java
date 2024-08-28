@@ -23,6 +23,7 @@ package davaguine.jmac.tools;
  * @version 04.03.2004 14:51:31
  */
 public abstract class ProgressCallback {
+
     public int pPercentageDone;
     public boolean killFlag = false;
 

@@ -18,17 +18,19 @@
 
 package davaguine.jmac.info;
 
+import java.io.IOException;
+
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RandomAccessFile;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APELink {
+
     private final static String APE_LINK_HEADER = "[Monkey's Audio Image Link File]";
     private final static String APE_LINK_IMAGE_FILE_TAG = "Image File=";
     private final static String APE_LINK_START_BLOCK_TAG = "Start Block=";

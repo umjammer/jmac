@@ -18,9 +18,10 @@
 
 package davaguine.jmac.spi;
 
+import java.util.Map;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
-import java.util.Map;
+
 
 /**
  * An instance of the APEAudioFileFormat class describes MAC audio file, including the file type,

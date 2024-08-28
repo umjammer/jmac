@@ -15,23 +15,34 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.core;
+
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import davaguine.jmac.decoder.IAPEDecompress;
 import davaguine.jmac.encoder.IAPECompress;
 import davaguine.jmac.info.APEFileInfo;
 import davaguine.jmac.info.InputSource;
 import davaguine.jmac.info.WaveFormat;
-import davaguine.jmac.tools.*;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.Globals;
+import davaguine.jmac.tools.IntegerPointer;
+import davaguine.jmac.tools.JMACException;
+import davaguine.jmac.tools.JMACSkippedException;
+import davaguine.jmac.tools.JMACStoppedByUserException;
+import davaguine.jmac.tools.MD5;
+import davaguine.jmac.tools.ProgressCallback;
+import davaguine.jmac.tools.ProgressHelper;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 
 /**
  * @author Dmitry Vaguine
  * @version 11.05.2004 16:26:19
  */
 public class APESimple {
+
     public final static int UNMAC_DECODER_OUTPUT_APE = 2;
     public final static int UNMAC_DECODER_OUTPUT_WAV = 1;
     public final static int UNMAC_DECODER_OUTPUT_NONE = 0;

@@ -18,24 +18,26 @@
 
 package davaguine.jmac.info;
 
+import java.io.EOFException;
+import java.io.IOException;
+
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class APETagFooter {
-    public String m_cID;		    	// should equal 'APETAGEX' (char[8])
-    public int m_nVersion;			// equals CURRENT_APE_TAG_VERSION (int)
-    public int m_nSize;				// the complete size of the tag, including this footer (int)
-    public int m_nFields;	    		// the number of fields in the tag (int)
-    public int m_nFlags;				// the tag flags (none currently defined) (int)
+
+    public String m_cID;                // should equal 'APETAGEX' (char[8])
+    public int m_nVersion;            // equals CURRENT_APE_TAG_VERSION (int)
+    public int m_nSize;                // the complete size of the tag, including this footer (int)
+    public int m_nFields;                // the number of fields in the tag (int)
+    public int m_nFlags;                // the tag flags (none currently defined) (int)
 
     public final static int APE_TAG_FOOTER_BYTES = 32;
 

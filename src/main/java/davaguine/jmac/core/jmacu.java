@@ -15,16 +15,19 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.core;
 
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.tools.ProgressCallback;
+
 
 /**
  * @author Dmitry Vaguine
  * @version 24.05.2004 10:50:38
  */
 public class jmacu extends ProgressCallback {
+
     private static long g_nInitialTickCount;
 
     public void callback(int persent) {
@@ -37,9 +40,9 @@ public class jmacu extends ProgressCallback {
 
     public static void main(String[] args) {
         try {
-            ///////////////////////////////////////////////////////////////////////////////
+            //
             // error check the command line parameters
-            ///////////////////////////////////////////////////////////////////////////////
+            //
             boolean processed = false;
             if (args.length >= 2) {
                 if (args[0].equals("d") && args.length == 3) {

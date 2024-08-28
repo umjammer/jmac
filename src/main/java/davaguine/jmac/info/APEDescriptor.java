@@ -15,31 +15,34 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.info;
+
+import java.io.EOFException;
+import java.io.IOException;
 
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.ByteArrayWriter;
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.JMACException;
 
-import java.io.EOFException;
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 07.04.2004 14:36:53
  */
 public class APEDescriptor {
-    public String cID;					// should equal 'MAC ' (char[4])
-    public int nVersion;				// version number * 1000 (3.81 = 3810) (unsigned short)
 
-    public long nDescriptorBytes;		// the number of descriptor bytes (allows later expansion of this header) (unsigned int32)
-    public long nHeaderBytes;			// the number of header APE_HEADER bytes (unsigned int32)
-    public long nSeekTableBytes;		// the number of bytes of the seek table (unsigned int32)
-    public long nHeaderDataBytes;		// the number of header data bytes (from original file) (unsigned int32)
-    public long nAPEFrameDataBytes;		// the number of bytes of APE frame data (unsigned int32)
-    public long nAPEFrameDataBytesHigh;	// the high order number of APE frame data bytes (unsigned int32)
-    public long nTerminatingDataBytes;	// the terminating data of the file (not including tag data) (unsigned int32)
+    public String cID;                    // should equal 'MAC ' (char[4])
+    public int nVersion;                // version number * 1000 (3.81 = 3810) (unsigned short)
+
+    public long nDescriptorBytes;        // the number of descriptor bytes (allows later expansion of this header) (unsigned int32)
+    public long nHeaderBytes;            // the number of header APE_HEADER bytes (unsigned int32)
+    public long nSeekTableBytes;        // the number of bytes of the seek table (unsigned int32)
+    public long nHeaderDataBytes;        // the number of header data bytes (from original file) (unsigned int32)
+    public long nAPEFrameDataBytes;        // the number of bytes of APE frame data (unsigned int32)
+    public long nAPEFrameDataBytesHigh;    // the high order number of APE frame data bytes (unsigned int32)
+    public long nTerminatingDataBytes;    // the terminating data of the file (not including tag data) (unsigned int32)
 
     public byte[] cFileMD5 = new byte[16]; // the MD5 hash of the file (see notes for usage... it's a littly tricky) (unsigned char[16])
 

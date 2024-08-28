@@ -20,11 +20,13 @@ package davaguine.jmac.tools;
 
 import java.util.Arrays;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class RollBufferFastInt {
+
     public RollBufferFastInt(int nWindowElements, int nHistoryElements) {
         m_pData = new int[nWindowElements + nHistoryElements];
         m_nWindowElements = nWindowElements;

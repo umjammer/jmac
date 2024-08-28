@@ -23,6 +23,7 @@ package davaguine.jmac.tools;
  * @version 04.03.2004 14:51:31
  */
 public class ProgressHelper {
+
     public ProgressHelper(int nTotalSteps, ProgressCallback ProgressCallback) {
         m_CallbackFunction = ProgressCallback;
 

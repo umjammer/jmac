@@ -20,11 +20,13 @@ package davaguine.jmac.player;
 
 import davaguine.jmac.decoder.IAPEDecompress;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public interface AudioDevice {
+
     /**
      * Prepares the AudioDevice for playback of audio samples.
      *
@@ -39,7 +41,7 @@ public interface AudioDevice {
      * Retrieves the open state of this audio device.
      *
      * @return <code>true</code> if this audio device is open and playing
-     *         audio samples, or <code>false</code> otherwise.
+     * audio samples, or <code>false</code> otherwise.
      */
     public boolean isOpen();
 

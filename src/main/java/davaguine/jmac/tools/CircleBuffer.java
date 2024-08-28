@@ -15,6 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.tools;
 
 
@@ -23,6 +24,7 @@ package davaguine.jmac.tools;
  * @version 06.05.2004 21:05:48
  */
 public class CircleBuffer {
+
     // construction / destruction
     public CircleBuffer() {
         m_pBuffer = null;

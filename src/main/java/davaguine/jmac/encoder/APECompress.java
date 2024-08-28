@@ -15,19 +15,26 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package davaguine.jmac.encoder;
+
+import java.io.IOException;
 
 import davaguine.jmac.info.InputSource;
 import davaguine.jmac.info.WaveFormat;
-import davaguine.jmac.tools.*;
+import davaguine.jmac.tools.ByteArrayReader;
+import davaguine.jmac.tools.ByteBuffer;
+import davaguine.jmac.tools.File;
+import davaguine.jmac.tools.IntegerPointer;
+import davaguine.jmac.tools.JMACException;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine
  * @version 08.05.2004 11:17:57
  */
 public class APECompress extends IAPECompress {
+
     public APECompress() {
         m_nBufferHead = 0;
         m_nBufferTail = 0;

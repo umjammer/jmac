@@ -18,15 +18,22 @@
 
 package davaguine.jmac.player;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
+
 import davaguine.jmac.decoder.IAPEDecompress;
 
-import javax.sound.sampled.*;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class JavaSoundAudioDevice extends AudioDeviceBase {
+
     private SourceDataLine source = null;
 
     private AudioFormat fmt = null;

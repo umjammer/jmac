@@ -18,17 +18,19 @@
 
 package davaguine.jmac.prediction;
 
+import java.util.Arrays;
+
 import davaguine.jmac.info.CompressionLevel;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RollBufferFastInt;
 
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class PredictorDecompress3950toCurrent extends IPredictorDecompress {
+
     public final static int M_COUNT = 8;
     private final static int WINDOW_BLOCKS = 512;
 
@@ -205,9 +207,9 @@ public class PredictorDecompress3950toCurrent extends IPredictorDecompress {
     protected RollBufferFastInt m_rbAdaptA = new RollBufferFastInt(WINDOW_BLOCKS, 8);
     protected RollBufferFastInt m_rbAdaptB = new RollBufferFastInt(WINDOW_BLOCKS, 8);
 
-//    protected ScaledFirstOrderFilter m_Stage1FilterA = new ScaledFirstOrderFilter(31, 5);
+    //    protected ScaledFirstOrderFilter m_Stage1FilterA = new ScaledFirstOrderFilter(31, 5);
     protected int scaledFilterALV;
-//    protected ScaledFirstOrderFilter m_Stage1FilterB = new ScaledFirstOrderFilter(31, 5);
+    //    protected ScaledFirstOrderFilter m_Stage1FilterB = new ScaledFirstOrderFilter(31, 5);
     protected int scaledFilterBLV;
 
     // other

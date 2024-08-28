@@ -21,6 +21,7 @@ package davaguine.jmac.tools;
 import java.io.EOFException;
 import java.io.IOException;
 
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31

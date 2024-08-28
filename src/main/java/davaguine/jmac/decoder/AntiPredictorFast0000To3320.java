@@ -24,6 +24,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorFast0000To3320 extends AntiPredictor {
+
     public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
 
         //short frame handling

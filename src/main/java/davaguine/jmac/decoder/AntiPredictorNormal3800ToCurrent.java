@@ -24,6 +24,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class AntiPredictorNormal3800ToCurrent extends AntiPredictor {
+
     private final static int FIRST_ELEMENT = 4;
 
     public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {

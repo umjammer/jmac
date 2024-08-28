@@ -23,6 +23,7 @@ package davaguine.jmac.decoder;
  * @version 04.03.2004 14:51:31
  */
 public class DecodeValueMethod {
+
     public final static int DECODE_VALUE_METHOD_UNSIGNED_INT = 0;
     public final static int DECODE_VALUE_METHOD_UNSIGNED_RICE = 1;
     public final static int DECODE_VALUE_METHOD_X_BITS = 2;

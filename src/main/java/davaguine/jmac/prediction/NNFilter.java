@@ -18,16 +18,18 @@
 
 package davaguine.jmac.prediction;
 
+import java.util.Arrays;
+
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RollBufferShort;
 
-import java.util.Arrays;
 
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public abstract class NNFilter {
+
     public final static int NN_WINDOW_ELEMENTS = 512;
 
     public NNFilter(int nOrder, int nShift, int nVersion) {

@@ -18,10 +18,11 @@
 
 package davaguine.jmac.info;
 
+import java.io.IOException;
+
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.File;
 
-import java.io.IOException;
 
 /**
  * @author Dmitry Vaguine

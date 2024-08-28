@@ -23,6 +23,7 @@ package davaguine.jmac.info;
  * @version 04.03.2004 14:51:31
  */
 public class CompressionLevel {
+
     public final static int COMPRESSION_LEVEL_FAST = 1000;
     public final static int COMPRESSION_LEVEL_NORMAL = 2000;
     public final static int COMPRESSION_LEVEL_HIGH = 3000;
