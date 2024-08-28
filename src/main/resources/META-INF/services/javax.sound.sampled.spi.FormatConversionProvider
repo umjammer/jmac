@@ -1,0 +1,3 @@
+# Providers for FormatConversion
+davaguine.jmac.spi.APEFormatConversionProvider
+#davaguine.jmac.spi.tritonus.APEFormatConversionProvider

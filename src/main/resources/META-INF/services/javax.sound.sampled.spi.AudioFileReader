@@ -1,0 +1,3 @@
+# Providers for audio file reading
+davaguine.jmac.spi.APEAudioFileReader
+#davaguine.jmac.spi.tritonus.APEAudioFileReader
