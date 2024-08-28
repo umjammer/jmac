@@ -27,172 +27,171 @@ import java.util.Arrays;
  */
 public class AntiPredictorExtraHigh3800ToCurrent extends AntiPredictor {
 
-    private short[] bm = new short[256];
-    private AntiPredictorExtraHighHelper Helper = new AntiPredictorExtraHighHelper();
-    private int[] FM = new int[9];
-    private int[] FP = new int[9];
-    private short[] IPAdaptFactor = null;
-    private short[] IPShort = null;
+    private final short[] bm = new short[256];
+    private final int[] fm = new int[9];
+    private final int[] fp = new int[9];
+    private short[] adaptFactors = null;
+    private short[] shorts = null;
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements, int nVersion) {
-        final int nFilterStageElements = (nVersion < 3830) ? 128 : 256;
-        final int nFilterStageShift = (nVersion < 3830) ? 11 : 12;
-        final int nMaxElements = (nVersion < 3830) ? 134 : 262;
-        final int nFirstElement = (nVersion < 3830) ? 128 : 256;
-        final int nStageCShift = (nVersion < 3830) ? 10 : 11;
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements, int version) {
+        int filterStageElements = (version < 3830) ? 128 : 256;
+        int filterStageShift = (version < 3830) ? 11 : 12;
+        int maxElements = (version < 3830) ? 134 : 262;
+        int firstElement = (version < 3830) ? 128 : 256;
+        int stageCShift = (version < 3830) ? 10 : 11;
 
-        //short frame handling
-        if (NumberOfElements < nMaxElements) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < maxElements) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //make the first five samples identical in both arrays
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, nFirstElement);
+        // make the first five samples identical in both arrays
+        System.arraycopy(inputArray, 0, outputArray, 0, firstElement);
 
-        //variable declares and initializations
+        // variable declares and initializations
         Arrays.fill(bm, (short) 0);
         int m2 = 64, m3 = 115, m4 = 64, m5 = 740, m6 = 0;
-        int p4 = pInputArray[nFirstElement - 1];
-        int p3 = (pInputArray[nFirstElement - 1] - pInputArray[nFirstElement - 2]) << 1;
-        int p2 = pInputArray[nFirstElement - 1] + ((pInputArray[nFirstElement - 3] - pInputArray[nFirstElement - 2]) << 3);
-        int op = nFirstElement;
-        int ip = nFirstElement;
-        int IPP2 = pInputArray[ip - 2];
-        int p7 = 2 * pInputArray[ip - 1] - pInputArray[ip - 2];
-        int opp = pOutputArray[op - 1];
-        int Original;
+        int p4 = inputArray[firstElement - 1];
+        int p3 = (inputArray[firstElement - 1] - inputArray[firstElement - 2]) << 1;
+        int p2 = inputArray[firstElement - 1] + ((inputArray[firstElement - 3] - inputArray[firstElement - 2]) << 3);
+        int op = firstElement;
+        int ip = firstElement;
+        int ipp2 = inputArray[ip - 2];
+        int p7 = 2 * inputArray[ip - 1] - inputArray[ip - 2];
+        int opp = outputArray[op - 1];
+        int original;
 
-        //undo the initial prediction stuff
+        // undo the initial prediction stuff
         int q; // loop variable
-        for (q = 1; q < nFirstElement; q++) {
-            pOutputArray[q] += pOutputArray[q - 1];
+        for (q = 1; q < firstElement; q++) {
+            outputArray[q] += outputArray[q - 1];
         }
 
-        //pump the primary loop
-        if (IPAdaptFactor == null || IPAdaptFactor.length < NumberOfElements)
-            IPAdaptFactor = new short[NumberOfElements];
-        if (IPShort == null || IPShort.length < NumberOfElements)
-            IPShort = new short[NumberOfElements];
-        for (q = 0; q < nFirstElement; q++) {
-            IPAdaptFactor[q] = (short) (((pInputArray[q] >> 30) & 2) - 1);
-            IPShort[q] = (short) pInputArray[q];
+        // pump the primary loop
+        if (adaptFactors == null || adaptFactors.length < numberOfElements)
+            adaptFactors = new short[numberOfElements];
+        if (shorts == null || shorts.length < numberOfElements)
+            shorts = new short[numberOfElements];
+        for (q = 0; q < firstElement; q++) {
+            adaptFactors[q] = (short) (((inputArray[q] >> 30) & 2) - 1);
+            shorts[q] = (short) inputArray[q];
         }
 
-        Arrays.fill(FM, 0);
-        Arrays.fill(FP, 0);
+        Arrays.fill(fm, 0);
+        Arrays.fill(fp, 0);
 
-        for (q = nFirstElement; op < NumberOfElements; op++, ip++, q++) {
-            //CPU load-balancing
-            if (nVersion >= 3830) {
-                int pFP = 8;
-                int pFM = 8;
-                int nDotProduct = 0;
-                FP[0] = pInputArray[ip];
+        for (q = firstElement; op < numberOfElements; op++, ip++, q++) {
+            // CPU load-balancing
+            if (version >= 3830) {
+                int fpP = 8;
+                int fmP = 8;
+                int dotProduct = 0;
+                fp[0] = inputArray[ip];
 
-                if (FP[0] == 0) {
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM--];
-                    FP[pFP--] = FP[pFP - 1];
-                } else if (FP[0] > 0) {
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] += ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
+                if (fp[0] == 0) {
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP--];
+                    fp[fpP--] = fp[fpP - 1];
+                } else if (fp[0] > 0) {
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] += ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
                 } else {
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
-                    nDotProduct += FP[pFP] * FM[pFM];
-                    FM[pFM--] -= ((FP[pFP] >> 30) & 2) - 1;
-                    FP[pFP--] = FP[pFP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
+                    dotProduct += fp[fpP] * fm[fmP];
+                    fm[fmP--] -= ((fp[fpP] >> 30) & 2) - 1;
+                    fp[fpP--] = fp[fpP - 1];
                 }
 
-                pInputArray[ip] -= nDotProduct >> 9;
+                inputArray[ip] -= dotProduct >> 9;
             }
 
-            Original = pInputArray[ip];
+            original = inputArray[ip];
 
-            IPShort[q] = (short) pInputArray[ip];
-            IPAdaptFactor[q] = (short) (((pInputArray[ip] >> 30) & 2) - 1);
+            shorts[q] = (short) inputArray[ip];
+            adaptFactors[q] = (short) (((inputArray[ip] >> 30) & 2) - 1);
 
-            pInputArray[ip] -= (Helper.ConventionalDotProduct(IPShort, q - nFirstElement, bm, 0, IPAdaptFactor, q - nFirstElement, Original, nFilterStageElements) >> nFilterStageShift);
+            inputArray[ip] -= (AntiPredictorExtraHighHelper.conventionalDotProduct(shorts, q - firstElement, bm, 0, adaptFactors, q - firstElement, original, filterStageElements) >> filterStageShift);
 
-            IPShort[q] = (short) pInputArray[ip];
-            IPAdaptFactor[q] = (short) (((pInputArray[ip] >> 30) & 2) - 1);
+            shorts[q] = (short) inputArray[ip];
+            adaptFactors[q] = (short) (((inputArray[ip] >> 30) & 2) - 1);
 
-            /////////////////////////////////////////////
-            pOutputArray[op] = pInputArray[ip] + (((p2 * m2) + (p3 * m3) + (p4 * m4)) >> 11);
+            //
+            outputArray[op] = inputArray[ip] + (((p2 * m2) + (p3 * m3) + (p4 * m4)) >> 11);
 
-            if (pInputArray[ip] > 0) {
+            if (inputArray[ip] > 0) {
                 m2 -= ((p2 >> 30) & 2) - 1;
                 m3 -= ((p3 >> 28) & 8) - 4;
                 m4 -= ((p4 >> 28) & 8) - 4;
-            } else if (pInputArray[ip] < 0) {
+            } else if (inputArray[ip] < 0) {
                 m2 += ((p2 >> 30) & 2) - 1;
                 m3 += ((p3 >> 28) & 8) - 4;
                 m4 += ((p4 >> 28) & 8) - 4;
             }
 
 
-            p2 = pOutputArray[op] + ((IPP2 - p4) << 3);
-            p3 = (pOutputArray[op] - p4) << 1;
-            IPP2 = p4;
-            p4 = pOutputArray[op];
+            p2 = outputArray[op] + ((ipp2 - p4) << 3);
+            p3 = (outputArray[op] - p4) << 1;
+            ipp2 = p4;
+            p4 = outputArray[op];
 
-            /////////////////////////////////////////////
-            pOutputArray[op] += (((p7 * m5) - (opp * m6)) >> nStageCShift);
+            //
+            outputArray[op] += (((p7 * m5) - (opp * m6)) >> stageCShift);
 
             if (p4 > 0) {
                 m5 -= ((p7 >> 29) & 4) - 2;
@@ -202,11 +201,11 @@ public class AntiPredictorExtraHigh3800ToCurrent extends AntiPredictor {
                 m6 -= ((opp >> 30) & 2) - 1;
             }
 
-            p7 = 2 * pOutputArray[op] - opp;
-            opp = pOutputArray[op];
+            p7 = 2 * outputArray[op] - opp;
+            opp = outputArray[op];
 
-            /////////////////////////////////////////////
-            pOutputArray[op] += ((pOutputArray[op - 1] * 31) >> 5);
+            //
+            outputArray[op] += ((outputArray[op - 1] * 31) >> 5);
         }
     }
 }

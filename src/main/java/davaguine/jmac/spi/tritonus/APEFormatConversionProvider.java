@@ -78,6 +78,7 @@ public class APEFormatConversionProvider extends TEncodingFormatConversionProvid
      * @param audioInputStream is the source input stream
      * @return a decoded AudioInputStream
      */
+    @Override
     public AudioInputStream getAudioInputStream(AudioFormat targetFormat, AudioInputStream audioInputStream) {
         logger.log(Level.TRACE, ">APEFormatConversionProvider.getAudioInputStream(AudioFormat targetFormat, AudioInputStream audioInputStream):");
         return new APEAudioInputStream(targetFormat, audioInputStream);

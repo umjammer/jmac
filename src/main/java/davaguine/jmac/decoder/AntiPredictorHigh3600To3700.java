@@ -25,20 +25,21 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorHigh3600To3700 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //variable declares
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // variable declares
         int q;
 
-        //short frame handling
-        if (NumberOfElements < 16) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < 16) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //make the first five samples identical in both arrays
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, 13);
+        // make the first five samples identical in both arrays
+        System.arraycopy(inputArray, 0, outputArray, 0, 13);
 
-        //initialize values
+        // initialize values
         int bm1 = 0;
         int bm2 = 0;
         int bm3 = 0;
@@ -59,28 +60,28 @@ public class AntiPredictorHigh3600To3700 extends AntiPredictor {
         int m3 = 28;
         int m4 = 16;
         int OP0;
-        int p4 = pInputArray[12];
-        int p3 = (pInputArray[12] - pInputArray[11]) << 1;
-        int p2 = pInputArray[12] + ((pInputArray[10] - pInputArray[11]) << 3);
-        int bp1 = pOutputArray[12];
-        int bp2 = pOutputArray[11];
-        int bp3 = pOutputArray[10];
-        int bp4 = pOutputArray[9];
-        int bp5 = pOutputArray[8];
-        int bp6 = pOutputArray[7];
-        int bp7 = pOutputArray[6];
-        int bp8 = pOutputArray[5];
-        int bp9 = pOutputArray[4];
-        int bp10 = pOutputArray[3];
-        int bp11 = pOutputArray[2];
-        int bp12 = pOutputArray[1];
-        int bp13 = pOutputArray[0];
+        int p4 = inputArray[12];
+        int p3 = (inputArray[12] - inputArray[11]) << 1;
+        int p2 = inputArray[12] + ((inputArray[10] - inputArray[11]) << 3);
+        int bp1 = outputArray[12];
+        int bp2 = outputArray[11];
+        int bp3 = outputArray[10];
+        int bp4 = outputArray[9];
+        int bp5 = outputArray[8];
+        int bp6 = outputArray[7];
+        int bp7 = outputArray[6];
+        int bp8 = outputArray[5];
+        int bp9 = outputArray[4];
+        int bp10 = outputArray[3];
+        int bp11 = outputArray[2];
+        int bp12 = outputArray[1];
+        int bp13 = outputArray[0];
 
-        for (q = 13; q < NumberOfElements; q++) {
-            pInputArray[q] = pInputArray[q] - 1;
-            OP0 = (pInputArray[q] - ((bp1 * bm1) >> 8) + ((bp2 * bm2) >> 8) - ((bp3 * bm3) >> 8) - ((bp4 * bm4) >> 8) - ((bp5 * bm5) >> 8) - ((bp6 * bm6) >> 8) - ((bp7 * bm7) >> 8) - ((bp8 * bm8) >> 8) - ((bp9 * bm9) >> 8) + ((bp10 * bm10) >> 8) + ((bp11 * bm11) >> 8) + ((bp12 * bm12) >> 8) + ((bp13 * bm13) >> 8));
+        for (q = 13; q < numberOfElements; q++) {
+            inputArray[q] = inputArray[q] - 1;
+            OP0 = (inputArray[q] - ((bp1 * bm1) >> 8) + ((bp2 * bm2) >> 8) - ((bp3 * bm3) >> 8) - ((bp4 * bm4) >> 8) - ((bp5 * bm5) >> 8) - ((bp6 * bm6) >> 8) - ((bp7 * bm7) >> 8) - ((bp8 * bm8) >> 8) - ((bp9 * bm9) >> 8) + ((bp10 * bm10) >> 8) + ((bp11 * bm11) >> 8) + ((bp12 * bm12) >> 8) + ((bp13 * bm13) >> 8));
 
-            if (pInputArray[q] > 0) {
+            if (inputArray[q] > 0) {
                 bm1 -= bp1 > 0 ? 1 : -1;
                 bm2 += bp2 >= 0 ? 1 : -1;
                 bm3 -= bp3 > 0 ? 1 : -1;
@@ -95,7 +96,7 @@ public class AntiPredictorHigh3600To3700 extends AntiPredictor {
                 bm12 += bp12 >= 0 ? 1 : -1;
                 bm13 += bp13 > 0 ? 1 : -1;
 
-            } else if (pInputArray[q] < 0) {
+            } else if (inputArray[q] < 0) {
                 bm1 -= bp1 <= 0 ? 1 : -1;
                 bm2 += bp2 < 0 ? 1 : -1;
                 bm3 -= bp3 <= 0 ? 1 : -1;
@@ -126,7 +127,7 @@ public class AntiPredictorHigh3600To3700 extends AntiPredictor {
             bp2 = bp1;
             bp1 = OP0;
 
-            pInputArray[q] = OP0 + ((p2 * m2) >> 11) + ((p3 * m3) >> 9) + ((p4 * m4) >> 9);
+            inputArray[q] = OP0 + ((p2 * m2) >> 11) + ((p3 * m3) >> 9) + ((p4 * m4) >> 9);
 
             if (OP0 > 0) {
                 m2 -= p2 > 0 ? -1 : 1;
@@ -138,52 +139,52 @@ public class AntiPredictorHigh3600To3700 extends AntiPredictor {
                 m4 -= p4 > 0 ? 1 : -1;
             }
 
-            p2 = pInputArray[q] + ((pInputArray[q - 2] - pInputArray[q - 1]) << 3);
-            p3 = (pInputArray[q] - pInputArray[q - 1]) << 1;
-            p4 = pInputArray[q];
+            p2 = inputArray[q] + ((inputArray[q - 2] - inputArray[q - 1]) << 3);
+            p3 = (inputArray[q] - inputArray[q - 1]) << 1;
+            p4 = inputArray[q];
 
-            pOutputArray[q] = pInputArray[q];
+            outputArray[q] = inputArray[q];
         }
 
         m4 = 370;
 
-        pOutputArray[1] = pInputArray[1] + pOutputArray[0];
-        pOutputArray[2] = pInputArray[2] + pOutputArray[1];
-        pOutputArray[3] = pInputArray[3] + pOutputArray[2];
-        pOutputArray[4] = pInputArray[4] + pOutputArray[3];
-        pOutputArray[5] = pInputArray[5] + pOutputArray[4];
-        pOutputArray[6] = pInputArray[6] + pOutputArray[5];
-        pOutputArray[7] = pInputArray[7] + pOutputArray[6];
-        pOutputArray[8] = pInputArray[8] + pOutputArray[7];
-        pOutputArray[9] = pInputArray[9] + pOutputArray[8];
-        pOutputArray[10] = pInputArray[10] + pOutputArray[9];
-        pOutputArray[11] = pInputArray[11] + pOutputArray[10];
-        pOutputArray[12] = pInputArray[12] + pOutputArray[11];
+        outputArray[1] = inputArray[1] + outputArray[0];
+        outputArray[2] = inputArray[2] + outputArray[1];
+        outputArray[3] = inputArray[3] + outputArray[2];
+        outputArray[4] = inputArray[4] + outputArray[3];
+        outputArray[5] = inputArray[5] + outputArray[4];
+        outputArray[6] = inputArray[6] + outputArray[5];
+        outputArray[7] = inputArray[7] + outputArray[6];
+        outputArray[8] = inputArray[8] + outputArray[7];
+        outputArray[9] = inputArray[9] + outputArray[8];
+        outputArray[10] = inputArray[10] + outputArray[9];
+        outputArray[11] = inputArray[11] + outputArray[10];
+        outputArray[12] = inputArray[12] + outputArray[11];
 
-        p4 = (2 * pInputArray[12]) - pInputArray[11];
+        p4 = (2 * inputArray[12]) - inputArray[11];
         int p6 = 0;
-        int p5 = pOutputArray[12];
-        int IP0, IP1;
+        int p5 = outputArray[12];
+        int ip0, ip1;
         int m6 = 0;
 
-        IP1 = pInputArray[12];
-        for (q = 13; q < NumberOfElements; q++) {
-            IP0 = pOutputArray[q] + ((p4 * m4) >> 9) - ((p6 * m6) >> 10);
-            if ((pOutputArray[q] ^ p4) >= 0)
+        ip1 = inputArray[12];
+        for (q = 13; q < numberOfElements; q++) {
+            ip0 = outputArray[q] + ((p4 * m4) >> 9) - ((p6 * m6) >> 10);
+            if ((outputArray[q] ^ p4) >= 0)
                 m4++;
             else
                 m4--;
-            if ((pOutputArray[q] ^ p6) >= 0)
+            if ((outputArray[q] ^ p6) >= 0)
                 m6--;
             else
                 m6++;
-            p4 = (2 * IP0) - IP1;
-            p6 = IP0;
+            p4 = (2 * ip0) - ip1;
+            p6 = ip0;
 
-            pOutputArray[q] = IP0 + ((p5 * 31) >> 5);
-            p5 = pOutputArray[q];
+            outputArray[q] = ip0 + ((p5 * 31) >> 5);
+            p5 = outputArray[q];
 
-            IP1 = IP0;
+            ip1 = ip0;
         }
     }
 }

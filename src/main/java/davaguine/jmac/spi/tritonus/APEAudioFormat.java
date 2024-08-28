@@ -23,10 +23,6 @@ import javax.sound.sampled.AudioFormat;
 
 import org.tritonus.share.sampled.TAudioFormat;
 
-/**
- * @author Dmitry Vaguine
- * @version 31.03.2004 19:09:05
- */
 
 /**
  * APE audio format parameters.
@@ -48,6 +44,9 @@ import org.tritonus.share.sampled.TAudioFormat;
  * <li><b>ape.totalblocks</b> [Integer], total blocks
  * <li><b>ape.peaklevel</b> [Integer], peak level
  * </ul>
+ *
+ * @author Dmitry Vaguine
+ * @version 31.03.2004 19:09:05
  */
 public class APEAudioFormat extends TAudioFormat {
 
@@ -56,17 +55,16 @@ public class APEAudioFormat extends TAudioFormat {
      * convention used to represent the data. The other parameters are further explained
      * in the class description.
      *
-     * @param encoding         - the audio encoding technique
-     * @param sampleRate       - the number of samples per second
-     * @param sampleSizeInBits - the number of bits in each sample
-     * @param channels         - the number of channels (1 for mono, 2 for stereo, and so on)
-     * @param frameSize        - the number of bytes in each frame
-     * @param frameRate        - the number of frames per second
-     * @param bigEndian        - indicates whether the data for a single sample is stored in big-endian byte order (false means little-endian)
-     * @param properties       - audio properties
+     * @param encoding         the audio encoding technique
+     * @param sampleRate       the number of samples per second
+     * @param sampleSizeInBits the number of bits in each sample
+     * @param channels         the number of channels (1 for mono, 2 for stereo, and so on)
+     * @param frameSize        the number of bytes in each frame
+     * @param frameRate        the number of frames per second
+     * @param bigEndian        indicates whether the data for a single sample is stored in big-endian byte order (false means little-endian)
+     * @param properties       audio properties
      */
-    public APEAudioFormat(AudioFormat.Encoding encoding, float sampleRate, int sampleSizeInBits, int channels, int frameSize, float frameRate, boolean bigEndian, Map properties) {
+    public APEAudioFormat(AudioFormat.Encoding encoding, float sampleRate, int sampleSizeInBits, int channels, int frameSize, float frameRate, boolean bigEndian, Map<String, Object> properties) {
         super(encoding, sampleRate, sampleSizeInBits, channels, frameSize, frameRate, bigEndian, properties);
     }
-
 }

@@ -30,35 +30,41 @@ import davaguine.jmac.tools.File;
  */
 public class WaveFormat {
 
-    public short wFormatTag;         /* format type */
-    public short nChannels;          /* number of channels (i.e. mono, stereo...) */
-    public int nSamplesPerSec;       /* sample rate */
-    public int nAvgBytesPerSec;      /* for buffer estimation */
-    public short nBlockAlign;        /* block size of data */
-    public short wBitsPerSample;     /* number of bits per sample of mono data */
-    public short cbSize;             /* the count in bytes of the size of */
+    /** format type */
+    public short formatTag;
+    /** number of channels (i.e. mono, stereo...) */
+    public short channels;
+    /** sample rate */
+    public int samplesPerSec;
+    /** for buffer estimation */
+    public int avgBytesPerSec;
+    /** block size of data */
+    public short blockAlign;
+    /** number of bits per sample of mono data */
+    public short bitsPerSample;
+    /** the count in bytes of the size of */
+    public short size;
 
     public final static int WAV_HEADER_SIZE = 16;
 
-    public static void FillWaveFormatEx(WaveFormat pWaveFormatEx, int nSampleRate, int nBitsPerSample, int nChannels) {
-        pWaveFormatEx.cbSize = 0;
-        pWaveFormatEx.nSamplesPerSec = nSampleRate;
-        pWaveFormatEx.wBitsPerSample = (short) nBitsPerSample;
-        pWaveFormatEx.nChannels = (short) nChannels;
-        pWaveFormatEx.wFormatTag = 1;
+    public static void fillWaveFormatEx(WaveFormat waveFormatEx, int sampleRate, int bitsPerSample, int channels) {
+        waveFormatEx.size = 0;
+        waveFormatEx.samplesPerSec = sampleRate;
+        waveFormatEx.bitsPerSample = (short) bitsPerSample;
+        waveFormatEx.channels = (short) channels;
+        waveFormatEx.formatTag = 1;
 
-        pWaveFormatEx.nBlockAlign = (short) ((pWaveFormatEx.wBitsPerSample / 8) * pWaveFormatEx.nChannels);
-        pWaveFormatEx.nAvgBytesPerSec = pWaveFormatEx.nBlockAlign * pWaveFormatEx.nSamplesPerSec;
+        waveFormatEx.blockAlign = (short) ((waveFormatEx.bitsPerSample / 8) * waveFormatEx.channels);
+        waveFormatEx.avgBytesPerSec = waveFormatEx.blockAlign * waveFormatEx.samplesPerSec;
     }
 
     public void readHeader(File io) throws IOException {
         ByteArrayReader reader = new ByteArrayReader(io, WAV_HEADER_SIZE);
-        wFormatTag = reader.readShort();
-        nChannels = reader.readShort();
-        nSamplesPerSec = reader.readInt();
-        nAvgBytesPerSec = reader.readInt();
-        nBlockAlign = reader.readShort();
-        wBitsPerSample = reader.readShort();
+        formatTag = reader.readShort();
+        channels = reader.readShort();
+        samplesPerSec = reader.readInt();
+        avgBytesPerSec = reader.readInt();
+        blockAlign = reader.readShort();
+        bitsPerSample = reader.readShort();
     }
-
 }

@@ -24,61 +24,61 @@ package davaguine.jmac.tools;
  */
 public class ProgressHelper {
 
-    public ProgressHelper(int nTotalSteps, ProgressCallback ProgressCallback) {
-        m_CallbackFunction = ProgressCallback;
+    public ProgressHelper(int totalSteps, ProgressCallback progressCallback) {
+        callbackFunction = progressCallback;
 
-        m_nTotalSteps = nTotalSteps;
-        m_nCurrentStep = 0;
-        m_nLastCallbackFiredPercentageDone = 0;
+        this.totalSteps = totalSteps;
+        currentStep = 0;
+        lastCallbackFiredPercentageDone = 0;
 
-        UpdateProgress(0);
+        updateProgress(0);
     }
 
-    public void UpdateStatus(String msg) {
-        m_CallbackFunction.updateStatus(msg);
+    public void updateStatus(String msg) {
+        callbackFunction.updateStatus(msg);
     }
 
-    public void UpdateProgress() {
-        UpdateProgress(-1, false);
+    public void updateProgress() {
+        updateProgress(-1, false);
     }
 
-    public void UpdateProgress(int nCurrentStep) {
-        UpdateProgress(nCurrentStep, false);
+    public void updateProgress(int currentStep) {
+        updateProgress(currentStep, false);
     }
 
-    public void UpdateProgress(int nCurrentStep, boolean bForceUpdate) {
-        //update the step
-        if (nCurrentStep == -1)
-            m_nCurrentStep++;
+    public void updateProgress(int currentStep, boolean forceUpdate) {
+        // update the step
+        if (currentStep == -1)
+            this.currentStep++;
         else
-            m_nCurrentStep = nCurrentStep;
+            this.currentStep = currentStep;
 
-        //figure the percentage done
-        float fPercentageDone = ((float) (m_nCurrentStep)) / ((float) (Math.max(m_nTotalSteps, 1)));
-        int nPercentageDone = (int) (fPercentageDone * 1000 * 100);
-        if (nPercentageDone > 100000) nPercentageDone = 100000;
+        // figure the percentage done
+        float percentageDone = ((float) (currentStep)) / ((float) (Math.max(totalSteps, 1)));
+        int percentageDone_ = (int) (percentageDone * 1000 * 100);
+        if (percentageDone_ > 100000) percentageDone_ = 100000;
 
-        //fire the callback
-        if (m_CallbackFunction != null) {
-            m_CallbackFunction.pPercentageDone = nPercentageDone;
-            if (bForceUpdate || (nPercentageDone - m_nLastCallbackFiredPercentageDone) >= 1000) {
-                m_CallbackFunction.callback(nPercentageDone);
-                m_nLastCallbackFiredPercentageDone = nPercentageDone;
+        // fire the callback
+        if (callbackFunction != null) {
+            callbackFunction.percentageDone = percentageDone_;
+            if (forceUpdate || (percentageDone_ - lastCallbackFiredPercentageDone) >= 1000) {
+                callbackFunction.callback(percentageDone_);
+                lastCallbackFiredPercentageDone = percentageDone_;
             }
         }
     }
 
-    public void UpdateProgressComplete() {
-        UpdateProgress(m_nTotalSteps, true);
+    public void updateProgressComplete() {
+        updateProgress(totalSteps, true);
     }
 
     public boolean isKillFlag() {
-        return m_CallbackFunction != null ? m_CallbackFunction.killFlag : false;
+        return callbackFunction != null ? callbackFunction.killFlag : false;
     }
 
-    private ProgressCallback m_CallbackFunction = null;
+    private ProgressCallback callbackFunction = null;
 
-    private int m_nTotalSteps;
-    private int m_nCurrentStep;
-    private int m_nLastCallbackFiredPercentageDone;
+    private final int totalSteps;
+    private int currentStep;
+    private int lastCallbackFiredPercentageDone;
 }

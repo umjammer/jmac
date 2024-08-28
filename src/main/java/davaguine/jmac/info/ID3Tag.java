@@ -32,44 +32,52 @@ import davaguine.jmac.tools.File;
  */
 public class ID3Tag {
 
-    public String Header;            // should equal 'TAG'
-    public String Title;            // title
-    public String Artist;            // artist
-    public String Album;            // album
-    public String Year;            // year
-    public String Comment;        // comment
-    public short Track;                // track
-    public short Genre;                // genre
+    /** should equal 'TAG' */
+    public String header;
+    /** title */
+    public String title;
+    /** artist */
+    public String artist;
+    /** album */
+    public String album;
+    /** year */
+    public String year;
+    /** comment */
+    public String comment;
+    /** track */
+    public short track;
+    /** genre */
+    public short genre;
 
     public final static int ID3_TAG_BYTES = 128;
 
-    public final static ID3Tag read(final File file) throws IOException {
+    public static ID3Tag read(File file) throws IOException {
         file.seek(file.length() - ID3_TAG_BYTES);
         try {
-            final ID3Tag tag = new ID3Tag();
-            final ByteArrayReader reader = new ByteArrayReader(file, ID3_TAG_BYTES);
-            tag.Header = reader.readString(3, "US-ASCII");
-            tag.Title = reader.readString(30, "US-ASCII");
-            tag.Artist = reader.readString(30, "US-ASCII");
-            tag.Album = reader.readString(30, "US-ASCII");
-            tag.Year = reader.readString(4, "US-ASCII");
-            tag.Comment = reader.readString(29, "US-ASCII");
-            tag.Track = reader.readUnsignedByte();
-            tag.Genre = reader.readUnsignedByte();
-            return tag.Header.equals("TAG") ? tag : null;
+            ID3Tag tag = new ID3Tag();
+            ByteArrayReader reader = new ByteArrayReader(file, ID3_TAG_BYTES);
+            tag.header = reader.readString(3, "US-ASCII");
+            tag.title = reader.readString(30, "US-ASCII");
+            tag.artist = reader.readString(30, "US-ASCII");
+            tag.album = reader.readString(30, "US-ASCII");
+            tag.year = reader.readString(4, "US-ASCII");
+            tag.comment = reader.readString(29, "US-ASCII");
+            tag.track = reader.readUnsignedByte();
+            tag.genre = reader.readUnsignedByte();
+            return tag.header.equals("TAG") ? tag : null;
         } catch (EOFException e) {
             return null;
         }
     }
 
-    public final void write(final ByteArrayWriter writer) {
-        writer.writeString(Header, 3, "US-ASCII");
-        writer.writeString(Title, 30, "US-ASCII");
-        writer.writeString(Artist, 30, "US-ASCII");
-        writer.writeString(Album, 30, "US-ASCII");
-        writer.writeString(Year, 4, "US-ASCII");
-        writer.writeString(Comment, 29, "US-ASCII");
-        writer.writeUnsignedByte(Track);
-        writer.writeUnsignedByte(Genre);
+    public final void write(ByteArrayWriter writer) {
+        writer.writeString(header, 3, "US-ASCII");
+        writer.writeString(title, 30, "US-ASCII");
+        writer.writeString(artist, 30, "US-ASCII");
+        writer.writeString(album, 30, "US-ASCII");
+        writer.writeString(year, 4, "US-ASCII");
+        writer.writeString(comment, 29, "US-ASCII");
+        writer.writeUnsignedByte(track);
+        writer.writeUnsignedByte(genre);
     }
 }

@@ -27,5 +27,4 @@ public class JMACStoppedByUserException extends Exception {
     public JMACStoppedByUserException() {
         super("Stopped By User");
     }
-
 }

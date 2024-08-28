@@ -33,36 +33,46 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEDescriptor {
 
-    public String cID;                    // should equal 'MAC ' (char[4])
-    public int nVersion;                // version number * 1000 (3.81 = 3810) (unsigned short)
+    /** should equal 'MAC ' (char[4]) */
+    public String id;
+    /** version number * 1000 (3.81 = 3810) (unsigned short) */
+    public int version;
 
-    public long nDescriptorBytes;        // the number of descriptor bytes (allows later expansion of this header) (unsigned int32)
-    public long nHeaderBytes;            // the number of header APE_HEADER bytes (unsigned int32)
-    public long nSeekTableBytes;        // the number of bytes of the seek table (unsigned int32)
-    public long nHeaderDataBytes;        // the number of header data bytes (from original file) (unsigned int32)
-    public long nAPEFrameDataBytes;        // the number of bytes of APE frame data (unsigned int32)
-    public long nAPEFrameDataBytesHigh;    // the high order number of APE frame data bytes (unsigned int32)
-    public long nTerminatingDataBytes;    // the terminating data of the file (not including tag data) (unsigned int32)
+    /** the number of descriptor bytes (allows later expansion of this header) (unsigned int32) */
+    public long descriptorBytes;
+    /** the number of header APE_HEADER bytes (unsigned int32) */
+    public long headerBytes;
+    /** the number of bytes of the seek table (unsigned int32) */
+    public long seekTableBytes;
+    /** the number of header data bytes (from original file) (unsigned int32) */
+    public long headerDataBytes;
+    /** the number of bytes of APE frame data (unsigned int32) */
+    public long apeFrameDataBytes;
+    /** the high order number of APE frame data bytes (unsigned int32) */
+    public long apeFrameDataBytesHigh;
+    /** the terminating data of the file (not including tag data) (unsigned int32) */
+    public long terminatingDataBytes;
 
-    public byte[] cFileMD5 = new byte[16]; // the MD5 hash of the file (see notes for usage... it's a littly tricky) (unsigned char[16])
+    /** the MD5 hash of the file (see notes for usage... it's a littly tricky) (unsigned char[16]) */
+    public byte[] fileMD5 = new byte[16];
 
     public final static int APE_DESCRIPTOR_BYTES = 52;
 
-    public static APEDescriptor read(final File file) throws IOException {
+    public static APEDescriptor read(File file) throws IOException {
         try {
             APEDescriptor header = new APEDescriptor();
-            final ByteArrayReader reader = new ByteArrayReader(file, APE_DESCRIPTOR_BYTES - 16);
-            header.cID = reader.readString(4, "US-ASCII");
-            header.nVersion = reader.readUnsignedShort();
+            ByteArrayReader reader = new ByteArrayReader(file, APE_DESCRIPTOR_BYTES - 16);
+            header.id = reader.readString(4, "US-ASCII");
+            header.version = reader.readUnsignedShort();
             reader.skipBytes(2);
-            header.nDescriptorBytes = reader.readUnsignedInt();
-            header.nHeaderBytes = reader.readUnsignedInt();
-            header.nSeekTableBytes = reader.readUnsignedInt();
-            header.nHeaderDataBytes = reader.readUnsignedInt();
-            header.nAPEFrameDataBytes = reader.readUnsignedInt();
-            header.nAPEFrameDataBytesHigh = reader.readUnsignedInt();
-            header.nTerminatingDataBytes = reader.readUnsignedInt();
-            file.readFully(header.cFileMD5);
+            header.descriptorBytes = reader.readUnsignedInt();
+            header.headerBytes = reader.readUnsignedInt();
+            header.seekTableBytes = reader.readUnsignedInt();
+            header.headerDataBytes = reader.readUnsignedInt();
+            header.apeFrameDataBytes = reader.readUnsignedInt();
+            header.apeFrameDataBytesHigh = reader.readUnsignedInt();
+            header.terminatingDataBytes = reader.readUnsignedInt();
+            file.readFully(header.fileMD5);
             return header;
         } catch (EOFException e) {
             throw new JMACException("Unsupported Format");
@@ -70,16 +80,16 @@ public class APEDescriptor {
     }
 
     public void write(ByteArrayWriter writer) {
-        writer.writeString(cID, 4, "US-ASCII");
-        writer.writeUnsignedShort(nVersion);
+        writer.writeString(id, 4, "US-ASCII");
+        writer.writeUnsignedShort(version);
         writer.writeUnsignedShort(0);
-        writer.writeUnsignedInt(nDescriptorBytes);
-        writer.writeUnsignedInt(nHeaderBytes);
-        writer.writeUnsignedInt(nSeekTableBytes);
-        writer.writeUnsignedInt(nHeaderDataBytes);
-        writer.writeUnsignedInt(nAPEFrameDataBytes);
-        writer.writeUnsignedInt(nAPEFrameDataBytesHigh);
-        writer.writeUnsignedInt(nTerminatingDataBytes);
-        writer.writeBytes(cFileMD5);
+        writer.writeUnsignedInt(descriptorBytes);
+        writer.writeUnsignedInt(headerBytes);
+        writer.writeUnsignedInt(seekTableBytes);
+        writer.writeUnsignedInt(headerDataBytes);
+        writer.writeUnsignedInt(apeFrameDataBytes);
+        writer.writeUnsignedInt(apeFrameDataBytesHigh);
+        writer.writeUnsignedInt(terminatingDataBytes);
+        writer.writeBytes(fileMD5);
     }
 }

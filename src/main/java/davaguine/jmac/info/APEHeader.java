@@ -32,196 +32,202 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEHeader {
 
-    public final static int MAC_FORMAT_FLAG_8_BIT = 1;              // is 8-bit
-    public final static int MAC_FORMAT_FLAG_CRC = 2;                // uses the new CRC32 error detection
-    public final static int MAC_FORMAT_FLAG_HAS_PEAK_LEVEL = 4;        // unsigned __int32 Peak_Level after the header
-    public final static int MAC_FORMAT_FLAG_24_BIT = 8;                // is 24-bit
-    public final static int MAC_FORMAT_FLAG_HAS_SEEK_ELEMENTS = 16;    // has the number of seek elements after the peak level
-    public final static int MAC_FORMAT_FLAG_CREATE_WAV_HEADER = 32; // create the wave header on decompression (not stored)
+    /** is 8-bit */
+    public final static int MAC_FORMAT_FLAG_8_BIT = 1;
+    /** uses the new CRC32 error detection */
+    public final static int MAC_FORMAT_FLAG_CRC = 2;
+    /** unsigned __int32 Peak_Level after the header */
+    public final static int MAC_FORMAT_FLAG_HAS_PEAK_LEVEL = 4;
+    /** is 24-bit */
+    public final static int MAC_FORMAT_FLAG_24_BIT = 8;
+    /** has the number of seek elements after the peak level */
+    public final static int MAC_FORMAT_FLAG_HAS_SEEK_ELEMENTS = 16;
+    /** create the wave header on decompression (not stored) */
+    public final static int MAC_FORMAT_FLAG_CREATE_WAV_HEADER = 32;
 
-    public APEHeader(final File file) {
-        m_pIO = file;
+    public APEHeader(File file) {
+        io = file;
     }
 
-    public void Analyze(APEFileInfo pInfo) throws IOException {
+    public void analyze(APEFileInfo info) throws IOException {
         // find the descriptor
-        pInfo.nJunkHeaderBytes = FindDescriptor(true);
-        if (pInfo.nJunkHeaderBytes < 0)
+        info.junkHeaderBytes = findDescriptor(true);
+        if (info.junkHeaderBytes < 0)
             throw new JMACException("Unsupported Format");
 
         // read the first 8 bytes of the descriptor (ID and version)
-        m_pIO.mark(10);
-        final ByteArrayReader reader = new ByteArrayReader(m_pIO, 8);
+        io.mark(10);
+        ByteArrayReader reader = new ByteArrayReader(io, 8);
         if (!reader.readString(4, "US-ASCII").equals("MAC "))
             throw new JMACException("Unsupported Format");
 
         int version = reader.readUnsignedShort();
 
-        m_pIO.reset();
+        io.reset();
 
         if (version >= 3980) {
             // current header format
-            AnalyzeCurrent(pInfo);
+            analyzeCurrent(info);
         } else {
             // legacy support
-            AnalyzeOld(pInfo);
+            AnalyzeOld(info);
         }
     }
 
-    protected void AnalyzeCurrent(APEFileInfo m_APEFileInfo) throws IOException {
-        m_APEFileInfo.spAPEDescriptor = APEDescriptor.read(m_pIO);
+    protected void analyzeCurrent(APEFileInfo apeFileInfo) throws IOException {
+        apeFileInfo.apeDescriptor = APEDescriptor.read(io);
 
-        if ((m_APEFileInfo.spAPEDescriptor.nDescriptorBytes - APEDescriptor.APE_DESCRIPTOR_BYTES) > 0)
-            m_pIO.skipBytes((int) (m_APEFileInfo.spAPEDescriptor.nDescriptorBytes - APEDescriptor.APE_DESCRIPTOR_BYTES));
+        if ((apeFileInfo.apeDescriptor.descriptorBytes - APEDescriptor.APE_DESCRIPTOR_BYTES) > 0)
+            io.skipBytes((int) (apeFileInfo.apeDescriptor.descriptorBytes - APEDescriptor.APE_DESCRIPTOR_BYTES));
 
-        final APEHeaderNew APEHeader = APEHeaderNew.read(m_pIO);
+        APEHeaderNew apeHeader = APEHeaderNew.read(io);
 
-        if ((m_APEFileInfo.spAPEDescriptor.nHeaderBytes - APEHeaderNew.APE_HEADER_BYTES) > 0)
-            m_pIO.skipBytes((int) (m_APEFileInfo.spAPEDescriptor.nHeaderBytes - APEHeaderNew.APE_HEADER_BYTES));
+        if ((apeFileInfo.apeDescriptor.headerBytes - APEHeaderNew.APE_HEADER_BYTES) > 0)
+            io.skipBytes((int) (apeFileInfo.apeDescriptor.headerBytes - APEHeaderNew.APE_HEADER_BYTES));
 
         // fill the APE info structure
-        m_APEFileInfo.nVersion = m_APEFileInfo.spAPEDescriptor.nVersion;
-        m_APEFileInfo.nCompressionLevel = APEHeader.nCompressionLevel;
-        m_APEFileInfo.nFormatFlags = APEHeader.nFormatFlags;
-        m_APEFileInfo.nTotalFrames = (int) APEHeader.nTotalFrames;
-        m_APEFileInfo.nFinalFrameBlocks = (int) APEHeader.nFinalFrameBlocks;
-        m_APEFileInfo.nBlocksPerFrame = (int) APEHeader.nBlocksPerFrame;
-        m_APEFileInfo.nChannels = APEHeader.nChannels;
-        m_APEFileInfo.nSampleRate = (int) APEHeader.nSampleRate;
-        m_APEFileInfo.nBitsPerSample = APEHeader.nBitsPerSample;
-        m_APEFileInfo.nBytesPerSample = m_APEFileInfo.nBitsPerSample / 8;
-        m_APEFileInfo.nBlockAlign = m_APEFileInfo.nBytesPerSample * m_APEFileInfo.nChannels;
-        m_APEFileInfo.nTotalBlocks = (int) ((APEHeader.nTotalFrames == 0) ? 0 : ((APEHeader.nTotalFrames - 1) * m_APEFileInfo.nBlocksPerFrame) + APEHeader.nFinalFrameBlocks);
-        m_APEFileInfo.nWAVHeaderBytes = (int) ((APEHeader.nFormatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0 ? WaveHeader.WAVE_HEADER_BYTES : m_APEFileInfo.spAPEDescriptor.nHeaderDataBytes);
-        m_APEFileInfo.nWAVTerminatingBytes = (int) m_APEFileInfo.spAPEDescriptor.nTerminatingDataBytes;
-        m_APEFileInfo.nWAVDataBytes = m_APEFileInfo.nTotalBlocks * m_APEFileInfo.nBlockAlign;
-        m_APEFileInfo.nWAVTotalBytes = m_APEFileInfo.nWAVDataBytes + m_APEFileInfo.nWAVHeaderBytes + m_APEFileInfo.nWAVTerminatingBytes;
-        m_APEFileInfo.nAPETotalBytes = m_pIO.isLocal() ? (int) m_pIO.length() : -1;
-        m_APEFileInfo.nLengthMS = (int) ((m_APEFileInfo.nTotalBlocks * 1000L) / m_APEFileInfo.nSampleRate);
-        m_APEFileInfo.nAverageBitrate = (m_APEFileInfo.nLengthMS <= 0) ? 0 : (int) ((m_APEFileInfo.nAPETotalBytes * 8L) / m_APEFileInfo.nLengthMS);
-        m_APEFileInfo.nDecompressedBitrate = (m_APEFileInfo.nBlockAlign * m_APEFileInfo.nSampleRate * 8) / 1000;
-        m_APEFileInfo.nSeekTableElements = (int) (m_APEFileInfo.spAPEDescriptor.nSeekTableBytes / 4);
-        m_APEFileInfo.nPeakLevel = -1;
+        apeFileInfo.version = apeFileInfo.apeDescriptor.version;
+        apeFileInfo.compressionLevel = apeHeader.compressionLevel;
+        apeFileInfo.formatFlags = apeHeader.formatFlags;
+        apeFileInfo.totalFrames = (int) apeHeader.totalFrames;
+        apeFileInfo.finalFrameBlocks = (int) apeHeader.finalFrameBlocks;
+        apeFileInfo.blocksPerFrame = (int) apeHeader.blocksPerFrame;
+        apeFileInfo.channels = apeHeader.channels;
+        apeFileInfo.sampleRate = (int) apeHeader.sampleRate;
+        apeFileInfo.bitsPerSample = apeHeader.bitsPerSample;
+        apeFileInfo.bytesPerSample = apeFileInfo.bitsPerSample / 8;
+        apeFileInfo.blockAlign = apeFileInfo.bytesPerSample * apeFileInfo.channels;
+        apeFileInfo.totalBlocks = (int) ((apeHeader.totalFrames == 0) ? 0 : ((apeHeader.totalFrames - 1) * apeFileInfo.blocksPerFrame) + apeHeader.finalFrameBlocks);
+        apeFileInfo.wavHeaderBytes = (int) ((apeHeader.formatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0 ? WaveHeader.WAVE_HEADER_BYTES : apeFileInfo.apeDescriptor.headerDataBytes);
+        apeFileInfo.wavTerminatingBytes = (int) apeFileInfo.apeDescriptor.terminatingDataBytes;
+        apeFileInfo.wavDataBytes = apeFileInfo.totalBlocks * apeFileInfo.blockAlign;
+        apeFileInfo.wavTotalBytes = apeFileInfo.wavDataBytes + apeFileInfo.wavHeaderBytes + apeFileInfo.wavTerminatingBytes;
+        apeFileInfo.apeTotalBytes = io.isLocal() ? (int) io.length() : -1;
+        apeFileInfo.lengthMS = (int) ((apeFileInfo.totalBlocks * 1000L) / apeFileInfo.sampleRate);
+        apeFileInfo.averageBitrate = (apeFileInfo.lengthMS <= 0) ? 0 : (int) ((apeFileInfo.apeTotalBytes * 8L) / apeFileInfo.lengthMS);
+        apeFileInfo.decompressedBitrate = (apeFileInfo.blockAlign * apeFileInfo.sampleRate * 8) / 1000;
+        apeFileInfo.seekTableElements = (int) (apeFileInfo.apeDescriptor.seekTableBytes / 4);
+        apeFileInfo.peakLevel = -1;
 
         // get the seek tables (really no reason to get the whole thing if there's extra)
-        m_APEFileInfo.spSeekByteTable = new int[m_APEFileInfo.nSeekTableElements];
-        for (int i = 0; i < m_APEFileInfo.nSeekTableElements; i++)
-            m_APEFileInfo.spSeekByteTable[i] = m_pIO.readIntBack();
+        apeFileInfo.seekByteTable = new int[apeFileInfo.seekTableElements];
+        for (int i = 0; i < apeFileInfo.seekTableElements; i++)
+            apeFileInfo.seekByteTable[i] = io.readIntBack();
 
         // get the wave header
-        if ((APEHeader.nFormatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) <= 0) {
-            if (m_APEFileInfo.nWAVHeaderBytes > Integer.MAX_VALUE)
+        if ((apeHeader.formatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) <= 0) {
+            if (apeFileInfo.wavHeaderBytes > Integer.MAX_VALUE)
                 throw new JMACException("The HeaderBytes Parameter Is Too Big");
-            m_APEFileInfo.spWaveHeaderData = new byte[m_APEFileInfo.nWAVHeaderBytes];
+            apeFileInfo.waveHeaderData = new byte[apeFileInfo.wavHeaderBytes];
             try {
-                m_pIO.readFully(m_APEFileInfo.spWaveHeaderData);
+                io.readFully(apeFileInfo.waveHeaderData);
             } catch (EOFException e) {
                 throw new JMACException("Can't Read Wave Header Data");
             }
         }
     }
 
-    protected void AnalyzeOld(APEFileInfo m_APEFileInfo) throws IOException {
-        APEHeaderOld header = APEHeaderOld.read(m_pIO);
+    protected void AnalyzeOld(APEFileInfo apeFileInfo) throws IOException {
+        APEHeaderOld header = APEHeaderOld.read(io);
 
         // fail on 0 length APE files (catches non-finalized APE files)
-        if (header.nTotalFrames == 0)
+        if (header.totalFrames == 0)
             throw new JMACException("Unsupported Format");
 
-        int nPeakLevel = -1;
-        if ((header.nFormatFlags & MAC_FORMAT_FLAG_HAS_PEAK_LEVEL) > 0)
-            nPeakLevel = m_pIO.readIntBack();
+        int peakLevel = -1;
+        if ((header.formatFlags & MAC_FORMAT_FLAG_HAS_PEAK_LEVEL) > 0)
+            peakLevel = io.readIntBack();
 
-        if ((header.nFormatFlags & MAC_FORMAT_FLAG_HAS_SEEK_ELEMENTS) > 0)
-            m_APEFileInfo.nSeekTableElements = m_pIO.readIntBack();
+        if ((header.formatFlags & MAC_FORMAT_FLAG_HAS_SEEK_ELEMENTS) > 0)
+            apeFileInfo.seekTableElements = io.readIntBack();
         else
-            m_APEFileInfo.nSeekTableElements = (int) header.nTotalFrames;
+            apeFileInfo.seekTableElements = (int) header.totalFrames;
 
         // fill the APE info structure
-        m_APEFileInfo.nVersion = header.nVersion;
-        m_APEFileInfo.nCompressionLevel = header.nCompressionLevel;
-        m_APEFileInfo.nFormatFlags = header.nFormatFlags;
-        m_APEFileInfo.nTotalFrames = (int) header.nTotalFrames;
-        m_APEFileInfo.nFinalFrameBlocks = (int) header.nFinalFrameBlocks;
-        m_APEFileInfo.nBlocksPerFrame = ((header.nVersion >= 3900) || ((header.nVersion >= 3800) && (header.nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH))) ? 73728 : 9216;
-        if (header.nVersion >= 3950)
-            m_APEFileInfo.nBlocksPerFrame = 73728 * 4;
-        m_APEFileInfo.nChannels = header.nChannels;
-        m_APEFileInfo.nSampleRate = (int) header.nSampleRate;
-        m_APEFileInfo.nBitsPerSample = (m_APEFileInfo.nFormatFlags & MAC_FORMAT_FLAG_8_BIT) > 0 ? 8 : ((m_APEFileInfo.nFormatFlags & MAC_FORMAT_FLAG_24_BIT) > 0 ? 24 : 16);
-        m_APEFileInfo.nBytesPerSample = m_APEFileInfo.nBitsPerSample / 8;
-        m_APEFileInfo.nBlockAlign = m_APEFileInfo.nBytesPerSample * m_APEFileInfo.nChannels;
-        m_APEFileInfo.nTotalBlocks = (int) ((header.nTotalFrames == 0) ? 0 : ((header.nTotalFrames - 1) * m_APEFileInfo.nBlocksPerFrame) + header.nFinalFrameBlocks);
-        m_APEFileInfo.nWAVHeaderBytes = (int) ((header.nFormatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0 ? WaveHeader.WAVE_HEADER_BYTES : header.nHeaderBytes);
-        m_APEFileInfo.nWAVTerminatingBytes = (int) header.nTerminatingBytes;
-        m_APEFileInfo.nWAVDataBytes = m_APEFileInfo.nTotalBlocks * m_APEFileInfo.nBlockAlign;
-        m_APEFileInfo.nWAVTotalBytes = m_APEFileInfo.nWAVDataBytes + m_APEFileInfo.nWAVHeaderBytes + m_APEFileInfo.nWAVTerminatingBytes;
-        m_APEFileInfo.nAPETotalBytes = m_pIO.isLocal() ? (int) m_pIO.length() : -1;
-        m_APEFileInfo.nLengthMS = (int) ((m_APEFileInfo.nTotalBlocks * 1000L) / m_APEFileInfo.nSampleRate);
-        m_APEFileInfo.nAverageBitrate = (int) ((m_APEFileInfo.nLengthMS <= 0) ? 0 : ((m_APEFileInfo.nAPETotalBytes * 8L) / m_APEFileInfo.nLengthMS));
-        m_APEFileInfo.nDecompressedBitrate = (m_APEFileInfo.nBlockAlign * m_APEFileInfo.nSampleRate * 8) / 1000;
-        m_APEFileInfo.nPeakLevel = nPeakLevel;
+        apeFileInfo.version = header.version;
+        apeFileInfo.compressionLevel = header.compressionLevel;
+        apeFileInfo.formatFlags = header.formatFlags;
+        apeFileInfo.totalFrames = (int) header.totalFrames;
+        apeFileInfo.finalFrameBlocks = (int) header.finalFrameBlocks;
+        apeFileInfo.blocksPerFrame = ((header.version >= 3900) || ((header.version >= 3800) && (header.compressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH))) ? 73728 : 9216;
+        if (header.version >= 3950)
+            apeFileInfo.blocksPerFrame = 73728 * 4;
+        apeFileInfo.channels = header.channels;
+        apeFileInfo.sampleRate = (int) header.sampleRate;
+        apeFileInfo.bitsPerSample = (apeFileInfo.formatFlags & MAC_FORMAT_FLAG_8_BIT) > 0 ? 8 : ((apeFileInfo.formatFlags & MAC_FORMAT_FLAG_24_BIT) > 0 ? 24 : 16);
+        apeFileInfo.bytesPerSample = apeFileInfo.bitsPerSample / 8;
+        apeFileInfo.blockAlign = apeFileInfo.bytesPerSample * apeFileInfo.channels;
+        apeFileInfo.totalBlocks = (int) ((header.totalFrames == 0) ? 0 : ((header.totalFrames - 1) * apeFileInfo.blocksPerFrame) + header.finalFrameBlocks);
+        apeFileInfo.wavHeaderBytes = (int) ((header.formatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0 ? WaveHeader.WAVE_HEADER_BYTES : header.headerBytes);
+        apeFileInfo.wavTerminatingBytes = (int) header.terminatingBytes;
+        apeFileInfo.wavDataBytes = apeFileInfo.totalBlocks * apeFileInfo.blockAlign;
+        apeFileInfo.wavTotalBytes = apeFileInfo.wavDataBytes + apeFileInfo.wavHeaderBytes + apeFileInfo.wavTerminatingBytes;
+        apeFileInfo.apeTotalBytes = io.isLocal() ? (int) io.length() : -1;
+        apeFileInfo.lengthMS = (int) ((apeFileInfo.totalBlocks * 1000L) / apeFileInfo.sampleRate);
+        apeFileInfo.averageBitrate = (int) ((apeFileInfo.lengthMS <= 0) ? 0 : ((apeFileInfo.apeTotalBytes * 8L) / apeFileInfo.lengthMS));
+        apeFileInfo.decompressedBitrate = (apeFileInfo.blockAlign * apeFileInfo.sampleRate * 8) / 1000;
+        apeFileInfo.peakLevel = peakLevel;
 
         // get the wave header
-        if ((header.nFormatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) <= 0) {
-            if (header.nHeaderBytes > Integer.MAX_VALUE)
+        if ((header.formatFlags & MAC_FORMAT_FLAG_CREATE_WAV_HEADER) <= 0) {
+            if (header.headerBytes > Integer.MAX_VALUE)
                 throw new JMACException("The HeaderBytes Parameter Is Too Big");
-            m_APEFileInfo.spWaveHeaderData = new byte[(int) header.nHeaderBytes];
+            apeFileInfo.waveHeaderData = new byte[(int) header.headerBytes];
             try {
-                m_pIO.readFully(m_APEFileInfo.spWaveHeaderData);
+                io.readFully(apeFileInfo.waveHeaderData);
             } catch (EOFException e) {
                 throw new JMACException("Can't Read Wave Header Data");
             }
         }
 
         // get the seek tables (really no reason to get the whole thing if there's extra)
-        m_APEFileInfo.spSeekByteTable = new int[m_APEFileInfo.nSeekTableElements];
-        for (int i = 0; i < m_APEFileInfo.nSeekTableElements; i++)
-            m_APEFileInfo.spSeekByteTable[i] = m_pIO.readIntBack();
+        apeFileInfo.seekByteTable = new int[apeFileInfo.seekTableElements];
+        for (int i = 0; i < apeFileInfo.seekTableElements; i++)
+            apeFileInfo.seekByteTable[i] = io.readIntBack();
 
-        if (header.nVersion <= 3800) {
-            m_APEFileInfo.spSeekBitTable = new byte[m_APEFileInfo.nSeekTableElements];
+        if (header.version <= 3800) {
+            apeFileInfo.seekBitTable = new byte[apeFileInfo.seekTableElements];
             try {
-                m_pIO.readFully(m_APEFileInfo.spSeekBitTable);
+                io.readFully(apeFileInfo.seekBitTable);
             } catch (EOFException e) {
                 throw new JMACException("Can't Read Seek Bit Table");
             }
         }
     }
 
-    protected int FindDescriptor(boolean bSeek) throws IOException {
-        int nJunkBytes = 0;
+    protected int findDescriptor(boolean seek) throws IOException {
+        int junkBytes = 0;
 
-        // We need to limit this method if m_pIO is represented as URL
+        // We need to limit this method if io is represented as URL
         // We'll not support ID3 tags for such files
-        if (m_pIO.isLocal()) {
+        if (io.isLocal()) {
 
             // figure the extra header bytes
-            m_pIO.mark(1000);
+            io.mark(1000);
 
             // skip an ID3v2 tag (which we really don't support anyway...)
             ByteArrayReader reader = new ByteArrayReader(10);
-            reader.reset(m_pIO, 10);
-            final String tag = reader.readString(3, "US-ASCII");
+            reader.reset(io, 10);
+            String tag = reader.readString(3, "US-ASCII");
             if (tag.equals("ID3")) {
                 // why is it so hard to figure the lenght of an ID3v2 tag ?!?
                 reader.readByte();
                 reader.readByte();
                 int byte5 = reader.readUnsignedByte();
 
-                int nSyncSafeLength;
-                nSyncSafeLength = (reader.readUnsignedByte() & 127) << 21;
-                nSyncSafeLength += (reader.readUnsignedByte() & 127) << 14;
-                nSyncSafeLength += (reader.readUnsignedByte() & 127) << 7;
-                nSyncSafeLength += (reader.readUnsignedByte() & 127);
+                int syncSafeLength;
+                syncSafeLength = (reader.readUnsignedByte() & 127) << 21;
+                syncSafeLength += (reader.readUnsignedByte() & 127) << 14;
+                syncSafeLength += (reader.readUnsignedByte() & 127) << 7;
+                syncSafeLength += (reader.readUnsignedByte() & 127);
 
-                boolean bHasTagFooter = false;
+                boolean hasTagFooter = false;
 
                 if ((byte5 & 16) > 0) {
-                    bHasTagFooter = true;
-                    nJunkBytes = nSyncSafeLength + 20;
+                    hasTagFooter = true;
+                    junkBytes = syncSafeLength + 20;
                 } else {
-                    nJunkBytes = nSyncSafeLength + 10;
+                    junkBytes = syncSafeLength + 10;
                 }
 
                 // error check
@@ -231,50 +237,50 @@ public class APEHeader {
                     // really do the trick
                 }
 
-                m_pIO.skipBytes(nJunkBytes - 10);
+                io.skipBytes(junkBytes - 10);
 
                 // scan for padding (slow and stupid, but who cares here...)
-                if (!bHasTagFooter) {
-                    while (m_pIO.read() == 0)
-                        nJunkBytes++;
+                if (!hasTagFooter) {
+                    while (io.read() == 0)
+                        junkBytes++;
                 }
             }
-            m_pIO.reset();
-            m_pIO.skipBytes(nJunkBytes);
+            io.reset();
+            io.skipBytes(junkBytes);
         }
 
-        m_pIO.mark(1000);
+        io.mark(1000);
 
         // scan until we hit the APE header, the end of the file, or 1 MB later
-        int nGoalID = ('M' << 24) | ('A' << 16) | ('C' << 8) | (' ');
-        int nReadID = m_pIO.readInt();
+        int goalID = ('M' << 24) | ('A' << 16) | ('C' << 8) | (' ');
+        int readID = io.readInt();
 
         // Also, lets suppose that MAC header placed in beginning of file in case of external source of file
-        if (m_pIO.isLocal()) {
-            int nScanBytes = 0;
-            while (nGoalID != nReadID && nScanBytes < (1024 * 1024)) {
-                nReadID = (nReadID << 8) | m_pIO.readByte();
-                nJunkBytes++;
-                nScanBytes++;
+        if (io.isLocal()) {
+            int scanBytes = 0;
+            while (goalID != readID && scanBytes < (1024 * 1024)) {
+                readID = (readID << 8) | io.readByte();
+                junkBytes++;
+                scanBytes++;
             }
         }
 
-        if (nGoalID != nReadID)
-            nJunkBytes = -1;
+        if (goalID != readID)
+            junkBytes = -1;
 
         // seek to the proper place (depending on result and settings)
-        if (bSeek && (nJunkBytes != -1)) {
+        if (seek && (junkBytes != -1)) {
             // successfully found the start of the file (seek to it and return)
-            m_pIO.reset();
-            m_pIO.skipBytes(nJunkBytes);
-            m_pIO.mark(1000);
+            io.reset();
+            io.skipBytes(junkBytes);
+            io.mark(1000);
         } else {
             // restore the original file pointer
-            m_pIO.reset();
+            io.reset();
         }
 
-        return nJunkBytes;
+        return junkBytes;
     }
 
-    protected File m_pIO;
+    protected final File io;
 }

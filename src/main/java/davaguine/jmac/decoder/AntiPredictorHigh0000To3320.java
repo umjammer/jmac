@@ -25,40 +25,41 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorHigh0000To3320 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //variable declares
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // variable declares
         int p, pw;
         int q;
         int m;
 
-        //short frame handling
-        if (NumberOfElements < 32) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < 32) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        ////////////////////////////////////////
-        //order 5
-        ////////////////////////////////////////
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, 8);
+        //
+        // order 5
+        //
+        System.arraycopy(inputArray, 0, outputArray, 0, 8);
 
-        //initialize values
+        // initialize values
         m = 0;
 
-        for (q = 8; q < NumberOfElements; q++) {
-            p = (5 * pOutputArray[q - 1]) - (10 * pOutputArray[q - 2]) + (12 * pOutputArray[q - 3]) - (7 * pOutputArray[q - 4]) + pOutputArray[q - 5];
+        for (q = 8; q < numberOfElements; q++) {
+            p = (5 * outputArray[q - 1]) - (10 * outputArray[q - 2]) + (12 * outputArray[q - 3]) - (7 * outputArray[q - 4]) + outputArray[q - 5];
 
             pw = (p * m) >> 12;
 
-            pOutputArray[q] = pInputArray[q] + pw;
+            outputArray[q] = inputArray[q] + pw;
 
-            //adjust m
-            if (pInputArray[q] > 0) {
+            // adjust m
+            if (inputArray[q] > 0) {
                 if (p > 0)
                     m += 1;
                 else
                     m -= 1;
-            } else if (pInputArray[q] < 0) {
+            } else if (inputArray[q] < 0) {
                 if (p > 0)
                     m -= 1;
                 else
@@ -67,25 +68,25 @@ public class AntiPredictorHigh0000To3320 extends AntiPredictor {
 
         }
 
-        ///////////////////////////////////////
-        //order 4
-        ///////////////////////////////////////
-        System.arraycopy(pOutputArray, 0, pInputArray, 0, 8);
+        //
+        // order 4
+        //
+        System.arraycopy(outputArray, 0, inputArray, 0, 8);
         m = 0;
 
-        for (q = 8; q < NumberOfElements; q++) {
-            p = (4 * pInputArray[q - 1]) - (6 * pInputArray[q - 2]) + (4 * pInputArray[q - 3]) - pInputArray[q - 4];
+        for (q = 8; q < numberOfElements; q++) {
+            p = (4 * inputArray[q - 1]) - (6 * inputArray[q - 2]) + (4 * inputArray[q - 3]) - inputArray[q - 4];
             pw = (p * m) >> 12;
 
-            pInputArray[q] = pOutputArray[q] + pw;
+            inputArray[q] = outputArray[q] + pw;
 
-            //adjust m
-            if (pOutputArray[q] > 0) {
+            // adjust m
+            if (outputArray[q] > 0) {
                 if (p > 0)
                     m += 2;
                 else
                     m -= 2;
-            } else if (pOutputArray[q] < 0) {
+            } else if (outputArray[q] < 0) {
                 if (p > 0)
                     m -= 2;
                 else
@@ -94,8 +95,8 @@ public class AntiPredictorHigh0000To3320 extends AntiPredictor {
 
         }
 
-        AntiPredictor.AntiPredict(pInputArray, pOutputArray, NumberOfElements);
+        antiPredictor.antiPredict(inputArray, outputArray, numberOfElements);
     }
 
-    private AntiPredictorNormal0000To3320 AntiPredictor = new AntiPredictorNormal0000To3320();
+    private final AntiPredictorNormal0000To3320 antiPredictor = new AntiPredictorNormal0000To3320();
 }

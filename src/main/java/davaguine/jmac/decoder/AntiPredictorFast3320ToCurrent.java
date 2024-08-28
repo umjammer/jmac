@@ -25,40 +25,41 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorFast3320ToCurrent extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
 
-        //short frame handling
-        if (NumberOfElements < 3) {
+        // short frame handling
+        if (numberOfElements < 3) {
             return;
         }
 
-        //variable declares
+        // variable declares
         int p;
         int m = 375;
         int ip;
-        int IP2 = pInputArray[1];
-        int IP3 = pInputArray[0];
-        int OP1 = pInputArray[1];
+        int ip2 = inputArray[1];
+        int ip3 = inputArray[0];
+        int op1 = inputArray[1];
 
-        //the decompression loop (order 2 followed by order 1)
-        for (ip = 2; ip < NumberOfElements; ip++) {
+        // the decompression loop (order 2 followed by order 1)
+        for (ip = 2; ip < numberOfElements; ip++) {
 
-            //make a prediction for order 2
-            p = IP2 + IP2 - IP3;
+            // make a prediction for order 2
+            p = ip2 + ip2 - ip3;
 
-            //rollback the values
-            IP3 = IP2;
-            IP2 = pInputArray[ip] + ((p * m) >> 9);
+            // rollback the values
+            ip3 = ip2;
+            ip2 = inputArray[ip] + ((p * m) >> 9);
 
-            //adjust m for the order 2
-            if ((pInputArray[ip] ^ p) > 0)
+            // adjust m for the order 2
+            if ((inputArray[ip] ^ p) > 0)
                 m++;
             else
                 m--;
 
-            //set the output value
-            pInputArray[ip] = IP2 + OP1;
-            OP1 = pInputArray[ip];
+            // set the output value
+            inputArray[ip] = ip2 + op1;
+            op1 = inputArray[ip];
         }
     }
 }

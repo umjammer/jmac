@@ -27,62 +27,63 @@ import davaguine.jmac.info.CompressionLevel;
  */
 public class AntiPredictor {
 
-    //construction/destruction
+    // construction/destruction
+
     public AntiPredictor() {
     }
 
-    //functions
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        return;
+    // functions
+
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
     }
 
-    public static AntiPredictor CreateAntiPredictor(int nCompressionLevel, int nVersion) {
-        AntiPredictor pAntiPredictor = null;
+    public static AntiPredictor createAntiPredictor(int compressionLevel, int version) {
+        AntiPredictor antiPredictor = null;
 
-        switch (nCompressionLevel) {
+        switch (compressionLevel) {
             case CompressionLevel.COMPRESSION_LEVEL_FAST:
-                if (nVersion < 3320)
-                    pAntiPredictor = new AntiPredictorFast0000To3320();
+                if (version < 3320)
+                    antiPredictor = new AntiPredictorFast0000To3320();
                 else
-                    pAntiPredictor = new AntiPredictorFast3320ToCurrent();
+                    antiPredictor = new AntiPredictorFast3320ToCurrent();
                 break;
 
             case CompressionLevel.COMPRESSION_LEVEL_NORMAL:
-                if (nVersion < 3320)
-                    pAntiPredictor = new AntiPredictorNormal0000To3320();
-                else if (nVersion < 3800)
-                    pAntiPredictor = new AntiPredictorNormal3320To3800();
+                if (version < 3320)
+                    antiPredictor = new AntiPredictorNormal0000To3320();
+                else if (version < 3800)
+                    antiPredictor = new AntiPredictorNormal3320To3800();
                 else
-                    pAntiPredictor = new AntiPredictorNormal3800ToCurrent();
+                    antiPredictor = new AntiPredictorNormal3800ToCurrent();
                 break;
 
             case CompressionLevel.COMPRESSION_LEVEL_HIGH:
-                if (nVersion < 3320)
-                    pAntiPredictor = new AntiPredictorHigh0000To3320();
-                else if (nVersion < 3600)
-                    pAntiPredictor = new AntiPredictorHigh3320To3600();
-                else if (nVersion < 3700)
-                    pAntiPredictor = new AntiPredictorHigh3600To3700();
-                else if (nVersion < 3800)
-                    pAntiPredictor = new AntiPredictorHigh3700To3800();
+                if (version < 3320)
+                    antiPredictor = new AntiPredictorHigh0000To3320();
+                else if (version < 3600)
+                    antiPredictor = new AntiPredictorHigh3320To3600();
+                else if (version < 3700)
+                    antiPredictor = new AntiPredictorHigh3600To3700();
+                else if (version < 3800)
+                    antiPredictor = new AntiPredictorHigh3700To3800();
                 else
-                    pAntiPredictor = new AntiPredictorHigh3800ToCurrent();
+                    antiPredictor = new AntiPredictorHigh3800ToCurrent();
                 break;
 
             case CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH:
-                if (nVersion < 3320)
-                    pAntiPredictor = new AntiPredictorExtraHigh0000To3320();
-                else if (nVersion < 3600)
-                    pAntiPredictor = new AntiPredictorExtraHigh3320To3600();
-                else if (nVersion < 3700)
-                    pAntiPredictor = new AntiPredictorExtraHigh3600To3700();
-                else if (nVersion < 3800)
-                    pAntiPredictor = new AntiPredictorExtraHigh3700To3800();
+                if (version < 3320)
+                    antiPredictor = new AntiPredictorExtraHigh0000To3320();
+                else if (version < 3600)
+                    antiPredictor = new AntiPredictorExtraHigh3320To3600();
+                else if (version < 3700)
+                    antiPredictor = new AntiPredictorExtraHigh3600To3700();
+                else if (version < 3800)
+                    antiPredictor = new AntiPredictorExtraHigh3700To3800();
                 else
-                    pAntiPredictor = new AntiPredictorExtraHigh3800ToCurrent();
+                    antiPredictor = new AntiPredictorExtraHigh3800ToCurrent();
                 break;
         }
 
-        return pAntiPredictor;
+        return antiPredictor;
     }
 }

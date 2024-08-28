@@ -65,7 +65,7 @@ public class Player {
 
     public Player(String file, AudioDevice device) throws IOException {
         io = File.createFile(file, "r");
-        decoder = IAPEDecompress.CreateIAPEDecompress(io);
+        decoder = IAPEDecompress.createAPEDecompress(io);
 
         if (device != null) {
             audio = device;
@@ -88,21 +88,21 @@ public class Player {
      */
     public boolean play() throws IOException {
 
-        int nBlocksLeft = decoder.getApeInfoDecompressTotalBlocks();
+        int blocksLeft = decoder.getApeInfoDecompressTotalBlocks();
         int blockAlign = decoder.getApeInfoBlockAlign();
 
         // allocate space for decompression
-        byte[] spTempBuffer = new byte[blockAlign * BLOCKS_PER_DECODE];
+        byte[] tempBuffer = new byte[blockAlign * BLOCKS_PER_DECODE];
 
-        while (nBlocksLeft > 0) {
-            int nBlocksDecoded = decoder.GetData(spTempBuffer, BLOCKS_PER_DECODE);
+        while (blocksLeft > 0) {
+            int blocksDecoded = decoder.getData(tempBuffer, BLOCKS_PER_DECODE);
 
             // update amount remaining
-            nBlocksLeft -= nBlocksDecoded;
+            blocksLeft -= blocksDecoded;
 
             synchronized (this) {
                 if (audio != null) {
-                    audio.write(spTempBuffer, 0, nBlocksDecoded * blockAlign);
+                    audio.write(tempBuffer, 0, blocksDecoded * blockAlign);
                 }
             }
         }
@@ -120,7 +120,7 @@ public class Player {
     }
 
     /**
-     * Cloases this player. Any audio currently playing is stopped
+     * Closes this player. Any audio currently playing is stopped
      * immediately.
      */
     public synchronized void close() throws IOException {
@@ -163,5 +163,4 @@ public class Player {
         }
         return position;
     }
-
 }

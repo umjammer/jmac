@@ -25,82 +25,83 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorNormal3320To3800 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //variable declares
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // variable declares
         int q;
 
-        //short frame handling
-        if (NumberOfElements < 8) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < 8) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //make the first five samples identical in both arrays
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, 5);
+        // make the first five samples identical in both arrays
+        System.arraycopy(inputArray, 0, outputArray, 0, 5);
 
-        //initialize values
+        // initialize values
         int m1 = 0;
         int m2 = 64;
         int m3 = 28;
-        int OP0;
+        int op0;
 
-        int p3 = (3 * (pOutputArray[4] - pOutputArray[3])) + pOutputArray[2];
-        int p2 = pInputArray[4] + ((pInputArray[2] - pInputArray[3]) << 3) - pInputArray[1] + pInputArray[0];
-        int p1 = pOutputArray[4];
+        int p3 = (3 * (outputArray[4] - outputArray[3])) + outputArray[2];
+        int p2 = inputArray[4] + ((inputArray[2] - inputArray[3]) << 3) - inputArray[1] + inputArray[0];
+        int p1 = outputArray[4];
 
-        for (q = 5; q < NumberOfElements; q++) {
-            OP0 = pInputArray[q] + ((p1 * m1) >> 8);
-            if ((pInputArray[q] ^ p1) > 0)
+        for (q = 5; q < numberOfElements; q++) {
+            op0 = inputArray[q] + ((p1 * m1) >> 8);
+            if ((inputArray[q] ^ p1) > 0)
                 m1++;
             else
                 m1--;
-            p1 = OP0;
+            p1 = op0;
 
-            pInputArray[q] = OP0 + ((p2 * m2) >> 11);
-            if ((OP0 ^ p2) > 0)
+            inputArray[q] = op0 + ((p2 * m2) >> 11);
+            if ((op0 ^ p2) > 0)
                 m2++;
             else
                 m2--;
-            p2 = pInputArray[q] + ((pInputArray[q - 2] - pInputArray[q - 1]) << 3) - pInputArray[q - 3] + pInputArray[q - 4];
+            p2 = inputArray[q] + ((inputArray[q - 2] - inputArray[q - 1]) << 3) - inputArray[q - 3] + inputArray[q - 4];
 
-            pOutputArray[q] = pInputArray[q] + ((p3 * m3) >> 9);
-            if ((pInputArray[q] ^ p3) > 0)
+            outputArray[q] = inputArray[q] + ((p3 * m3) >> 9);
+            if ((inputArray[q] ^ p3) > 0)
                 m3++;
             else
                 m3--;
-            p3 = (3 * (pOutputArray[q] - pOutputArray[q - 1])) + pOutputArray[q - 2];
+            p3 = (3 * (outputArray[q] - outputArray[q - 1])) + outputArray[q - 2];
         }
 
         int m4 = 370;
         int m5 = 3900;
 
-        //pOutputArray[0] = pInputArray[0];
-        pOutputArray[1] = pInputArray[1] + pOutputArray[0];
-        pOutputArray[2] = pInputArray[2] + pOutputArray[1];
-        pOutputArray[3] = pInputArray[3] + pOutputArray[2];
-        pOutputArray[4] = pInputArray[4] + pOutputArray[3];
+//        outputArray[0] = inputArray[0];
+        outputArray[1] = inputArray[1] + outputArray[0];
+        outputArray[2] = inputArray[2] + outputArray[1];
+        outputArray[3] = inputArray[3] + outputArray[2];
+        outputArray[4] = inputArray[4] + outputArray[3];
 
-        int p4 = (2 * pInputArray[4]) - pInputArray[3];
-        int p5 = pOutputArray[4];
-        int IP0, IP1;
+        int p4 = (2 * inputArray[4]) - inputArray[3];
+        int p5 = outputArray[4];
+        int ip0, ip1;
 
-        IP1 = pInputArray[4];
-        for (q = 5; q < NumberOfElements; q++) {
-            IP0 = pOutputArray[q] + ((p4 * m4) >> 9);
-            if ((pOutputArray[q] ^ p4) > 0)
+        ip1 = inputArray[4];
+        for (q = 5; q < numberOfElements; q++) {
+            ip0 = outputArray[q] + ((p4 * m4) >> 9);
+            if ((outputArray[q] ^ p4) > 0)
                 m4++;
             else
                 m4--;
-            p4 = (2 * IP0) - IP1;
+            p4 = (2 * ip0) - ip1;
 
-            pOutputArray[q] = IP0 + ((p5 * m5) >> 12);
-            if ((IP0 ^ p5) > 0)
+            outputArray[q] = ip0 + ((p5 * m5) >> 12);
+            if ((ip0 ^ p5) > 0)
                 m5++;
             else
                 m5--;
-            p5 = pOutputArray[q];
+            p5 = outputArray[q];
 
-            IP1 = IP0;
+            ip1 = ip0;
         }
     }
 }

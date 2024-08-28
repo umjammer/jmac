@@ -29,13 +29,12 @@ public interface AudioDevice {
 
     /**
      * Prepares the AudioDevice for playback of audio samples.
+     * <p/>
+     * If the audio device is already open, this method returns silently.
      *
-     * @param decoder The core that will be providing the audio
-     *                samples.
-     *                <p/>
-     *                If the audio device is already open, this method returns silently.
+     * @param decoder The core that will be providing the audio samples.
      */
-    public void open(IAPEDecompress decoder);
+    void open(IAPEDecompress decoder);
 
     /**
      * Retrieves the open state of this audio device.
@@ -43,20 +42,19 @@ public interface AudioDevice {
      * @return <code>true</code> if this audio device is open and playing
      * audio samples, or <code>false</code> otherwise.
      */
-    public boolean isOpen();
+    boolean isOpen();
 
     /**
      * Writes a number of samples to this <code>AudioDevice</code>.
+     * <p/>
+     * This method may return prior to the samples actually being played
+     * by the audio device.
      *
-     * @param samples The array of samples to write
-     *                to the audio device.
+     * @param samples The array of samples to write to the audio device.
      * @param offs    The offset of the first sample.
      * @param len     The number of samples to write.
-     *                <p/>
-     *                This method may return prior to the samples actually being played
-     *                by the audio device.
      */
-    public void write(byte[] samples, int offs, int len);
+    void write(byte[] samples, int offs, int len);
 
 
     /**
@@ -68,17 +66,17 @@ public interface AudioDevice {
      * on the device (e.g. during a <code>write</code> or <code>flush</code>
      * operation should be unblocked by this method.
      */
-    public void close();
+    void close();
 
 
     /**
      * Blocks until all audio samples previously written to this audio device have
      * been heard.
      */
-    public void flush();
+    void flush();
 
     /**
      * Retrieves the current playback position in milliseconds.
      */
-    public int getPosition();
+    int getPosition();
 }

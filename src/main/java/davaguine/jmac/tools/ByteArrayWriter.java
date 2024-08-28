@@ -35,7 +35,7 @@ public class ByteArrayWriter {
         this.data = new byte[size];
     }
 
-    public ByteArrayWriter(final byte[] data) {
+    public ByteArrayWriter(byte[] data) {
         this.data = data;
     }
 
@@ -117,5 +117,4 @@ public class ByteArrayWriter {
         }
         data[index++] = 0;
     }
-
 }

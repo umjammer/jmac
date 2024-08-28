@@ -25,44 +25,45 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorFast0000To3320 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
 
-        //short frame handling
-        if (NumberOfElements < 32) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < 32) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //the initial
-        pOutputArray[0] = pInputArray[0];
-        pOutputArray[1] = pInputArray[1] + pOutputArray[0];
-        pOutputArray[2] = pInputArray[2] + pOutputArray[1];
-        pOutputArray[3] = pInputArray[3] + pOutputArray[2];
-        pOutputArray[4] = pInputArray[4] + pOutputArray[3];
-        pOutputArray[5] = pInputArray[5] + pOutputArray[4];
-        pOutputArray[6] = pInputArray[6] + pOutputArray[5];
-        pOutputArray[7] = pInputArray[7] + pOutputArray[6];
+        // the initial
+        outputArray[0] = inputArray[0];
+        outputArray[1] = inputArray[1] + outputArray[0];
+        outputArray[2] = inputArray[2] + outputArray[1];
+        outputArray[3] = inputArray[3] + outputArray[2];
+        outputArray[4] = inputArray[4] + outputArray[3];
+        outputArray[5] = inputArray[5] + outputArray[4];
+        outputArray[6] = inputArray[6] + outputArray[5];
+        outputArray[7] = inputArray[7] + outputArray[6];
 
-        //the rest
+        // the rest
         int p, pw;
         int m = 4000;
         int ip, op, op1;
 
         op1 = 7;
-        p = (pOutputArray[op1] * 2) - pOutputArray[6];
+        p = (outputArray[op1] * 2) - outputArray[6];
         pw = (p * m) >> 12;
 
-        for (op = 8, ip = 8; ip < NumberOfElements; ip++, op++, op1++) {
-            pOutputArray[op] = pInputArray[ip] + pw;
+        for (op = 8, ip = 8; ip < numberOfElements; ip++, op++, op1++) {
+            outputArray[op] = inputArray[ip] + pw;
 
 
-            //adjust m
-            if (pInputArray[ip] > 0)
+            // adjust m
+            if (inputArray[ip] > 0)
                 m += (p > 0) ? 4 : -4;
-            else if (pInputArray[ip] < 0)
+            else if (inputArray[ip] < 0)
                 m += (p > 0) ? -4 : 4;
 
-            p = (pOutputArray[op] * 2) - pOutputArray[op1];
+            p = (outputArray[op] * 2) - outputArray[op1];
             pw = (p * m) >> 12;
         }
     }

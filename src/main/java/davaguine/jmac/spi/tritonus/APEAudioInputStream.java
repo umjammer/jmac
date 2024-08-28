@@ -47,10 +47,10 @@ public class APEAudioInputStream extends TAsynchronousFilteredAudioInputStream {
 
     private static final int BLOCKS_PER_DECODE = 9216;
     protected File file = null;
-    protected IAPEDecompress m_decoder = null;
+    protected IAPEDecompress decoder = null;
     protected byte[] buffer = null;
     protected byte[] skipbuffer = null;
-    protected int nBlocksLeft;
+    protected int blocksLeft;
     protected int blockAlign;
     protected int pos = 0;
     protected int size = 0;
@@ -71,12 +71,12 @@ public class APEAudioInputStream extends TAsynchronousFilteredAudioInputStream {
         super(format, AudioSystem.NOT_SPECIFIED);
         try {
             file = new InputStreamFile(stream);
-            m_decoder = IAPEDecompress.CreateIAPEDecompress(file);
+            decoder = IAPEDecompress.createAPEDecompress(file);
 
-            nBlocksLeft = m_decoder.getApeInfoDecompressTotalBlocks();
-            blockAlign = m_decoder.getApeInfoBlockAlign();
+            blocksLeft = decoder.getApeInfoDecompressTotalBlocks();
+            blockAlign = decoder.getApeInfoBlockAlign();
 
-            currentBitrate = m_decoder.getApeInfoAverageBitrate();
+            currentBitrate = decoder.getApeInfoAverageBitrate();
             currentBlock = 0;
             currentMs = 0;
 
@@ -101,7 +101,8 @@ public class APEAudioInputStream extends TAsynchronousFilteredAudioInputStream {
      *
      * @return dynamic properties of input stream.
      */
-    public Map properties() {
+    @Override
+    public Map<String, Object> properties() {
         properties.put("ape.block", currentBlock);
         properties.put("ape.bitrate", currentBitrate);
         properties.put("ape.position.microseconds", currentMs);
@@ -111,20 +112,21 @@ public class APEAudioInputStream extends TAsynchronousFilteredAudioInputStream {
     /**
      * Execute method of input stream
      */
+    @Override
     public void execute() {
         logger.log(Level.TRACE, "execute() : begin");
         try {
-            if (m_decoder == null)
+            if (decoder == null)
                 throw new IOException("Stream closed");
             pos = 0;
-            if (nBlocksLeft > 0) {
-                int nBlocksDecoded = m_decoder.GetData(buffer, BLOCKS_PER_DECODE);
+            if (blocksLeft > 0) {
+                int blocksDecoded = decoder.getData(buffer, BLOCKS_PER_DECODE);
 
-                nBlocksLeft -= nBlocksDecoded;
-                size = nBlocksDecoded * blockAlign;
-                currentBitrate = m_decoder.getApeInfoDecompressCurrentBitRate();
-                currentBlock = m_decoder.getApeInfoDecompressCurrentBlock();
-                currentMs = m_decoder.getApeInfoDecompressCurrentMS();
+                blocksLeft -= blocksDecoded;
+                size = blocksDecoded * blockAlign;
+                currentBitrate = decoder.getApeInfoDecompressCurrentBitRate();
+                currentBlock = decoder.getApeInfoDecompressCurrentBlock();
+                currentMs = decoder.getApeInfoDecompressCurrentMS();
                 logger.log(Level.TRACE, "ape.block: " + currentBlock);
                 logger.log(Level.TRACE, "ape.bitrate: " + currentBitrate);
                 logger.log(Level.TRACE, "ape.position.microseconds: " + currentMs);
@@ -142,14 +144,15 @@ public class APEAudioInputStream extends TAsynchronousFilteredAudioInputStream {
     /**
      * Closes the input stream.
      *
-     * @throws IOException - in case of IO error occured.
+     * @throws IOException in case of IO error occured.
      */
+    @Override
     public void close() throws IOException {
-        if (m_decoder == null)
+        if (decoder == null)
             return;
         file.close();
         file = null;
-        m_decoder = null;
+        decoder = null;
         buffer = null;
         properties = null;
     }

@@ -30,7 +30,11 @@ import java.net.URL;
  */
 public abstract class File implements DataInput {
 
-    public static File createFile(final String name, final String mode) throws IOException {
+    public static File createFile(URL url, String mode) throws IOException {
+        return new InputStreamFile(url);
+    }
+
+    public static File createFile(String name, String mode) throws IOException {
         URL url = null;
         try {
             url = new URL(name);
@@ -56,49 +60,64 @@ public abstract class File implements DataInput {
 
     public long readLongBack() throws IOException {
         return read() |
-                (read() << 8) |
-                (read() << 16) |
-                (read() << 24) |
-                (read() << 32) |
-                (read() << 40) |
-                (read() << 48) |
-                (read() << 56);
+                ((long) read() << 8) |
+                ((long) read() << 16) |
+                ((long) read() << 24) |
+                ((long) read() << 32) |
+                ((long) read() << 40) |
+                ((long) read() << 48) |
+                ((long) read() << 56);
     }
 
     public abstract int read(byte[] b) throws IOException;
 
     public abstract int read(byte[] b, int offs, int len) throws IOException;
 
+    @Override
     public abstract void readFully(byte[] b) throws IOException;
 
+    @Override
     public abstract void readFully(byte[] b, int offs, int len) throws IOException;
 
     public abstract void close() throws IOException;
 
+    @Override
     public abstract boolean readBoolean() throws IOException;
 
+    @Override
     public abstract byte readByte() throws IOException;
 
+    @Override
     public abstract char readChar() throws IOException;
 
+    @Override
     public abstract double readDouble() throws IOException;
 
+    @Override
     public abstract float readFloat() throws IOException;
 
+    @Override
     public abstract int readInt() throws IOException;
 
+    @Override
     public abstract String readLine() throws IOException;
 
+    @Override
     public abstract long readLong() throws IOException;
 
+    @Override
     public abstract short readShort() throws IOException;
 
+    @Override
     public abstract int readUnsignedByte() throws IOException;
 
+    @Override
     public abstract int readUnsignedShort() throws IOException;
 
+    @Override
     public abstract String readUTF() throws IOException;
 
+    @Override
     public abstract int skipBytes(int n) throws IOException;
 
     public abstract long length() throws IOException;
@@ -120,7 +139,7 @@ public abstract class File implements DataInput {
     public abstract String getFilename();
 
     public String getExtension() {
-        final String filename = getFilename();
+        String filename = getFilename();
         int index = filename.lastIndexOf('.');
         return index >= 0 ? filename.substring(index) : "";
     }

@@ -18,6 +18,9 @@
 
 package davaguine.jmac.player;
 
+import java.lang.reflect.InvocationTargetException;
+
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
@@ -40,20 +43,20 @@ public abstract class AudioDeviceFactory {
      * @param name   The name of the class to load.
      * @return A newly-created instance of the audio device class.
      */
-    protected AudioDevice instantiate(ClassLoader loader, String name)
+    protected static AudioDevice instantiate(ClassLoader loader, String name)
             throws ClassNotFoundException,
             IllegalAccessException,
-            InstantiationException {
-        AudioDevice dev = null;
+            InstantiationException, NoSuchMethodException, InvocationTargetException {
+        AudioDevice dev;
 
-        Class cls = null;
+        Class<?> cls;
         if (loader == null) {
             cls = Class.forName(name);
         } else {
             cls = loader.loadClass(name);
         }
 
-        Object o = cls.newInstance();
+        Object o = cls.getDeclaredConstructor().newInstance();
         dev = (AudioDevice) o;
 
         return dev;

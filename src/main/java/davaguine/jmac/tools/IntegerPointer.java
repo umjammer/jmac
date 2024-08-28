@@ -25,5 +25,4 @@ package davaguine.jmac.tools;
 public class IntegerPointer {
 
     public int value;
-
 }

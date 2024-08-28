@@ -33,36 +33,39 @@ import davaguine.jmac.tools.JMACException;
 public abstract class InputSource {
 
     // construction / destruction
-    public InputSource(File pIO, WaveFormat pwfeSource, IntegerPointer pTotalBlocks, IntegerPointer pHeaderBytes, IntegerPointer pTerminatingBytes) throws IOException {
+
+    public InputSource(File io, WaveFormat wfeSource, IntegerPointer totalBlocks, IntegerPointer headerBytes, IntegerPointer terminatingBytes) throws IOException {
     }
 
-    public InputSource(String pSourceName, WaveFormat pwfeSource, IntegerPointer pTotalBlocks, IntegerPointer pHeaderBytes, IntegerPointer pTerminatingBytes) throws IOException {
+    public InputSource(String sourceName, WaveFormat wfeSource, IntegerPointer totalBlocks, IntegerPointer headerBytes, IntegerPointer terminatingBytes) throws IOException {
     }
 
     // get data
-    public abstract int GetData(ByteBuffer pBuffer, int nBlocks) throws IOException;
+
+    public abstract int getData(ByteBuffer buffer, int blocks) throws IOException;
 
     // get header / terminating data
-    public abstract void GetHeaderData(byte[] pBuffer) throws IOException;
 
-    public abstract void GetTerminatingData(byte[] pBuffer) throws IOException;
+    public abstract void getHeaderData(byte[] buffer) throws IOException;
 
-    public abstract void Close() throws IOException;
+    public abstract void getTerminatingData(byte[] buffer) throws IOException;
 
-    public static InputSource CreateInputSource(String pSourceName, WaveFormat pwfeSource, IntegerPointer pTotalBlocks, IntegerPointer pHeaderBytes, IntegerPointer pTerminatingBytes) throws IOException {
+    public abstract void close() throws IOException;
+
+    public static InputSource createInputSource(String sourceName, WaveFormat wfeSource, IntegerPointer totalBlocks, IntegerPointer headerBytes, IntegerPointer terminatingBytes) throws IOException {
         // error check the parameters
-        if ((pSourceName == null) || (pSourceName.length() == 0))
+        if ((sourceName == null) || (sourceName.isEmpty()))
             throw new JMACException("Bad Parameters");
 
         // get the extension
-        int index = pSourceName.lastIndexOf('.');
-        String pExtension = "";
+        int index = sourceName.lastIndexOf('.');
+        String extension = "";
         if (index >= 0)
-            pExtension = pSourceName.substring(pSourceName.lastIndexOf('.'));
+            extension = sourceName.substring(sourceName.lastIndexOf('.'));
 
         // create the proper input source
-        if (pExtension.toLowerCase().equals(".wav")) {
-            return new WAVInputSource(pSourceName, pwfeSource, pTotalBlocks, pHeaderBytes, pTerminatingBytes);
+        if (extension.equalsIgnoreCase(".wav")) {
+            return new WAVInputSource(sourceName, wfeSource, totalBlocks, headerBytes, terminatingBytes);
         } else
             throw new JMACException("Invalid Input File");
     }

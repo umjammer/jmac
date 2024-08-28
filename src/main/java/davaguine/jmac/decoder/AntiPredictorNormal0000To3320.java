@@ -25,102 +25,103 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorNormal0000To3320 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //variable declares
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // variable declares
         int ip, op, op1, op2;
         int p, pw;
         int m;
 
-        //short frame handling
-        if (NumberOfElements < 32) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+        // short frame handling
+        if (numberOfElements < 32) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        ////////////////////////////////////////
-        //order 3
-        ////////////////////////////////////////
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, 8);
+        //
+        // order 3
+        //
+        System.arraycopy(inputArray, 0, outputArray, 0, 8);
 
-        //initialize values
+        // initialize values
         m = 300;
         op = 8;
         op1 = 7;
         op2 = 6;
 
-        //make the first prediction
-        p = (pOutputArray[7] * 3) - (pOutputArray[6] * 3) + pOutputArray[5];
+        // make the first prediction
+        p = (outputArray[7] * 3) - (outputArray[6] * 3) + outputArray[5];
         pw = (p * m) >> 12;
 
-        //loop through the array
-        for (ip = 8; ip < NumberOfElements; ip++, op++, op1++, op2++) {
+        // loop through the array
+        for (ip = 8; ip < numberOfElements; ip++, op++, op1++, op2++) {
 
-            //figure the output value
-            pOutputArray[op] = pInputArray[ip] + pw;
+            // figure the output value
+            outputArray[op] = inputArray[ip] + pw;
 
-            //adjust m
-            if (pInputArray[ip] > 0)
+            // adjust m
+            if (inputArray[ip] > 0)
                 m += (p > 0) ? 4 : -4;
-            else if (pInputArray[ip] < 0)
+            else if (inputArray[ip] < 0)
                 m += (p > 0) ? -4 : 4;
 
-            //make the next prediction
-            p = (pOutputArray[op] * 3) - (pOutputArray[op1] * 3) + pOutputArray[op2];
+            // make the next prediction
+            p = (outputArray[op] * 3) - (outputArray[op1] * 3) + outputArray[op2];
             pw = (p * m) >> 12;
         }
 
 
-        ///////////////////////////////////////
-        //order 2
-        ///////////////////////////////////////
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, 8);
+        //
+        // order 2
+        //
+        System.arraycopy(inputArray, 0, outputArray, 0, 8);
         m = 3000;
 
         op1 = 7;
-        p = (pInputArray[op1] * 2) - pInputArray[6];
+        p = (inputArray[op1] * 2) - inputArray[6];
         pw = (p * m) >> 12;
 
-        for (op = 8, ip = 8; ip < NumberOfElements; ip++, op++, op1++) {
-            pInputArray[op] = pOutputArray[ip] + pw;
+        for (op = 8, ip = 8; ip < numberOfElements; ip++, op++, op1++) {
+            inputArray[op] = outputArray[ip] + pw;
 
-            //adjust m
-            if (pOutputArray[ip] > 0)
+            // adjust m
+            if (outputArray[ip] > 0)
                 m += (p > 0) ? 12 : -12;
-            else if (pOutputArray[ip] < 0)
+            else if (outputArray[ip] < 0)
                 m += (p > 0) ? -12 : 12;
 
-            p = (pInputArray[op] * 2) - pInputArray[op1];
+            p = (inputArray[op] * 2) - inputArray[op1];
             pw = (p * m) >> 12;
 
         }
 
-        ///////////////////////////////////////
-        //order 1
-        ///////////////////////////////////////
-        pOutputArray[0] = pInputArray[0];
-        pOutputArray[1] = pInputArray[1] + pOutputArray[0];
-        pOutputArray[2] = pInputArray[2] + pOutputArray[1];
-        pOutputArray[3] = pInputArray[3] + pOutputArray[2];
-        pOutputArray[4] = pInputArray[4] + pOutputArray[3];
-        pOutputArray[5] = pInputArray[5] + pOutputArray[4];
-        pOutputArray[6] = pInputArray[6] + pOutputArray[5];
-        pOutputArray[7] = pInputArray[7] + pOutputArray[6];
+        //
+        // order 1
+        //
+        outputArray[0] = inputArray[0];
+        outputArray[1] = inputArray[1] + outputArray[0];
+        outputArray[2] = inputArray[2] + outputArray[1];
+        outputArray[3] = inputArray[3] + outputArray[2];
+        outputArray[4] = inputArray[4] + outputArray[3];
+        outputArray[5] = inputArray[5] + outputArray[4];
+        outputArray[6] = inputArray[6] + outputArray[5];
+        outputArray[7] = inputArray[7] + outputArray[6];
 
         m = 3900;
 
-        p = pOutputArray[7];
+        p = outputArray[7];
         pw = (p * m) >> 12;
 
-        for (op = 8, ip = 8; ip < NumberOfElements; ip++, op++) {
-            pOutputArray[op] = pInputArray[ip] + pw;
+        for (op = 8, ip = 8; ip < numberOfElements; ip++, op++) {
+            outputArray[op] = inputArray[ip] + pw;
 
-            //adjust m
-            if (pInputArray[ip] > 0)
+            // adjust m
+            if (inputArray[ip] > 0)
                 m += (p > 0) ? 1 : -1;
-            else if (pInputArray[ip] < 0)
+            else if (inputArray[ip] < 0)
                 m += (p > 0) ? -1 : 1;
 
-            p = pOutputArray[op];
+            p = outputArray[op];
             pw = (p * m) >> 12;
         }
     }

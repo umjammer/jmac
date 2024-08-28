@@ -18,8 +18,6 @@
 
 package davaguine.jmac.player;
 
-import java.io.IOException;
-
 
 /**
  * @author Dmitry Vaguine
@@ -27,7 +25,7 @@ import java.io.IOException;
  */
 public class jmacp {
 
-    private String fFilename = null;
+    private String filename = null;
 
     public static void main(String[] args) {
         int retval = 0;
@@ -58,7 +56,7 @@ public class jmacp {
     }
 
     protected void init(String filename) {
-        fFilename = filename;
+        this.filename = filename;
     }
 
     protected boolean parseArgs(String[] args) {
@@ -74,27 +72,24 @@ public class jmacp {
         return parsed;
     }
 
-    public void showUsage() {
+    public static void showUsage() {
         System.out.println("Usage: jmacp <filename>");
-        System.out.println("");
+        System.out.println();
         System.out.println(" e.g. : java davaguine.jmac.player.jmacp localfile.ape");
     }
 
     public void play() {
         try {
-            System.out.println("playing " + fFilename + "...");
+            System.out.println("playing " + filename + "...");
             AudioDevice dev = getAudioDevice();
-            Player player = new Player(fFilename, dev);
+            Player player = new Player(filename, dev);
             player.play();
-        } catch (IOException ex) {
-            throw new JMACPlayerException("Problem playing file " + fFilename, ex);
         } catch (Exception ex) {
-            throw new JMACPlayerException("Problem playing file " + fFilename, ex);
+            throw new JMACPlayerException("Problem playing file " + filename, ex);
         }
     }
 
-    protected AudioDevice getAudioDevice() {
+    protected static AudioDevice getAudioDevice() {
         return FactoryRegistry.systemRegistry().createAudioDevice();
     }
-
 }

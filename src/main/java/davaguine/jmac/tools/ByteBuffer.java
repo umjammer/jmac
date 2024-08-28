@@ -30,7 +30,7 @@ public class ByteBuffer {
     public ByteBuffer() {
     }
 
-    public ByteBuffer(final byte[] output, final int index) {
+    public ByteBuffer(byte[] output, int index) {
         this.data = output;
         this.index = index;
     }
@@ -45,39 +45,39 @@ public class ByteBuffer {
         this.index = index;
     }
 
-    public void append(final byte value) {
+    public void append(byte value) {
         data[index++] = value;
     }
 
-    public void append(final byte value1, final byte value2) {
-        byte abyte0[];
+    public void append(byte value1, byte value2) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = value1;
         abyte0[index++] = value2;
     }
 
-    public void append(final short value) {
-        byte abyte0[];
+    public void append(short value) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = (byte) (value & 0xff);
         abyte0[index++] = (byte) (value >> 8);
     }
 
-    public void append(final short value1, final short value2) {
-        byte abyte0[];
+    public void append(short value1, short value2) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = (byte) (value1 & 0xff);
         abyte0[index++] = (byte) (value1 >> 8);
         abyte0[index++] = (byte) (value2 & 0xff);
         abyte0[index++] = (byte) (value2 >> 8);
     }
 
-    public void append24(final int value) {
-        byte abyte0[];
+    public void append24(int value) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = (byte) (value & 0xff);
         abyte0[index++] = (byte) (value >> 8 & 0xff);
         abyte0[index++] = (byte) (value >> 16 & 0xff);
     }
 
-    public void append24(final int value1, final int value2) {
-        byte abyte0[];
+    public void append24(int value1, int value2) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = (byte) (value1 & 0xff);
         abyte0[index++] = (byte) (value1 >> 8 & 0xff);
         abyte0[index++] = (byte) (value1 >> 16 & 0xff);
@@ -86,8 +86,8 @@ public class ByteBuffer {
         abyte0[index++] = (byte) (value2 >> 16 & 0xff);
     }
 
-    public void append(final int value) {
-        byte abyte0[];
+    public void append(int value) {
+        byte[] abyte0;
         (abyte0 = data)[index++] = (byte) (value & 0xff);
         abyte0[index++] = (byte) (value >> 8 & 0xff);
         abyte0[index++] = (byte) (value >> 16 & 0xff);
@@ -100,7 +100,7 @@ public class ByteBuffer {
 
     public void append(byte[] bytes, int off, int len) {
         if (0 < len) {
-            byte abyte1[];
+            byte[] abyte1;
             (abyte1 = data)[index++] = bytes[off];
             for (int i = off + 1; i < len; i++)
                 abyte1[index++] = bytes[i];
@@ -114,5 +114,4 @@ public class ByteBuffer {
     public int getIndex() {
         return index;
     }
-
 }

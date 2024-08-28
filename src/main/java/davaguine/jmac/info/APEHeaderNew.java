@@ -33,31 +33,39 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEHeaderNew {
 
-    public int nCompressionLevel;        // the compression level (unsigned short)
-    public int nFormatFlags;            // any format flags (for future use) (unsigned short)
+    /** the compression level (unsigned short) */
+    public int compressionLevel;
+    /** any format flags (for future use) (unsigned short) */
+    public int formatFlags;
 
-    public long nBlocksPerFrame;        // the number of audio blocks in one frame (unsigned int)
-    public long nFinalFrameBlocks;        // the number of audio blocks in the final frame (unsigned int)
-    public long nTotalFrames;            // the total number of frames (unsigned int)
+    /** the number of audio blocks in one frame (unsigned int) */
+    public long blocksPerFrame;
+    /** the number of audio blocks in the final frame (unsigned int) */
+    public long finalFrameBlocks;
+    /** the total number of frames (unsigned int) */
+    public long totalFrames;
 
-    public int nBitsPerSample;            // the bits per sample (typically 16) (unsigned short)
-    public int nChannels;                // the number of channels (1 or 2) (unsigned short)
-    public long nSampleRate;            // the sample rate (typically 44100) (unsigned int)
+    /** the bits per sample (typically 16) (unsigned short) */
+    public int bitsPerSample;
+    /** the number of channels (1 or 2) (unsigned short) */
+    public int channels;
+    /** the sample rate (typically 44100) (unsigned int) */
+    public long sampleRate;
 
     public final static int APE_HEADER_BYTES = 24;
 
-    public static APEHeaderNew read(final File file) throws IOException {
+    public static APEHeaderNew read(File file) throws IOException {
         try {
             APEHeaderNew header = new APEHeaderNew();
-            final ByteArrayReader reader = new ByteArrayReader(file, APE_HEADER_BYTES);
-            header.nCompressionLevel = reader.readUnsignedShort();
-            header.nFormatFlags = reader.readUnsignedShort();
-            header.nBlocksPerFrame = reader.readUnsignedInt();
-            header.nFinalFrameBlocks = reader.readUnsignedInt();
-            header.nTotalFrames = reader.readUnsignedInt();
-            header.nBitsPerSample = reader.readUnsignedShort();
-            header.nChannels = reader.readUnsignedShort();
-            header.nSampleRate = reader.readUnsignedInt();
+            ByteArrayReader reader = new ByteArrayReader(file, APE_HEADER_BYTES);
+            header.compressionLevel = reader.readUnsignedShort();
+            header.formatFlags = reader.readUnsignedShort();
+            header.blocksPerFrame = reader.readUnsignedInt();
+            header.finalFrameBlocks = reader.readUnsignedInt();
+            header.totalFrames = reader.readUnsignedInt();
+            header.bitsPerSample = reader.readUnsignedShort();
+            header.channels = reader.readUnsignedShort();
+            header.sampleRate = reader.readUnsignedInt();
             return header;
         } catch (EOFException e) {
             throw new JMACException("Unsupported Format");
@@ -65,13 +73,13 @@ public class APEHeaderNew {
     }
 
     public void write(ByteArrayWriter writer) {
-        writer.writeUnsignedShort(nCompressionLevel);
-        writer.writeUnsignedShort(nFormatFlags);
-        writer.writeUnsignedInt(nBlocksPerFrame);
-        writer.writeUnsignedInt(nFinalFrameBlocks);
-        writer.writeUnsignedInt(nTotalFrames);
-        writer.writeUnsignedShort(nBitsPerSample);
-        writer.writeUnsignedShort(nChannels);
-        writer.writeUnsignedInt(nSampleRate);
+        writer.writeUnsignedShort(compressionLevel);
+        writer.writeUnsignedShort(formatFlags);
+        writer.writeUnsignedInt(blocksPerFrame);
+        writer.writeUnsignedInt(finalFrameBlocks);
+        writer.writeUnsignedInt(totalFrames);
+        writer.writeUnsignedShort(bitsPerSample);
+        writer.writeUnsignedShort(channels);
+        writer.writeUnsignedInt(sampleRate);
     }
 }

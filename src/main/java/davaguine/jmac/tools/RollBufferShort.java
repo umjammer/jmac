@@ -28,38 +28,38 @@ import java.util.Arrays;
 public class RollBufferShort {
 
     public RollBufferShort() {
-        m_pData = null;
+        data = null;
     }
 
-    public int Create(int nWindowElements, int nHistoryElements) {
-        m_nWindowElements = nWindowElements;
-        m_nHistoryElements = nHistoryElements;
-        windowPlusHistory = nWindowElements += nHistoryElements;
+    public int create(int windowElements, int historyElements) {
+        this.windowElements = windowElements;
+        this.historyElements = historyElements;
+        windowPlusHistory = windowElements += historyElements;
 
-        m_pData = new short[nWindowElements];
+        data = new short[windowElements];
 
-        Flush();
+        flush();
         return 0;
     }
 
-    public void Flush() {
-        Arrays.fill(m_pData, 0, m_nHistoryElements, (short) 0);
-        index = m_nHistoryElements;
+    public void flush() {
+        Arrays.fill(data, 0, historyElements, (short) 0);
+        index = historyElements;
     }
 
-    public void IncrementSafe() {
+    public void incrementSafe() {
         if ((++index) == windowPlusHistory) {
-            short aword0[];
+            short[] aword0;
             int i;
-            System.arraycopy(aword0 = m_pData, index - (i = m_nHistoryElements), aword0, 0, i);
+            System.arraycopy(aword0 = data, index - (i = historyElements), aword0, 0, i);
             index = i;
         }
     }
 
-    public short[] m_pData;
+    public short[] data;
     public int index;
 
-    protected int m_nHistoryElements;
-    protected int m_nWindowElements;
+    protected int historyElements;
+    protected int windowElements;
     protected int windowPlusHistory;
 }

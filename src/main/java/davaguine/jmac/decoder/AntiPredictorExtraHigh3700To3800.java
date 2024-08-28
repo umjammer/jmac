@@ -25,46 +25,46 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorExtraHigh3700To3800 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements, int Iterations, long[] pOffsetValueArrayA, long[] pOffsetValueArrayB) {
-        for (int z = Iterations; z >= 0; ) {
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements, int iterations, long[] offsetValueArrayA, long[] offsetValueArrayB) {
+        for (int z = iterations; z >= 0; ) {
 
-            AntiPredictorOffset(pInputArray, pOutputArray, NumberOfElements, (int) pOffsetValueArrayA[z], (int) pOffsetValueArrayB[z], 64);
+            antiPredictorOffset(inputArray, outputArray, numberOfElements, (int) offsetValueArrayA[z], (int) offsetValueArrayB[z], 64);
             z--;
 
             if (z >= 0) {
-                AntiPredictorOffset(pOutputArray, pInputArray, NumberOfElements, (int) pOffsetValueArrayA[z], (int) pOffsetValueArrayB[z], 64);
+                antiPredictorOffset(outputArray, inputArray, numberOfElements, (int) offsetValueArrayA[z], (int) offsetValueArrayB[z], 64);
                 z--;
             } else {
-                System.arraycopy(pOutputArray, 0, pInputArray, 0, NumberOfElements);
+                System.arraycopy(outputArray, 0, inputArray, 0, numberOfElements);
                 break;
             }
         }
 
-        AntiPredictor.AntiPredict(pInputArray, pOutputArray, NumberOfElements);
+        antiPredictor.antiPredict(inputArray, outputArray, numberOfElements);
     }
 
-    private AntiPredictorHigh3700To3800 AntiPredictor = new AntiPredictorHigh3700To3800();
+    private final AntiPredictorHigh3700To3800 antiPredictor = new AntiPredictorHigh3700To3800();
 
-    protected void AntiPredictorOffset(int[] Input_Array, int[] Output_Array, int Number_of_Elements, int g1, int g2, int Max_Order) {
+    protected static void antiPredictorOffset(int[] inputArray, int[] outputArray, int numberOfElements, int g1, int g2, int maxOrder) {
         int q;
 
-        if ((g1 == 0) || (g2 == 0) || (Number_of_Elements <= Max_Order)) {
-            System.arraycopy(Input_Array, 0, Output_Array, 0, Number_of_Elements);
+        if ((g1 == 0) || (g2 == 0) || (numberOfElements <= maxOrder)) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        System.arraycopy(Input_Array, 0, Output_Array, 0, Max_Order);
+        System.arraycopy(inputArray, 0, outputArray, 0, maxOrder);
 
         int m = 64;
         int m2 = 64;
 
-        for (q = Max_Order; q < Number_of_Elements; q++) {
-            Output_Array[q] = Input_Array[q] + ((Output_Array[q - g1] * m) >> 9) - ((Output_Array[q - g2] * m2) >> 9);
-            if ((Input_Array[q] ^ Output_Array[q - g1]) > 0)
+        for (q = maxOrder; q < numberOfElements; q++) {
+            outputArray[q] = inputArray[q] + ((outputArray[q - g1] * m) >> 9) - ((outputArray[q - g2] * m2) >> 9);
+            if ((inputArray[q] ^ outputArray[q - g1]) > 0)
                 m++;
             else
                 m--;
-            if ((Input_Array[q] ^ Output_Array[q - g2]) > 0)
+            if ((inputArray[q] ^ outputArray[q - g2]) > 0)
                 m2--;
             else
                 m2++;

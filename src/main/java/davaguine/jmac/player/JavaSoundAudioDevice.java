@@ -68,11 +68,11 @@ public class JavaSoundAudioDevice extends AudioDeviceBase {
         }
     }
 
+    @Override
     protected void openImpl() {
     }
 
-
-    // createSource fix.
+    /** createSource fix. */
     protected void createSource() {
         Throwable t = null;
         try {
@@ -82,26 +82,24 @@ public class JavaSoundAudioDevice extends AudioDeviceBase {
                 source.open(fmt, millisecondsToBytes(fmt, 2000));
                 source.start();
             }
-        } catch (RuntimeException ex) {
-            t = ex;
-        } catch (LinkageError ex) {
-            t = ex;
-        } catch (LineUnavailableException ex) {
+        } catch (RuntimeException | LineUnavailableException | LinkageError ex) {
             t = ex;
         }
         if (source == null) throw new JMACPlayerException("cannot obtain source audio line", t);
     }
 
-    public int millisecondsToBytes(AudioFormat fmt, int time) {
+    public static int millisecondsToBytes(AudioFormat fmt, int time) {
         return (int) (time * (fmt.getSampleRate() * fmt.getChannels() * fmt.getSampleSizeInBits()) / 8000.0);
     }
 
+    @Override
     protected void closeImpl() {
         if (source != null) {
             source.close();
         }
     }
 
+    @Override
     protected void writeImpl(byte[] samples, int offs, int len) {
         if (source == null)
             createSource();
@@ -109,12 +107,14 @@ public class JavaSoundAudioDevice extends AudioDeviceBase {
         source.write(samples, offs, len);
     }
 
+    @Override
     protected void flushImpl() {
         if (source != null) {
             source.drain();
         }
     }
 
+    @Override
     public int getPosition() {
         int pos = 0;
         if (source != null) {

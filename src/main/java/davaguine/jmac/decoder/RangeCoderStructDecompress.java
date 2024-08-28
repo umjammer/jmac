@@ -24,7 +24,10 @@ package davaguine.jmac.decoder;
  */
 public class RangeCoderStructDecompress {
 
-    public long low;       //low end of interval
-    public long range;     //length of interval
-    public long buffer;    //buffer for input/output
+    /** low end of interval */
+    public long low;
+    /** length of interval */
+    public long range;
+    /** buffer for input/output */
+    public long buffer;
 }

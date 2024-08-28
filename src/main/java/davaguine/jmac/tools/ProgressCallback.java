@@ -24,10 +24,10 @@ package davaguine.jmac.tools;
  */
 public abstract class ProgressCallback {
 
-    public int pPercentageDone;
-    public boolean killFlag = false;
+    public int percentageDone;
+    public final boolean killFlag = false;
 
-    public abstract void callback(int persent);
+    public abstract void callback(int percent);
 
     public void updateStatus(String msg) {
     }

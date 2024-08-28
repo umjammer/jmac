@@ -24,14 +24,14 @@ package davaguine.jmac.prediction;
  */
 public abstract class IPredictorDecompress {
 
-    public IPredictorDecompress(int nCompressionLevel, int nVersion) {
+    public IPredictorDecompress(int compressionLevel, int version) {
     }
 
-    public int DecompressValue(int nA) {
-        return DecompressValue(nA, 0);
+    public int decompressValue(int a) {
+        return decompressValue(a, 0);
     }
 
-    public abstract int DecompressValue(int nA, int nB);
+    public abstract int decompressValue(int a, int b);
 
-    public abstract void Flush();
+    public abstract void flush();
 }

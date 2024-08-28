@@ -43,10 +43,10 @@ public class APEAudioFileFormatType extends AudioFileFormat.Type {
     /**
      * Constructs a MAC file type.
      *
-     * @param name      - the string that names the file type
-     * @param extension - the string that commonly marks the file type without leading dot.
+     * @param name      the string that names the file type
+     * @param extension the string that commonly marks the file type without leading dot.
      */
-    public APEAudioFileFormatType(final String name, final String extension) {
+    public APEAudioFileFormatType(String name, String extension) {
         super(name, extension);
     }
 }

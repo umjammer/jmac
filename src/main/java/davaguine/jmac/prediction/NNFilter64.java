@@ -25,120 +25,122 @@ package davaguine.jmac.prediction;
  */
 public class NNFilter64 extends NNFilter {
 
-    public NNFilter64(int nShift, int nVersion) {
-        super(64, nShift, nVersion);
-        orderPlusWindow = 576 /* NN_WINDOW_ELEMENTS + m_nOrder */;
+    public NNFilter64(int shift, int version) {
+        super(64, shift, version);
+        orderPlusWindow = 576 /* NN_WINDOW_ELEMENTS + order */;
     }
 
-    protected int CalculateDotProductNoMMX(short[] pA, int indexA, short[] pB, int indexB) {
-        int nDotProduct = 0;
+    @Override
+    protected int calculateDotProductNoMMX(short[] a, int indexA, short[] b, int indexB) {
+        int dotProduct = 0;
         for (int i = 0; i < 2; i++) {
-            nDotProduct += (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]) +
-                    (pA[indexA++] * pB[indexB++]);
+            dotProduct += (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]) +
+                    (a[indexA++] * b[indexB++]);
         }
-        return nDotProduct;
+        return dotProduct;
     }
 
-    protected void AdaptNoMMX(short[] pM, int indexM, short[] pAdapt, int indexA, int nDirection) {
-        if (nDirection < 0) {
+    @Override
+    protected void adaptNoMMX(short[] m, int indexM, short[] adapt, int indexA, int direction) {
+        if (direction < 0) {
             for (int i = 0; i < 2; i++) {
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
-                pM[indexM++] += pAdapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
+                m[indexM++] += adapt[indexA++];
             }
-        } else if (nDirection > 0) {
+        } else if (direction > 0) {
             for (int i = 0; i < 2; i++) {
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
-                pM[indexM++] -= pAdapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
+                m[indexM++] -= adapt[indexA++];
             }
         }
     }

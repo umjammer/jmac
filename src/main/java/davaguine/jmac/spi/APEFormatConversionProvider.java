@@ -19,16 +19,21 @@
 package davaguine.jmac.spi;
 
 import java.io.PrintStream;
-import java.util.Hashtable;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.Map.Entry;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.spi.FormatConversionProvider;
 
-import davaguine.jmac.tools.Globals;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -38,6 +43,8 @@ import davaguine.jmac.tools.Globals;
  * @version 12.03.2004 13:35:13
  */
 public class APEFormatConversionProvider extends FormatConversionProvider {
+
+    private static final Logger logger = getLogger(APEFormatConversionProvider.class.getName());
 
     /**
      * Source formats of provider.
@@ -75,15 +82,15 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
 
     /**
      * An internal field used to map from source AudioFormats to target AudioFormat.Encodings.
+     * Map: key=source format, value=AudioFormat.Encoding [] of unique target encodings
      */
-    protected Hashtable sourceFormatTargetEncodings;
-    // HashTable: key=source format, value=AudioFormat.Encoding [] of unique target encodings
+    protected Map<AudioFormat, AudioFormat.Encoding[]> sourceFormatTargetEncodings;
 
     /**
      * An internal field used to map from source AudioFormats to target AudioFormats.
+     * Map: key=target format, value=hashtable: key=encoding, value=Vector of unique target formats
      */
-    protected Hashtable sourceFormatTargetFormats;
-    // HashTable: key=target format, value=hashtable: key=encoding, value=Vector of unique target formats
+    protected Map<AudioFormat, Map<AudioFormat.Encoding, List<AudioFormat>>> sourceFormatTargetFormats;
 
     /**
      * Constructor of conversion provider.
@@ -93,29 +100,25 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
         SOURCE_ENCODINGS = createEncodings(SOURCE_FORMATS);
         TARGET_ENCODINGS = createEncodings(TARGET_FORMATS);
         createConversions(SOURCE_FORMATS, TARGET_FORMATS);
-    } // constructor
+    }
 
     /**
      * This helper method creates encodings from the list of AudioFormats.
      *
-     * @param sourceFormats - the source formats
-     * @param targetFormats - the target formats
+     * @param sourceFormats the source formats
+     * @param targetFormats the target formats
      */
     protected void createConversions(AudioFormat[] sourceFormats, AudioFormat[] targetFormats) {
 
-        sourceFormatTargetEncodings = new Hashtable();
-        sourceFormatTargetFormats = new Hashtable();
+        sourceFormatTargetEncodings = new HashMap<>();
+        sourceFormatTargetFormats = new HashMap<>();
 
-        for (int i = 0; i < sourceFormats.length; i++) {
-            AudioFormat sourceFormat = sourceFormats[i];
-
-            Vector supportedTargetEncodings = new Vector();
-            Hashtable targetEncodingTargetFormats = new Hashtable();
+        for (AudioFormat sourceFormat : sourceFormats) {
+            List<Encoding> supportedTargetEncodings = new ArrayList<>();
+            Map<Encoding, List<AudioFormat>> targetEncodingTargetFormats = new HashMap<>();
             sourceFormatTargetFormats.put(sourceFormat, targetEncodingTargetFormats);
 
-            for (int j = 0; j < targetFormats.length; j++) {
-                AudioFormat targetFormat = targetFormats[j];
-
+            for (AudioFormat targetFormat : targetFormats) {
                 // Simplistic: Assume conversion possible if sampling rate and channels match.
                 // Depends on what streams can be decoded by the APE subsystem.
                 boolean conversionPossible =
@@ -124,33 +127,29 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
                                 (sourceFormat.getSampleSizeInBits() == targetFormat.getSampleSizeInBits());
 
                 if (conversionPossible) {
-                    AudioFormat.Encoding targetEncoding = targetFormat.getEncoding();
+                    Encoding targetEncoding = targetFormat.getEncoding();
 
                     if (!supportedTargetEncodings.contains(targetEncoding))
-                        supportedTargetEncodings.addElement(targetEncoding);
+                        supportedTargetEncodings.add(targetEncoding);
 
                     // Will be converted to an AudioFormat [] when queried
-                    Vector supportedTargetFormats = (Vector) targetEncodingTargetFormats.get(targetEncoding);
-                    if (supportedTargetFormats == null) {
-                        supportedTargetFormats = new Vector();
-                        targetEncodingTargetFormats.put(targetEncoding, supportedTargetFormats);
-                    }
+                    List<AudioFormat> supportedTargetFormats = targetEncodingTargetFormats.computeIfAbsent(targetEncoding, k -> new ArrayList<>());
                     supportedTargetFormats.add(targetFormat);
                 }
             }
 
             // Convert supported target encodings from vector to []
-            AudioFormat.Encoding[] targetEncodings = new AudioFormat.Encoding[supportedTargetEncodings.size()];
-            supportedTargetEncodings.copyInto(targetEncodings);
+            Encoding[] targetEncodings = supportedTargetEncodings.toArray(Encoding[]::new);
             sourceFormatTargetEncodings.put(sourceFormat, targetEncodings);
         }
-    } // createConversions
+    }
 
     /**
      * Returns the source AudioFormat.Encodings that this class can read from.
      *
      * @return the source AudioFormat.Encodings
      */
+    @Override
     public AudioFormat.Encoding[] getSourceEncodings() {
         return SOURCE_ENCODINGS;
     }
@@ -160,6 +159,7 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      *
      * @return the target AudioFormat.Encodings
      */
+    @Override
     public AudioFormat.Encoding[] getTargetEncodings() {
         return TARGET_ENCODINGS;
     }
@@ -170,22 +170,24 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param sourceFormat is the source format
      * @return the target AudioFormat.Encodings
      */
+    @Override
+    @SuppressWarnings("WhileLoopReplaceableByForEach")
     public AudioFormat.Encoding[] getTargetEncodings(AudioFormat sourceFormat) {
-        if (Globals.DEBUG) System.out.println("APEFormatConversionProvider.getTargetEncodings( sourceFormat )");
-        if (Globals.DEBUG) System.out.println("   sourceFormat=" + sourceFormat);
+        logger.log(Level.TRACE, "APEFormatConversionProvider.getTargetEncodings( sourceFormat )");
+        logger.log(Level.TRACE, "   sourceFormat=" + sourceFormat);
 
         // Must use iteration since Hashtable contains and get uses equals
         // and AudioFormat does not implement this and finalizes it.
-        Iterator iterator = sourceFormatTargetEncodings.entrySet().iterator();
+        Iterator<Map.Entry<AudioFormat, AudioFormat.Encoding[]>> iterator = sourceFormatTargetEncodings.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            AudioFormat format = (AudioFormat) entry.getKey();
+            Map.Entry<AudioFormat, AudioFormat.Encoding[]> entry = iterator.next();
+            AudioFormat format = entry.getKey();
             if (format.matches(sourceFormat)) {
-                AudioFormat.Encoding[] targetEncodings = (AudioFormat.Encoding[]) entry.getValue();
-                if (Globals.DEBUG) System.out.println("   targetEncodings:");
-                if (Globals.DEBUG) printAudioEncodings(targetEncodings, System.out);
+                AudioFormat.Encoding[] targetEncodings = entry.getValue();
+                logger.log(Level.DEBUG, "   targetEncodings:");
+                if (logger.isLoggable(Level.DEBUG)) printAudioEncodings(targetEncodings, System.err);
                 return targetEncodings;
-            } // if
+            }
         }
         return new AudioFormat.Encoding[0];
     }
@@ -198,31 +200,33 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param sourceFormat   - the source format
      * @return the target AudioFormat.Encodings
      */
+    @Override
+    @SuppressWarnings("WhileLoopReplaceableByForEach")
     public AudioFormat[] getTargetFormats(AudioFormat.Encoding targetEncoding, AudioFormat sourceFormat) {
-        if (Globals.DEBUG) System.out.println("APEFormatConversionProvider.getTargetFormats( sourceFormat )");
-        if (Globals.DEBUG) System.out.println("   sourceFormat=" + sourceFormat);
+        logger.log(Level.TRACE, "APEFormatConversionProvider.getTargetFormats( sourceFormat )");
+        logger.log(Level.TRACE, "   sourceFormat=" + sourceFormat);
 
         // Must use iteration since Hashtable contains and get uses equals
         // and AudioFormat does not implement this and finalizes it.
-        Iterator iterator = sourceFormatTargetFormats.entrySet().iterator();
+        Iterator<Entry<AudioFormat, Map<Encoding, List<AudioFormat>>>> iterator = sourceFormatTargetFormats.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            AudioFormat format = (AudioFormat) entry.getKey();
+            Entry<AudioFormat, Map<Encoding, List<AudioFormat>>> entry = iterator.next();
+            AudioFormat format = entry.getKey();
 
             if (sourceFormat.matches(format)) {
-                Hashtable targetEncodings = (Hashtable) entry.getValue();
-                Vector targetFormats = (Vector) targetEncodings.get(targetEncoding);
+                Map<Encoding, List<AudioFormat>> targetEncodings = entry.getValue();
+                List<AudioFormat> targetFormats = targetEncodings.get(targetEncoding);
                 AudioFormat[] targetFormatArray = new AudioFormat[targetFormats.size()];
                 AudioFormat ft;
                 for (int i = 0; i < targetFormats.size(); i++) {
-                    ft = (AudioFormat) targetFormats.get(i);
+                    ft = targetFormats.get(i);
                     targetFormatArray[i] = new AudioFormat(ft.getEncoding(), sourceFormat.getSampleRate(), ft.getSampleSizeInBits(), ft.getChannels(), ft.getFrameSize(), ft.getFrameRate(), ft.isBigEndian());
                 }
-                if (Globals.DEBUG) System.out.println("   targetFormats");
-                if (Globals.DEBUG) printAudioFormats(targetFormatArray, System.out);
+                logger.log(Level.TRACE, "   targetFormats");
+                if (logger.isLoggable(Level.TRACE)) printAudioFormats(targetFormatArray, System.err);
                 return targetFormatArray;
             }
-        } // while
+        }
         return new AudioFormat[0];
     }
 
@@ -233,6 +237,7 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param audioInputStream is the source input stream
      * @return a decoded AudioInputStream
      */
+    @Override
     public AudioInputStream getAudioInputStream(AudioFormat.Encoding targetEncoding,
                                                 AudioInputStream audioInputStream) {
         AudioFormat sourceFormat = audioInputStream.getFormat();
@@ -253,11 +258,11 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param audioInputStream is the source input stream
      * @return a decoded AudioInputStream
      */
+    @Override
     public AudioInputStream getAudioInputStream(AudioFormat targetFormat,
                                                 AudioInputStream audioInputStream) {
         if (isConversionSupported(targetFormat, audioInputStream.getFormat())) {
-            if (Globals.DEBUG)
-                System.out.println("APEFormatConversionProvider.getAudioInputStream( targetEnc, audioInputStream )");
+            logger.log(Level.TRACE, "APEFormatConversionProvider.getAudioInputStream( targetEnc, audioInputStream )");
             return new APEAudioInputStream(targetFormat, audioInputStream);
         }
         throw new IllegalArgumentException("conversion not supported");
@@ -269,6 +274,7 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param sourceEncoding is the source encoding
      * @return true if the given source AudioFormat.Encoding is supported
      */
+    @Override
     public boolean isSourceEncodingSupported(AudioFormat.Encoding sourceEncoding) {
         return containsEncoding(SOURCE_ENCODINGS, sourceEncoding);
     }
@@ -279,6 +285,7 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param targetEncoding is the target encoding
      * @return true if the given target AudioFormat.Encoding is supported
      */
+    @Override
     public boolean isTargetEncodingSupported(AudioFormat.Encoding targetEncoding) {
         return containsEncoding(TARGET_ENCODINGS, targetEncoding);
     }
@@ -291,14 +298,13 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      */
     protected static AudioFormat.Encoding[] createEncodings(AudioFormat[] formats) {
         if ((formats == null) || (formats.length == 0)) return new AudioFormat.Encoding[0];
-        Vector encodings = new Vector();
-        for (int i = 0; i < formats.length; i++) {
-            AudioFormat.Encoding encoding = formats[i].getEncoding();
+        List<AudioFormat.Encoding> encodings = new ArrayList<>();
+        for (AudioFormat format : formats) {
+            Encoding encoding = format.getEncoding();
             if (!encodings.contains(encoding))
-                encodings.addElement(encoding);
+                encodings.add(encoding);
         }
-        AudioFormat.Encoding[] encodingArray = new AudioFormat.Encoding[encodings.size()];
-        encodings.copyInto(encodingArray);
+        AudioFormat.Encoding[] encodingArray = encodings.toArray(AudioFormat.Encoding[]::new);
         return encodingArray;
     }
 
@@ -311,8 +317,8 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      */
     public static boolean containsEncoding(AudioFormat.Encoding[] encodings, AudioFormat.Encoding encoding) {
         if ((encodings == null) || (encoding == null)) return false;
-        for (int i = 0; i < encodings.length; i++) {
-            if (encodings[i].equals(encoding)) return true;
+        for (Encoding value : encodings) {
+            if (value.equals(encoding)) return true;
         }
         return false;
     }
@@ -324,8 +330,7 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param stream       is a given PrintStream
      */
     public static void printAudioFormats(AudioFormat[] audioFormats, PrintStream stream) {
-        for (int i = 0; i < audioFormats.length; i++)
-            stream.println("   " + audioFormats[i]);
+        for (AudioFormat audioFormat : audioFormats) stream.println("   " + audioFormat);
     }
 
     /**
@@ -335,7 +340,6 @@ public class APEFormatConversionProvider extends FormatConversionProvider {
      * @param stream         is a given PrintStream
      */
     public static void printAudioEncodings(AudioFormat.Encoding[] audioEncodings, PrintStream stream) {
-        for (int i = 0; i < audioEncodings.length; i++)
-            stream.println("   " + audioEncodings[i]);
+        for (Encoding audioEncoding : audioEncodings) stream.println("   " + audioEncoding);
     }
 }

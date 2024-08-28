@@ -25,21 +25,21 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorOffset extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements, int Offset, int DeltaM) {
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, Offset);
+    public static void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements, int offset, int deltaM) {
+        System.arraycopy(inputArray, 0, outputArray, 0, offset);
 
-        int ip = Offset;
+        int ip = offset;
         int ipo = 0;
-        int op = Offset;
+        int op = offset;
         int m = 0;
 
-        for (; op < NumberOfElements; ip++, ipo++, op++) {
-            pOutputArray[op] = pInputArray[ip] + ((pOutputArray[ipo] * m) >> 12);
+        for (; op < numberOfElements; ip++, ipo++, op++) {
+            outputArray[op] = inputArray[ip] + ((outputArray[ipo] * m) >> 12);
 
-            if ((pOutputArray[ipo] ^ pInputArray[ip]) > 0)
-                m += DeltaM;
+            if ((outputArray[ipo] ^ inputArray[ip]) > 0)
+                m += deltaM;
             else
-                m -= DeltaM;
+                m -= deltaM;
         }
     }
 }

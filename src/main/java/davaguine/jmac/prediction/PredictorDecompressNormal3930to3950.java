@@ -36,105 +36,107 @@ public class PredictorDecompressNormal3930to3950 extends IPredictorDecompress {
     private final static int BUFFER_COUNT = 1;
     private final static int M_COUNT = 8;
 
-    public PredictorDecompressNormal3930to3950(int nCompressionLevel, int nVersion) {
-        super(nCompressionLevel, nVersion);
-        m_pBuffer[0] = new int[HISTORY_ELEMENTS + WINDOW_BLOCKS];
+    public PredictorDecompressNormal3930to3950(int compressionLevel, int version) {
+        super(compressionLevel, version);
+        buffer[0] = new int[HISTORY_ELEMENTS + WINDOW_BLOCKS];
 
-        if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_FAST) {
-            m_pNNFilter = null;
-            m_pNNFilter1 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_NORMAL) {
-            m_pNNFilter = new NNFilter16(11, nVersion);
-            m_pNNFilter1 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_HIGH) {
-            m_pNNFilter = new NNFilter64(11, nVersion);
-            m_pNNFilter1 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH) {
-            m_pNNFilter = new NNFilter256(13, nVersion);
-            m_pNNFilter1 = new NNFilter32(10, nVersion);
+        if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_FAST) {
+            nnFilter = null;
+            nnFilter1 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_NORMAL) {
+            nnFilter = new NNFilter16(11, version);
+            nnFilter1 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_HIGH) {
+            nnFilter = new NNFilter64(11, version);
+            nnFilter1 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH) {
+            nnFilter = new NNFilter256(13, version);
+            nnFilter1 = new NNFilter32(10, version);
         } else {
             throw new JMACException("Unknown Compression Type");
         }
     }
 
-    public int DecompressValue(int nInput, int notneeded) {
-        if (m_nCurrentIndex == WINDOW_BLOCKS) {
+    @Override
+    public int decompressValue(int a, int b) {
+        if (currentIndex == WINDOW_BLOCKS) {
             // copy forward and adjust pointers
-            System.arraycopy(m_pBuffer[0], WINDOW_BLOCKS, m_pBuffer[0], 0, HISTORY_ELEMENTS);
-            m_pInputBuffer_i = 0;
-            m_pInputBuffer_j = HISTORY_ELEMENTS;
+            System.arraycopy(buffer[0], WINDOW_BLOCKS, buffer[0], 0, HISTORY_ELEMENTS);
+            inputBufferI = 0;
+            inputBufferJ = HISTORY_ELEMENTS;
 
-            m_nCurrentIndex = 0;
+            currentIndex = 0;
         }
 
         // stage 2: NNFilter
-        if (m_pNNFilter1 != null)
-            nInput = m_pNNFilter1.Decompress(nInput);
-        if (m_pNNFilter != null)
-            nInput = m_pNNFilter.Decompress(nInput);
+        if (nnFilter1 != null)
+            a = nnFilter1.decompress(a);
+        if (nnFilter != null)
+            a = nnFilter.decompress(a);
 
         // stage 1: multiple predictors (order 2 and offset 1)
 
-        int p1 = m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 1];
-        int p2 = m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 1] - m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 2];
-        int p3 = m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 2] - m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 3];
-        int p4 = m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 3] - m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j - 4];
+        int p1 = buffer[inputBufferI][inputBufferJ - 1];
+        int p2 = buffer[inputBufferI][inputBufferJ - 1] - buffer[inputBufferI][inputBufferJ - 2];
+        int p3 = buffer[inputBufferI][inputBufferJ - 2] - buffer[inputBufferI][inputBufferJ - 3];
+        int p4 = buffer[inputBufferI][inputBufferJ - 3] - buffer[inputBufferI][inputBufferJ - 4];
 
-        m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j] = nInput + (((p1 * m_aryM[0]) + (p2 * m_aryM[1]) + (p3 * m_aryM[2]) + (p4 * m_aryM[3])) >> 9);
+        buffer[inputBufferI][inputBufferJ] = a + (((p1 * m[0]) + (p2 * m[1]) + (p3 * m[2]) + (p4 * m[3])) >> 9);
 
-        if (nInput > 0) {
-            m_aryM[0] -= ((p1 >> 30) & 2) - 1;
-            m_aryM[1] -= ((p2 >> 30) & 2) - 1;
-            m_aryM[2] -= ((p3 >> 30) & 2) - 1;
-            m_aryM[3] -= ((p4 >> 30) & 2) - 1;
-        } else if (nInput < 0) {
-            m_aryM[0] += ((p1 >> 30) & 2) - 1;
-            m_aryM[1] += ((p2 >> 30) & 2) - 1;
-            m_aryM[2] += ((p3 >> 30) & 2) - 1;
-            m_aryM[3] += ((p4 >> 30) & 2) - 1;
+        if (a > 0) {
+            m[0] -= ((p1 >> 30) & 2) - 1;
+            m[1] -= ((p2 >> 30) & 2) - 1;
+            m[2] -= ((p3 >> 30) & 2) - 1;
+            m[3] -= ((p4 >> 30) & 2) - 1;
+        } else if (a < 0) {
+            m[0] += ((p1 >> 30) & 2) - 1;
+            m[1] += ((p2 >> 30) & 2) - 1;
+            m[2] += ((p3 >> 30) & 2) - 1;
+            m[3] += ((p4 >> 30) & 2) - 1;
         }
 
-        int nRetVal = m_pBuffer[m_pInputBuffer_i][m_pInputBuffer_j] + ((m_nLastValue * 31) >> 5);
-        m_nLastValue = nRetVal;
+        int retVal = buffer[inputBufferI][inputBufferJ] + ((lastValue * 31) >> 5);
+        lastValue = retVal;
 
-        m_nCurrentIndex++;
-        m_pInputBuffer_j++;
+        currentIndex++;
+        inputBufferJ++;
 
-        return nRetVal;
+        return retVal;
     }
 
-    public void Flush() {
-        if (m_pNNFilter != null) m_pNNFilter.Flush();
-        if (m_pNNFilter1 != null) m_pNNFilter1.Flush();
+    @Override
+    public void flush() {
+        if (nnFilter != null) nnFilter.flush();
+        if (nnFilter1 != null) nnFilter1.flush();
 
-        Arrays.fill(m_pBuffer[0], 0, HISTORY_ELEMENTS, 0);
-        Arrays.fill(m_aryM, 0);
+        Arrays.fill(buffer[0], 0, HISTORY_ELEMENTS, 0);
+        Arrays.fill(m, 0);
 
-        m_aryM[0] = 360;
-        m_aryM[1] = 317;
-        m_aryM[2] = -109;
-        m_aryM[3] = 98;
+        m[0] = 360;
+        m[1] = 317;
+        m[2] = -109;
+        m[3] = 98;
 
-        m_pInputBuffer_i = 0;
-        m_pInputBuffer_j = HISTORY_ELEMENTS;
+        inputBufferI = 0;
+        inputBufferJ = HISTORY_ELEMENTS;
 
-        m_nLastValue = 0;
-        m_nCurrentIndex = 0;
+        lastValue = 0;
+        currentIndex = 0;
     }
 
     // buffer information
-    protected int[][] m_pBuffer = new int[BUFFER_COUNT][];
+    protected final int[][] buffer = new int[BUFFER_COUNT][];
 
     // adaption
-    protected int[] m_aryM = new int[M_COUNT];
+    protected final int[] m = new int[M_COUNT];
 
     // buffer pointers
-    protected int m_pInputBuffer_i;
-    protected int m_pInputBuffer_j;
+    protected int inputBufferI;
+    protected int inputBufferJ;
 
     // other
-    protected int m_nCurrentIndex;
-    protected int m_nLastValue;
-    protected NNFilter m_pNNFilter;
-    protected NNFilter m_pNNFilter1;
+    protected int currentIndex;
+    protected int lastValue;
+    protected NNFilter nnFilter;
+    protected NNFilter nnFilter1;
 }

@@ -25,5 +25,5 @@ package davaguine.jmac.encoder;
 public class BitArrayState {
 
     public int k;
-    public int nKSum;
+    public int kSum;
 }

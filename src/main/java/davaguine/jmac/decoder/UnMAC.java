@@ -35,176 +35,176 @@ import davaguine.jmac.tools.Prepare;
  */
 public class UnMAC {
 
-    //construction/destruction
+    // construction/destruction
+
     public UnMAC() {
-        //initialize member variables
-        m_bInitialized = false;
-        m_nRealFrame = 0;
-        m_LastDecodedFrameIndex = -1;
-        m_pAPEDecompress = null;
+        // initialize member variables
+        initialized = false;
+        realFrame = 0;
+        lastDecodedFrameIndex = -1;
+        apeDecompress = null;
 
-        m_pAPEDecompressCore = null;
-        m_pPrepare = null;
+        apeDecompressCore = null;
 
-        m_nBlocksProcessed = 0;
+        blocksProcessed = 0;
     }
 
-    //functions
-    public void Initialize(IAPEDecompress pAPEDecompress) {
-        //uninitialize if it is currently initialized
-        if (m_bInitialized)
-            Uninitialize();
+    // functions
 
-        if (pAPEDecompress == null) {
-            Uninitialize();
+    public void initialize(IAPEDecompress apeDecompress) {
+        // uninitialize if it is currently initialized
+        if (initialized)
+            uninitialize();
+
+        if (apeDecompress == null) {
+            uninitialize();
             throw new JMACException("Error Initializing UnMAC");
         }
 
-        //set the member pointer to the IAPEDecompress class
-        m_pAPEDecompress = pAPEDecompress;
+        // set the member pointer to the IAPEDecompress class
+        this.apeDecompress = apeDecompress;
 
-        //set the last decode frame to -1 so it forces a seek on start
-        m_LastDecodedFrameIndex = -1;
+        // set the last decode frame to -1 so it forces a seek on start
+        lastDecodedFrameIndex = -1;
 
-        m_pAPEDecompressCore = new APEDecompressCore(pAPEDecompress);
-        m_pPrepare = new Prepare();
+        apeDecompressCore = new APEDecompressCore(apeDecompress);
 
-        //set the initialized flag to TRUE
-        m_bInitialized = true;
+        // set the initialized flag to TRUE
+        initialized = true;
 
-        m_wfeInput = m_pAPEDecompress.getApeInfoWaveFormatEx();
+        wfeInput = apeDecompress.getApeInfoWaveFormatEx();
     }
 
-    public void Uninitialize() {
-        if (m_bInitialized) {
-            m_pAPEDecompressCore = null;
-            m_pPrepare = null;
+    public void uninitialize() {
+        if (initialized) {
+            apeDecompressCore = null;
 
-            //clear the APE info pointer
-            m_pAPEDecompress = null;
+            // clear the APE info pointer
+            apeDecompress = null;
 
-            //set the last decoded frame again
-            m_LastDecodedFrameIndex = -1;
+            // set the last decoded frame again
+            lastDecodedFrameIndex = -1;
 
-            //set the initialized flag to FALSE
-            m_bInitialized = false;
+            // set the initialized flag to FALSE
+            initialized = false;
         }
     }
 
-    public int DecompressFrame(ByteBuffer pOutputData, int FrameIndex) throws IOException {
-        return DecompressFrameOld(pOutputData, FrameIndex);
+    public int decompressFrame(ByteBuffer outputData, int frameIndex) throws IOException {
+        return decompressFrameOld(outputData, frameIndex);
     }
 
-    public void SeekToFrame(int FrameIndex) throws IOException {
-        if (m_pAPEDecompress.getApeInfoFileVersion() > 3800) {
-            if ((m_LastDecodedFrameIndex == -1) || ((FrameIndex - 1) != m_LastDecodedFrameIndex)) {
-                int SeekRemainder = (m_pAPEDecompress.getApeInfoSeekByte(FrameIndex) - m_pAPEDecompress.getApeInfoSeekByte(0)) % 4;
-                m_pAPEDecompressCore.GetUnBitArrray().FillAndResetBitArray(m_nRealFrame == FrameIndex ? -1 : m_pAPEDecompress.getApeInfoSeekByte(FrameIndex) - SeekRemainder, SeekRemainder * 8);
-                m_nRealFrame = FrameIndex;
+    public void seekToFrame(int frameIndex) throws IOException {
+        if (apeDecompress.getApeInfoFileVersion() > 3800) {
+            if ((lastDecodedFrameIndex == -1) || ((frameIndex - 1) != lastDecodedFrameIndex)) {
+                int seekRemainder = (apeDecompress.getApeInfoSeekByte(frameIndex) - apeDecompress.getApeInfoSeekByte(0)) % 4;
+                apeDecompressCore.getUnBitArray().fillAndResetBitArray(realFrame == frameIndex ? -1 : apeDecompress.getApeInfoSeekByte(frameIndex) - seekRemainder, seekRemainder * 8);
+                realFrame = frameIndex;
             } else
-                m_pAPEDecompressCore.GetUnBitArrray().AdvanceToByteBoundary();
+                apeDecompressCore.getUnBitArray().advanceToByteBoundary();
         } else {
-            if ((m_LastDecodedFrameIndex == -1) || ((FrameIndex - 1) != m_LastDecodedFrameIndex)) {
-                m_pAPEDecompressCore.GetUnBitArrray().FillAndResetBitArray(m_nRealFrame == FrameIndex ? -1 : m_pAPEDecompress.getApeInfoSeekByte(FrameIndex), m_pAPEDecompress.getApeInfoSeekBit(FrameIndex));
-                m_nRealFrame = FrameIndex;
+            if ((lastDecodedFrameIndex == -1) || ((frameIndex - 1) != lastDecodedFrameIndex)) {
+                apeDecompressCore.getUnBitArray().fillAndResetBitArray(realFrame == frameIndex ? -1 : apeDecompress.getApeInfoSeekByte(frameIndex), apeDecompress.getApeInfoSeekBit(frameIndex));
+                realFrame = frameIndex;
             }
         }
     }
 
-    //data members
-    private boolean m_bInitialized;
-    private int m_LastDecodedFrameIndex;
-    private int m_nRealFrame;
-    private IAPEDecompress m_pAPEDecompress;
-    private Prepare m_pPrepare;
+    // data members
 
-    private APEDecompressCore m_pAPEDecompressCore;
+    private boolean initialized;
+    private int lastDecodedFrameIndex;
+    private int realFrame;
+    private IAPEDecompress apeDecompress;
 
-    //functions
-    private int DecompressFrameOld(ByteBuffer pOutputData, int FrameIndex) throws IOException {
-        //error check the parameters (too high of a frame index, etc.)
-        if (FrameIndex >= m_pAPEDecompress.getApeInfoTotalFrames())
+    private APEDecompressCore apeDecompressCore;
+
+    // functions
+
+    private int decompressFrameOld(ByteBuffer outputData, int frameIndex) throws IOException {
+        // error check the parameters (too high of a frame index, etc.)
+        if (frameIndex >= apeDecompress.getApeInfoTotalFrames())
             return 0;
 
-        //get the number of samples in the frame
-        int nBlocks = 0;
-        nBlocks = ((FrameIndex + 1) >= m_pAPEDecompress.getApeInfoTotalFrames()) ? m_pAPEDecompress.getApeInfoFinalFrameBlocks() : m_pAPEDecompress.getApeInfoBlocksPerFrame();
-        if (nBlocks == 0)
-            throw new JMACException("Invalid Frame Index"); //nothing to do (file must be zero length) (have to return error)
+        // get the number of samples in the frame
+        int blocks = 0;
+        blocks = ((frameIndex + 1) >= apeDecompress.getApeInfoTotalFrames()) ? apeDecompress.getApeInfoFinalFrameBlocks() : apeDecompress.getApeInfoBlocksPerFrame();
+        if (blocks == 0)
+            throw new JMACException("Invalid Frame Index"); // nothing to do (file must be zero length) (have to return error)
 
-        //take care of seeking and frame alignment
-        SeekToFrame(FrameIndex);
+        // take care of seeking and frame alignment
+        seekToFrame(frameIndex);
 
-        //get the checksum
-        long nSpecialCodes = 0;
-        long nStoredCRC = 0;
+        // get the checksum
+        long specialCodes = 0;
+        long storedCRC;
 
-        if ((m_pAPEDecompress.getApeInfoFormatFlags() & APEHeader.MAC_FORMAT_FLAG_CRC) <= 0) {
-            nStoredCRC = m_pAPEDecompressCore.GetUnBitArrray().DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_RICE, 30);
-            if (nStoredCRC == 0)
-                nSpecialCodes = SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE | SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE;
+        if ((apeDecompress.getApeInfoFormatFlags() & APEHeader.MAC_FORMAT_FLAG_CRC) <= 0) {
+            storedCRC = apeDecompressCore.getUnBitArray().decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_RICE, 30);
+            if (storedCRC == 0)
+                specialCodes = SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE | SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE;
         } else {
-            nStoredCRC = m_pAPEDecompressCore.GetUnBitArrray().DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_INT);
+            storedCRC = apeDecompressCore.getUnBitArray().decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_INT);
 
-            //get any 'special' codes if the file uses them (for silence, FALSE stereo, etc.)
-            nSpecialCodes = 0;
-            if (m_pAPEDecompress.getApeInfoFileVersion() > 3820) {
-                if ((nStoredCRC & 0x80000000) > 0)
-                    nSpecialCodes = m_pAPEDecompressCore.GetUnBitArrray().DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_INT);
-                nStoredCRC &= 0x7fffffff;
+            // get any 'special' codes if the file uses them (for silence, FALSE stereo, etc.)
+            specialCodes = 0;
+            if (apeDecompress.getApeInfoFileVersion() > 3820) {
+                if ((storedCRC & 0x8000_0000L) > 0)
+                    specialCodes = apeDecompressCore.getUnBitArray().decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_UNSIGNED_INT);
+                storedCRC &= 0x7fff_ffff;
             }
         }
 
-        //decompress and convert from (x,y) -> (l,r)
-        //sort of int and ugly.... sorry
-        if (m_pAPEDecompress.getApeInfoChannels() == 2) {
-            m_pAPEDecompressCore.GenerateDecodedArrays(nBlocks, (int) nSpecialCodes, FrameIndex);
+        // decompress and convert from (x,y) -> (l,r)
+        // sort of int and ugly.... sorry
+        if (apeDecompress.getApeInfoChannels() == 2) {
+            apeDecompressCore.generateDecodedArrays(blocks, (int) specialCodes, frameIndex);
 
-            m_pPrepare.unprepareOld(m_pAPEDecompressCore.m_pDataX, m_pAPEDecompressCore.m_pDataY, nBlocks, m_wfeInput,
-                    pOutputData, CRC, m_pAPEDecompress.getApeInfoFileVersion());
-        } else if (m_pAPEDecompress.getApeInfoChannels() == 1) {
-            m_pAPEDecompressCore.GenerateDecodedArrays(nBlocks, (int) nSpecialCodes, FrameIndex);
+            Prepare.unprepareOld(apeDecompressCore.dataX, apeDecompressCore.dataY, blocks, wfeInput,
+                    outputData, crc, apeDecompress.getApeInfoFileVersion());
+        } else if (apeDecompress.getApeInfoChannels() == 1) {
+            apeDecompressCore.generateDecodedArrays(blocks, (int) specialCodes, frameIndex);
 
-            m_pPrepare.unprepareOld(m_pAPEDecompressCore.m_pDataX, null, nBlocks, m_wfeInput,
-                    pOutputData, CRC, m_pAPEDecompress.getApeInfoFileVersion());
+            Prepare.unprepareOld(apeDecompressCore.dataX, null, blocks, wfeInput,
+                    outputData, crc, apeDecompress.getApeInfoFileVersion());
         }
 
-        if (m_pAPEDecompress.getApeInfoFileVersion() > 3820)
-            CRC.finalizeCrc();
+        if (apeDecompress.getApeInfoFileVersion() > 3820)
+            crc.finalizeCrc();
 
         // check the CRC
-        if ((m_pAPEDecompress.getApeInfoFormatFlags() & APEHeader.MAC_FORMAT_FLAG_CRC) <= 0) {
-            long nChecksum = CalculateOldChecksum(m_pAPEDecompressCore.m_pDataX, m_pAPEDecompressCore.m_pDataY, m_pAPEDecompress.getApeInfoChannels(), nBlocks);
-            if (nChecksum != nStoredCRC)
+        if ((apeDecompress.getApeInfoFormatFlags() & APEHeader.MAC_FORMAT_FLAG_CRC) <= 0) {
+            long checksum = calculateOldChecksum(apeDecompressCore.dataX, apeDecompressCore.dataY, apeDecompress.getApeInfoChannels(), blocks);
+            if (checksum != storedCRC)
                 throw new JMACException("Invalid Checksum");
         } else {
-            if (CRC.getCrc() != nStoredCRC)
+            if (crc.getCrc() != storedCRC)
                 throw new JMACException("Invalid Checksum");
         }
 
-        m_LastDecodedFrameIndex = FrameIndex;
-        return nBlocks;
+        lastDecodedFrameIndex = frameIndex;
+        return blocks;
     }
 
-    private long CalculateOldChecksum(int[] pDataX, int[] pDataY, int nChannels, int nBlocks) {
-        long nChecksum = 0;
+    private static long calculateOldChecksum(int[] dataX, int[] dataY, int channels, int blocks) {
+        long checksum = 0;
 
-        if (nChannels == 2) {
-            for (int z = 0; z < nBlocks; z++) {
-                int R = pDataX[z] - (pDataY[z] / 2);
-                int L = R + pDataY[z];
-                nChecksum += (Math.abs(R) + Math.abs(L));
+        if (channels == 2) {
+            for (int z = 0; z < blocks; z++) {
+                int r = dataX[z] - (dataY[z] / 2);
+                int l = r + dataY[z];
+                checksum += (Math.abs(r) + Math.abs(l));
             }
-        } else if (nChannels == 1) {
-            for (int z = 0; z < nBlocks; z++)
-                nChecksum += Math.abs(pDataX[z]);
+        } else if (channels == 1) {
+            for (int z = 0; z < blocks; z++)
+                checksum += Math.abs(dataX[z]);
         }
 
-        return nChecksum;
+        return checksum;
     }
 
-    public int m_nBlocksProcessed;
-    public Crc32 CRC = new Crc32();
-    public long m_nStoredCRC;
-    public WaveFormat m_wfeInput;
+    public final int blocksProcessed;
+    public final Crc32 crc = new Crc32();
+    public long storedCRC;
+    public WaveFormat wfeInput;
 }

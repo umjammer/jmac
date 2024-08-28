@@ -20,13 +20,12 @@ package davaguine.jmac.spi;
 
 import javax.sound.sampled.AudioFormat;
 
-/**
- * @author Dmitry Vaguine
- * @version 12.03.2004 13:35:13
- */
 
 /**
  * The encoding of MAC audio.
+ *
+ * @author Dmitry Vaguine
+ * @version 12.03.2004 13:35:13
  */
 public class APEEncoding extends AudioFormat.Encoding {
 
@@ -38,10 +37,9 @@ public class APEEncoding extends AudioFormat.Encoding {
     /**
      * Constructs a new APEEncoding
      *
-     * @param encodingName - the name of the new type of encoding
+     * @param encodingName the name of the new type of encoding
      */
     public APEEncoding(String encodingName) {
         super(encodingName);
     }
-
 }

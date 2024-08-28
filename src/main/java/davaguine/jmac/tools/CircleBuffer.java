@@ -26,105 +26,111 @@ package davaguine.jmac.tools;
 public class CircleBuffer {
 
     // construction / destruction
+
     public CircleBuffer() {
-        m_pBuffer = null;
-        m_nTotal = 0;
-        m_nHead = 0;
-        m_nTail = 0;
-        m_nEndCap = 0;
-        m_nMaxDirectWriteBytes = 0;
+        buffer = null;
+        total = 0;
+        head = 0;
+        tail = 0;
+        endCap = 0;
+        maxDirectWriteBytes = 0;
     }
 
     // create the buffer
-    public void CreateBuffer(int nBytes, int nMaxDirectWriteBytes) {
-        m_nMaxDirectWriteBytes = nMaxDirectWriteBytes;
-        m_nTotal = nBytes + 1 + nMaxDirectWriteBytes;
-        m_pBuffer = new byte[m_nTotal];
+
+    public void createBuffer(int bytes, int maxDirectWriteBytes) {
+        this.maxDirectWriteBytes = maxDirectWriteBytes;
+        total = bytes + 1 + maxDirectWriteBytes;
+        buffer = new byte[total];
         byteBuffer = new ByteBuffer();
-        m_nHead = 0;
-        m_nTail = 0;
-        m_nEndCap = m_nTotal;
+        head = 0;
+        tail = 0;
+        endCap = total;
     }
 
     // query
-    public int MaxAdd() {
-        int nMaxAdd = (m_nTail >= m_nHead) ? (m_nTotal - 1 - m_nMaxDirectWriteBytes) - (m_nTail - m_nHead) : m_nHead - m_nTail - 1;
-        return nMaxAdd;
+
+    public int maxAdd() {
+        int maxAdd = (tail >= head) ? (total - 1 - maxDirectWriteBytes) - (tail - head) : head - tail - 1;
+        return maxAdd;
     }
 
-    public int MaxGet() {
-        return (m_nTail >= m_nHead) ? m_nTail - m_nHead : (m_nEndCap - m_nHead) + m_nTail;
+    public int maxGet() {
+        return (tail >= head) ? tail - head : (endCap - head) + tail;
     }
 
     // direct writing
-    public ByteBuffer GetDirectWritePointer() {
+
+    public ByteBuffer getDirectWritePointer() {
         // return a pointer to the tail -- note that it will always be safe to write
-        // at least m_nMaxDirectWriteBytes since we use an end cap region
-        byteBuffer.reset(m_pBuffer, m_nTail);
+        // at least maxDirectWriteBytes since we use an end cap region
+        byteBuffer.reset(buffer, tail);
         return byteBuffer;
     }
 
-    public void UpdateAfterDirectWrite(int nBytes) {
+    public void updateAfterDirectWrite(int bytes) {
         // update the tail
-        m_nTail += nBytes;
+        tail += bytes;
 
         // if the tail enters the "end cap" area, set the end cap and loop around
-        if (m_nTail >= (m_nTotal - m_nMaxDirectWriteBytes)) {
-            m_nEndCap = m_nTail;
-            m_nTail = 0;
+        if (tail >= (total - maxDirectWriteBytes)) {
+            endCap = tail;
+            tail = 0;
         }
     }
 
     // get data
-    public int Get(byte[] pBuffer, int index, int nBytes) {
-        int nTotalGetBytes = 0;
 
-        if (pBuffer != null && nBytes > 0) {
-            int nHeadBytes = Math.min(m_nEndCap - m_nHead, nBytes);
-            int nFrontBytes = nBytes - nHeadBytes;
+    public int get(byte[] buffer, int index, int bytes) {
+        int totalGetBytes = 0;
 
-            System.arraycopy(m_pBuffer, m_nHead, pBuffer, index, nHeadBytes);
-            nTotalGetBytes = nHeadBytes;
+        if (buffer != null && bytes > 0) {
+            int headBytes = Math.min(endCap - head, bytes);
+            int frontBytes = bytes - headBytes;
 
-            if (nFrontBytes > 0) {
-                System.arraycopy(m_pBuffer, 0, pBuffer, index + nHeadBytes, nFrontBytes);
-                nTotalGetBytes += nFrontBytes;
+            System.arraycopy(this.buffer, head, buffer, index, headBytes);
+            totalGetBytes = headBytes;
+
+            if (frontBytes > 0) {
+                System.arraycopy(this.buffer, 0, buffer, index + headBytes, frontBytes);
+                totalGetBytes += frontBytes;
             }
 
-            RemoveHead(nBytes);
+            removeHead(bytes);
         }
 
-        return nTotalGetBytes;
+        return totalGetBytes;
     }
 
     // remove / empty
-    public void Empty() {
-        m_nHead = 0;
-        m_nTail = 0;
-        m_nEndCap = m_nTotal;
+
+    public void empty() {
+        head = 0;
+        tail = 0;
+        endCap = total;
     }
 
-    public int RemoveHead(int nBytes) {
-        nBytes = Math.min(MaxGet(), nBytes);
-        m_nHead += nBytes;
-        if (m_nHead >= m_nEndCap)
-            m_nHead -= m_nEndCap;
-        return nBytes;
+    public int removeHead(int bytes) {
+        bytes = Math.min(maxGet(), bytes);
+        head += bytes;
+        if (head >= endCap)
+            head -= endCap;
+        return bytes;
     }
 
-    public int RemoveTail(int nBytes) {
-        nBytes = Math.min(MaxGet(), nBytes);
-        m_nTail -= nBytes;
-        if (m_nTail < 0)
-            m_nTail += m_nEndCap;
-        return nBytes;
+    public int removeTail(int bytes) {
+        bytes = Math.min(maxGet(), bytes);
+        tail -= bytes;
+        if (tail < 0)
+            tail += endCap;
+        return bytes;
     }
 
-    private int m_nTotal;
-    private int m_nMaxDirectWriteBytes;
-    private int m_nEndCap;
-    private int m_nHead;
-    private int m_nTail;
-    private byte[] m_pBuffer;
+    private int total;
+    private int maxDirectWriteBytes;
+    private int endCap;
+    private int head;
+    private int tail;
+    private byte[] buffer;
     private ByteBuffer byteBuffer;
 }

@@ -24,9 +24,12 @@ package davaguine.jmac.encoder;
  */
 public class RangeCoderStructCompress {
 
-    public long low;        // low end of interval
-    public long range;        // length of interval
-    public long help;        // bytes_to_follow resp. intermediate value
-    public short buffer;    // buffer for input / output
-
+    /** low end of interval */
+    public long low;
+    /** length of interval */
+    public long range;
+    /** bytes_to_follow resp. intermediate value */
+    public long help;
+    /** buffer for input / output */
+    public short buffer;
 }

@@ -50,8 +50,7 @@ public class JavaSoundSimpleAudioPlayer {
         }
 
         // Process arguments.
-        for (int i = 0; i < args.length; i++)
-            playAudioFile(args[i]);
+        for (String arg : args) playAudioFile(arg);
 
         // Must exit explicitly since audio creates non-daemon threads.
         System.exit(0);
@@ -62,7 +61,7 @@ public class JavaSoundSimpleAudioPlayer {
      */
     public static void playAudioFile(String fileName) {
         try {
-            AudioInputStream audioInputStream = null;
+            AudioInputStream audioInputStream;
             AudioFileFormat audioFileFormat = null;
             try {
                 URL url = new URL(fileName);
@@ -138,12 +137,12 @@ public class JavaSoundSimpleAudioPlayer {
                 while (bytesRead >= 0) {
                     bytesRead = audioInputStream.read(buffer, 0, buffer.length);
                     if (bytesRead >= 0) {
-                        //System.out.println("Play.playAudioStream bytes read=" + bytesRead +
-                        //        ", frame size=" + audioFormat.getFrameSize() + ", frames read=" + bytesRead / audioFormat.getFrameSize());
+//System.out.println("Play.playAudioStream bytes read=" + bytesRead +
+// ", frame size=" + audioFormat.getFrameSize() + ", frames read=" + bytesRead / audioFormat.getFrameSize());
                         // Odd sized sounds throw an exception if we don't write the same amount.
                         int framesWritten = dataLine.write(buffer, 0, bytesRead);
                     }
-                } // while
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

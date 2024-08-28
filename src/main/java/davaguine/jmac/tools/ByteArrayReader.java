@@ -20,6 +20,10 @@ package davaguine.jmac.tools;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -28,18 +32,20 @@ import java.io.IOException;
  */
 public class ByteArrayReader {
 
+    private static final Logger logger = getLogger(ByteArrayReader.class.getName());
+
     private byte[] data = null;
     private int index = 0;
 
     public ByteArrayReader() {
     }
 
-    public ByteArrayReader(final File io, int size) throws IOException {
+    public ByteArrayReader(File io, int size) throws IOException {
         this.data = new byte[size];
         io.readFully(data);
     }
 
-    public ByteArrayReader(final byte[] data) {
+    public ByteArrayReader(byte[] data) {
         this.data = data;
     }
 
@@ -56,16 +62,17 @@ public class ByteArrayReader {
         this.index = index;
     }
 
-    public void reset(final File io, int size) throws IOException {
+    public void reset(File io, int size) throws IOException {
         index = 0;
         try {
             io.readFully(data, 0, size);
         } catch (EOFException e) {
+            logger.log(Level.TRACE, e);
         }
     }
 
     public void skipBytes(long n) {
-        index += n;
+        index += (int) n;
     }
 
     public short readUnsignedByte() {
@@ -73,12 +80,12 @@ public class ByteArrayReader {
     }
 
     public int readUnsignedShort() {
-        byte a1[];
+        byte[] a1;
         return ((a1 = data)[index++] & 0xff) | ((a1[index++] & 0xff) << 8);
     }
 
     public long readUnsignedInt() {
-        byte a1[];
+        byte[] a1;
         return ((long) ((a1 = data)[index++] & 0xff)) | (((long) (a1[index++] & 0xff)) << 8) | (((long) (a1[index++] & 0xff)) << 16) | (((long) (a1[index++] & 0xff)) << 24);
     }
 
@@ -87,17 +94,17 @@ public class ByteArrayReader {
     }
 
     public short readShort() {
-        byte a1[];
+        byte[] a1;
         return (short) (((a1 = data)[index++] & 0xff) | ((a1[index++] & 0xff) << 8));
     }
 
     public int readInt() {
-        byte a1[];
+        byte[] a1;
         return (int) (((long) ((a1 = data)[index++] & 0xff)) | (((long) (a1[index++] & 0xff)) << 8) | (((long) (a1[index++] & 0xff)) << 16) | (((long) (a1[index++] & 0xff)) << 24));
     }
 
     public long readLong() {
-        byte a1[];
+        byte[] a1;
         return ((long) ((a1 = data)[index++] & 0xff)) | (((long) (a1[index++] & 0xff)) << 8) | (((long) (a1[index++] & 0xff)) << 16) | (((long) (a1[index++] & 0xff)) << 24) | (((long) (a1[index++] & 0xff)) << 32) | (((long) (a1[index++] & 0xff)) << 40) | (((long) (a1[index++] & 0xff)) << 48) | (((long) (a1[index++] & 0xff)) << 56);
     }
 
@@ -133,5 +140,4 @@ public class ByteArrayReader {
         index += (size + 1);
         return res;
     }
-
 }

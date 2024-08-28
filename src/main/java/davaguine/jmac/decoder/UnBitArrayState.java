@@ -25,5 +25,5 @@ package davaguine.jmac.decoder;
 public class UnBitArrayState {
 
     public int k;
-    public int nKSum;
+    public int kSum;
 }

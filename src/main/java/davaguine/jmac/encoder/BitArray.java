@@ -33,9 +33,9 @@ import davaguine.jmac.tools.MD5;
  */
 public class BitArray {
 
-    private final static int BIT_ARRAY_ELEMENTS = 4096;                        // the number of elements in the bit array (4 MB)
-    private final static int BIT_ARRAY_BYTES = BIT_ARRAY_ELEMENTS * 4;    // the number of bytes in the bit array
-    private final static int BIT_ARRAY_BITS = BIT_ARRAY_BYTES * 8;    // the number of bits in the bit array
+    private final static int BIT_ARRAY_ELEMENTS = 4096;  // the number of elements in the bit array (4 MB)
+    private final static int BIT_ARRAY_BYTES = BIT_ARRAY_ELEMENTS * 4;  // the number of bytes in the bit array
+    private final static int BIT_ARRAY_BITS = BIT_ARRAY_BYTES * 8;  // the number of bits in the bit array
     private final static int MAX_ELEMENT_BITS = 128;
     private final static int REFILL_BIT_THRESHOLD = BIT_ARRAY_BITS - MAX_ELEMENT_BITS;
 
@@ -53,63 +53,65 @@ public class BitArray {
     private final static int RANGE_OVERFLOW_SHIFT = 16;
 
     // construction / destruction
-    public BitArray(File pIO) {
+
+    public BitArray(File io) {
         // allocate memory for the bit array
-        m_pBitArray = new int[BIT_ARRAY_ELEMENTS];
-        Arrays.fill(m_pBitArray, 0);
+        bitArray = new int[BIT_ARRAY_ELEMENTS];
+        Arrays.fill(bitArray, 0);
 
         // initialize other variables
-        m_nCurrentBitIndex = 0;
-        m_pIO = pIO;
+        currentBitIndex = 0;
+        this.io = io;
     }
 
+    @Override
     protected void finalize() {
-        m_pBitArray = null;
+        bitArray = null;
     }
 
-    private void NormalizeRangeCoder() {
-        while (m_RangeCoderInfo.range <= BOTTOM_VALUE) {
-            if (m_RangeCoderInfo.low < (0xFF << SHIFT_BITS)) {
-                putc(m_RangeCoderInfo.buffer);
-                for (; m_RangeCoderInfo.help > 0; m_RangeCoderInfo.help--) {
-                    putc_nocap(0xFF);
+    private void normalizeRangeCoder() {
+        while (rangeCoderInfo.range <= BOTTOM_VALUE) {
+            if (rangeCoderInfo.low < (0xFF << SHIFT_BITS)) {
+                putc(rangeCoderInfo.buffer);
+                for (; rangeCoderInfo.help > 0; rangeCoderInfo.help--) {
+                    putcNocap(0xFF);
                 }
-                m_RangeCoderInfo.buffer = (short) ((m_RangeCoderInfo.low >> SHIFT_BITS) & 0xff);
-            } else if ((m_RangeCoderInfo.low & TOP_VALUE) > 0) {
-                putc(m_RangeCoderInfo.buffer + 1);
-                m_nCurrentBitIndex += (m_RangeCoderInfo.help * 8);
-                m_RangeCoderInfo.help = 0;
-                m_RangeCoderInfo.buffer = (short) ((m_RangeCoderInfo.low >> SHIFT_BITS) & 0xff);
+                rangeCoderInfo.buffer = (short) ((rangeCoderInfo.low >> SHIFT_BITS) & 0xff);
+            } else if ((rangeCoderInfo.low & TOP_VALUE) > 0) {
+                putc(rangeCoderInfo.buffer + 1);
+                currentBitIndex += (rangeCoderInfo.help * 8);
+                rangeCoderInfo.help = 0;
+                rangeCoderInfo.buffer = (short) ((rangeCoderInfo.low >> SHIFT_BITS) & 0xff);
             } else {
-                m_RangeCoderInfo.help++;
+                rangeCoderInfo.help++;
             }
 
-            m_RangeCoderInfo.low = (m_RangeCoderInfo.low << 8) & (TOP_VALUE - 1);
-            m_RangeCoderInfo.range <<= 8;
+            rangeCoderInfo.low = (rangeCoderInfo.low << 8) & (TOP_VALUE - 1);
+            rangeCoderInfo.range <<= 8;
         }
     }
 
-    private void EncodeFast(long RANGE_WIDTH, long RANGE_TOTAL, int SHIFT) {
-        NormalizeRangeCoder();
-        long nTemp = m_RangeCoderInfo.range >> (SHIFT);
-        m_RangeCoderInfo.range = nTemp * (RANGE_WIDTH);
-        m_RangeCoderInfo.low += nTemp * (RANGE_TOTAL);
+    private void encodeFast(long rangeWidth, long rangeTotal, int shift) {
+        normalizeRangeCoder();
+        long temp = rangeCoderInfo.range >> shift;
+        rangeCoderInfo.range = temp * rangeWidth;
+        rangeCoderInfo.low += temp * rangeTotal;
     }
 
-    private void EncodeDirect(long VALUE, int SHIFT) {
-        NormalizeRangeCoder();
-        m_RangeCoderInfo.range = m_RangeCoderInfo.range >> (SHIFT);
-        m_RangeCoderInfo.low += m_RangeCoderInfo.range * (VALUE);
+    private void encodeDirect(long value, int shift) {
+        normalizeRangeCoder();
+        rangeCoderInfo.range = rangeCoderInfo.range >> shift;
+        rangeCoderInfo.low += rangeCoderInfo.range * value;
     }
 
-    private void putc(long VALUE) {
-        m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] |= ((VALUE) & 0xFF) << (24 - (m_nCurrentBitIndex & 31));
-        m_nCurrentBitIndex += 8;
+    private void putc(long value) {
+        bitArray[(int) (currentBitIndex >> 5)] |= (int) ((value & 0xFF) << (24 - (currentBitIndex & 31)));
+        currentBitIndex += 8;
     }
 
-    private void putc_nocap(long VALUE) {
-        m_pBitArray[(int) (m_nCurrentBitIndex >> 5)] |= (VALUE) << (24 - (m_nCurrentBitIndex & 31));
-        m_nCurrentBitIndex += 8;
+    private void putcNocap(long value) {
+        bitArray[(int) (currentBitIndex >> 5)] |= (int) (value << (24 - (currentBitIndex & 31)));
+        currentBitIndex += 8;
     }
 
     public void checkValue(long value) {
@@ -118,214 +120,212 @@ public class BitArray {
     }
 
     // encoding
-    public void EncodeUnsignedLong(long n) throws IOException {
+    public void encodeUnsignedLong(long n) throws IOException {
         // make sure there are at least 8 bytes in the buffer
-        if (m_nCurrentBitIndex > (BIT_ARRAY_BYTES - 8))
-            OutputBitArray();
+        if (currentBitIndex > (BIT_ARRAY_BYTES - 8))
+            outputBitArray();
 
         // encode the value
-        int nBitArrayIndex = (int) (m_nCurrentBitIndex >> 5);
-        int nBitIndex = (int) (m_nCurrentBitIndex & 31);
+        int bitArrayIndex = (int) (currentBitIndex >> 5);
+        int bitIndex = (int) (currentBitIndex & 31);
 
-        if (nBitIndex == 0)
-            m_pBitArray[nBitArrayIndex] = (int) n;
+        if (bitIndex == 0)
+            bitArray[bitArrayIndex] = (int) n;
         else {
-            m_pBitArray[nBitArrayIndex] |= n >> nBitIndex;
-            m_pBitArray[nBitArrayIndex + 1] = (int) (n << (32 - nBitIndex));
+            bitArray[bitArrayIndex] |= (int) (n >> bitIndex);
+            bitArray[bitArrayIndex + 1] = (int) (n << (32 - bitIndex));
         }
 
-        m_nCurrentBitIndex += 32;
+        currentBitIndex += 32;
     }
 
-    public void EncodeValue(int nEncode, BitArrayState BitArrayState) throws IOException {
+    public void encodeValue(int encode, BitArrayState bitArrayState) throws IOException {
         // make sure there is room for the data
         // this is a little slower than ensuring a huge block to start with, but it's safer
-        if (m_nCurrentBitIndex > REFILL_BIT_THRESHOLD)
-            OutputBitArray();
+        if (currentBitIndex > REFILL_BIT_THRESHOLD)
+            outputBitArray();
 
         // convert to unsigned
-        nEncode = (nEncode > 0) ? nEncode * 2 - 1 : -nEncode * 2;
+        encode = (encode > 0) ? encode * 2 - 1 : -encode * 2;
 
-        int nOriginalKSum = BitArrayState.nKSum;
+        int originalKSum = bitArrayState.kSum;
 
-        // update nKSum
-        BitArrayState.nKSum += ((nEncode + 1) / 2) - ((BitArrayState.nKSum + 16) >> 5);
+        // update kSum
+        bitArrayState.kSum += ((encode + 1) / 2) - ((bitArrayState.kSum + 16) >> 5);
 
         // update k
-        if (BitArrayState.nKSum < K_SUM_MIN_BOUNDARY[BitArrayState.k])
-            BitArrayState.k--;
-        else if (BitArrayState.nKSum >= K_SUM_MIN_BOUNDARY[BitArrayState.k + 1])
-            BitArrayState.k++;
+        if (bitArrayState.kSum < K_SUM_MIN_BOUNDARY[bitArrayState.k])
+            bitArrayState.k--;
+        else if (bitArrayState.kSum >= K_SUM_MIN_BOUNDARY[bitArrayState.k + 1])
+            bitArrayState.k++;
 
         // figure the pivot value
-        int nPivotValue = Math.max(nOriginalKSum / 32, 1);
-        int nOverflow = nEncode / nPivotValue;
-        int nBase = nEncode - (nOverflow * nPivotValue);
+        int pivotValue = Math.max(originalKSum / 32, 1);
+        int overflow = encode / pivotValue;
+        int base = encode - (overflow * pivotValue);
 
         // store the overflow
-        if (nOverflow < (MODEL_ELEMENTS - 1))
-            EncodeFast(RANGE_WIDTH[nOverflow], RANGE_TOTAL[nOverflow], RANGE_OVERFLOW_SHIFT);
+        if (overflow < (MODEL_ELEMENTS - 1))
+            encodeFast(RANGE_WIDTH[overflow], RANGE_TOTAL[overflow], RANGE_OVERFLOW_SHIFT);
         else {
             // store the "special" overflow (tells that perfect k is encoded next)
-            EncodeFast(RANGE_WIDTH[MODEL_ELEMENTS - 1], RANGE_TOTAL[MODEL_ELEMENTS - 1], RANGE_OVERFLOW_SHIFT);
+            encodeFast(RANGE_WIDTH[MODEL_ELEMENTS - 1], RANGE_TOTAL[MODEL_ELEMENTS - 1], RANGE_OVERFLOW_SHIFT);
 
             // code the overflow using straight bits
-            EncodeDirect((nOverflow >> 16) & 0xFFFF, 16);
-            EncodeDirect(nOverflow & 0xFFFF, 16);
+            encodeDirect((overflow >> 16) & 0xFFFF, 16);
+            encodeDirect(overflow & 0xFFFF, 16);
         }
 
         // code the base
         {
-            if (nPivotValue >= (1 << 16)) {
-                int nPivotValueBits = 0;
-                while ((nPivotValue >> nPivotValueBits) > 0)
-                    nPivotValueBits++;
-                int nSplitFactor = 1 << (nPivotValueBits - 16);
+            if (pivotValue >= (1 << 16)) {
+                int pivotValueBits = 0;
+                while ((pivotValue >> pivotValueBits) > 0)
+                    pivotValueBits++;
+                int splitFactor = 1 << (pivotValueBits - 16);
 
                 // we know that base is smaller than pivot coming into this
                 // however, after we divide both by an integer, they could be the same
                 // we account by adding one to the pivot, but this hurts compression
-                // by (1 / nSplitFactor) -- therefore we maximize the split factor
+                // by (1 / splitFactor) -- therefore we maximize the split factor
                 // that gets one added to it
 
                 // encode the pivot as two pieces
-                int nPivotValueA = (nPivotValue / nSplitFactor) + 1;
-                int nPivotValueB = nSplitFactor;
+                int pivotValueA = (pivotValue / splitFactor) + 1;
+                int pivotValueB = splitFactor;
 
-                int nBaseA = nBase / nSplitFactor;
-                int nBaseB = nBase % nSplitFactor;
+                int baseA = base / splitFactor;
+                int baseB = base % splitFactor;
 
                 {
-                    NormalizeRangeCoder();
-                    long nTemp = m_RangeCoderInfo.range / nPivotValueA;
-                    m_RangeCoderInfo.range = nTemp;
-                    m_RangeCoderInfo.low += nTemp * nBaseA;
+                    normalizeRangeCoder();
+                    long temp = rangeCoderInfo.range / pivotValueA;
+                    rangeCoderInfo.range = temp;
+                    rangeCoderInfo.low += temp * baseA;
                 }
 
                 {
-                    NormalizeRangeCoder();
-                    long nTemp = m_RangeCoderInfo.range / nPivotValueB;
-                    m_RangeCoderInfo.range = nTemp;
-                    m_RangeCoderInfo.low += nTemp * nBaseB;
+                    normalizeRangeCoder();
+                    long temp = rangeCoderInfo.range / pivotValueB;
+                    rangeCoderInfo.range = temp;
+                    rangeCoderInfo.low += temp * baseB;
                 }
             } else {
-                NormalizeRangeCoder();
-                long nTemp = m_RangeCoderInfo.range / nPivotValue;
-                m_RangeCoderInfo.range = nTemp;
-                m_RangeCoderInfo.low += nTemp * nBase;
+                normalizeRangeCoder();
+                long temp = rangeCoderInfo.range / pivotValue;
+                rangeCoderInfo.range = temp;
+                rangeCoderInfo.low += temp * base;
             }
         }
     }
 
-    public void EncodeBits(long nValue, int nBits) throws IOException {
+    public void encodeBits(long value, int bits) throws IOException {
         // make sure there is room for the data
         // this is a little slower than ensuring a huge block to start with, but it's safer
-        if (m_nCurrentBitIndex > REFILL_BIT_THRESHOLD)
-            OutputBitArray();
+        if (currentBitIndex > REFILL_BIT_THRESHOLD)
+            outputBitArray();
 
-        EncodeDirect(nValue, nBits);
+        encodeDirect(value, bits);
     }
 
     // output (saving)
-    public void OutputBitArray() throws IOException {
-        OutputBitArray(false);
+
+    public void outputBitArray() throws IOException {
+        outputBitArray(false);
     }
 
-    private ByteArrayWriter m_pWriter = new ByteArrayWriter();
+    private final ByteArrayWriter writer = new ByteArrayWriter();
 
-    public void OutputBitArray(boolean bFinalize) throws IOException {
+    public void outputBitArray(boolean finalize) throws IOException {
         // write the entire file to disk
-        long nBytesToWrite = 0;
+        long bytesToWrite = 0;
 
-        m_pWriter.reset(m_pBitArray.length * 4);
-        for (int i = 0; i < m_pBitArray.length; i++)
-            m_pWriter.writeInt(m_pBitArray[i]);
+        writer.reset(bitArray.length * 4);
+        for (int j : bitArray) writer.writeInt(j);
 
-        if (bFinalize) {
-            nBytesToWrite = ((m_nCurrentBitIndex >> 5) * 4) + 4;
+        if (finalize) {
+            bytesToWrite = ((currentBitIndex >> 5) * 4) + 4;
 
-            m_MD5.Update(m_pWriter.getBytes(), (int) nBytesToWrite);
+            md5.update(writer.getBytes(), (int) bytesToWrite);
 
-            m_pIO.write(m_pWriter.getBytes(), 0, (int) nBytesToWrite);
+            io.write(writer.getBytes(), 0, (int) bytesToWrite);
 
             // reset the bit pointer
-            m_nCurrentBitIndex = 0;
+            currentBitIndex = 0;
         } else {
-            nBytesToWrite = (m_nCurrentBitIndex >> 5) * 4;
+            bytesToWrite = (currentBitIndex >> 5) * 4;
 
-            m_MD5.Update(m_pWriter.getBytes(), (int) nBytesToWrite);
+            md5.update(writer.getBytes(), (int) bytesToWrite);
 
-            m_pIO.write(m_pWriter.getBytes(), 0, (int) nBytesToWrite);
+            io.write(writer.getBytes(), 0, (int) bytesToWrite);
 
             // move the last value to the front of the bit array
-            m_pBitArray[0] = m_pBitArray[(int) (m_nCurrentBitIndex >> 5)];
-            m_nCurrentBitIndex = (m_nCurrentBitIndex & 31);
+            bitArray[0] = bitArray[(int) (currentBitIndex >> 5)];
+            currentBitIndex = (currentBitIndex & 31);
 
             // zero the rest of the memory (may not need the +1 because of frame byte alignment)
-            Arrays.fill(m_pBitArray, 1, (int) (Math.min(nBytesToWrite + 1, BIT_ARRAY_BYTES - 1) / 4 + 1), 0);
+            Arrays.fill(bitArray, 1, (int) (Math.min(bytesToWrite + 1, BIT_ARRAY_BYTES - 1) / 4 + 1), 0);
         }
     }
 
     // other functions
-    public void Finalize() {
-        NormalizeRangeCoder();
 
-        long nTemp = (m_RangeCoderInfo.low >> SHIFT_BITS) + 1;
+    public void finalize_() {
+        normalizeRangeCoder();
 
-        if (nTemp > 0xFF) // we have a carry
-        {
-            putc(m_RangeCoderInfo.buffer + 1);
-            for (; m_RangeCoderInfo.help > 0; m_RangeCoderInfo.help--)
+        long temp = (rangeCoderInfo.low >> SHIFT_BITS) + 1;
+
+        if (temp > 0xFF) { // we have a carry
+            putc(rangeCoderInfo.buffer + 1);
+            for (; rangeCoderInfo.help > 0; rangeCoderInfo.help--)
                 putc(0);
-        } else  // no carry
-        {
-            putc(m_RangeCoderInfo.buffer);
-            for (; m_RangeCoderInfo.help > 0; m_RangeCoderInfo.help--)
+        } else { // no carry
+            putc(rangeCoderInfo.buffer);
+            for (; rangeCoderInfo.help > 0; rangeCoderInfo.help--)
                 putc(((char) 0xFF));
         }
 
         // we must output these bytes so the core can properly work at the end of the stream
-        putc(nTemp & 0xFF);
+        putc(temp & 0xFF);
         putc(0);
         putc(0);
         putc(0);
     }
 
-    public void AdvanceToByteBoundary() {
-        while ((m_nCurrentBitIndex % 8) > 0)
-            m_nCurrentBitIndex++;
+    public void advanceToByteBoundary() {
+        while ((currentBitIndex % 8) > 0)
+            currentBitIndex++;
     }
 
-    public long GetCurrentBitIndex() {
-        return m_nCurrentBitIndex;
+    public long getCurrentBitIndex() {
+        return currentBitIndex;
     }
 
-    public void FlushState(BitArrayState BitArrayState) {
+    public void flushState(BitArrayState bitArrayState) {
         // k and ksum
-        BitArrayState.k = 10;
-        BitArrayState.nKSum = (1 << BitArrayState.k) * 16;
+        bitArrayState.k = 10;
+        bitArrayState.kSum = (1 << bitArrayState.k) * 16;
     }
 
-    public void FlushBitArray() {
+    public void flushBitArray() {
         // advance to a byte boundary (for alignment)
-        AdvanceToByteBoundary();
+        advanceToByteBoundary();
 
         // the range coder
-        m_RangeCoderInfo.low = 0;  // full code range
-        m_RangeCoderInfo.range = TOP_VALUE;
-        m_RangeCoderInfo.buffer = 0;
-        m_RangeCoderInfo.help = 0;  // no bytes to follow
+        rangeCoderInfo.low = 0;  // full code range
+        rangeCoderInfo.range = TOP_VALUE;
+        rangeCoderInfo.buffer = 0;
+        rangeCoderInfo.help = 0;  // no bytes to follow
     }
 
-    public MD5 GetMD5Helper() {
-        return m_MD5;
+    public MD5 getMD5Helper() {
+        return md5;
     }
 
     // data members
-    private int[] m_pBitArray;
-    private File m_pIO;
-    private long m_nCurrentBitIndex;
-    private RangeCoderStructCompress m_RangeCoderInfo = new RangeCoderStructCompress();
-    private MD5 m_MD5 = new MD5();
-
+    private int[] bitArray;
+    private final File io;
+    private long currentBitIndex;
+    private final RangeCoderStructCompress rangeCoderInfo = new RangeCoderStructCompress();
+    private final MD5 md5 = new MD5();
 }

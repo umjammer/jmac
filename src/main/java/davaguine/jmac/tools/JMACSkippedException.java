@@ -27,5 +27,4 @@ public class JMACSkippedException extends Exception {
     public JMACSkippedException() {
         super("Skipped");
     }
-
 }

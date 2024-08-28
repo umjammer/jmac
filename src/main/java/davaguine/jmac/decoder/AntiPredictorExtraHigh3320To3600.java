@@ -25,43 +25,43 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorExtraHigh3320To3600 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements, int Iterations, long[] pOffsetValueArrayA, long[] pOffsetValueArrayB) {
-        for (int z = Iterations; z >= 0; z--) {
-            AntiPredictorOffset(pInputArray, pOutputArray, NumberOfElements, (int) pOffsetValueArrayB[z], -1, 32);
-            AntiPredictorOffset(pOutputArray, pInputArray, NumberOfElements, (int) pOffsetValueArrayA[z], 1, 32);
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements, int iterations, long[] offsetValueArrayA, long[] offsetValueArrayB) {
+        for (int z = iterations; z >= 0; z--) {
+            antiPredictorOffset(inputArray, outputArray, numberOfElements, (int) offsetValueArrayB[z], -1, 32);
+            antiPredictorOffset(outputArray, inputArray, numberOfElements, (int) offsetValueArrayA[z], 1, 32);
         }
 
-        AntiPredictor.AntiPredict(pInputArray, pOutputArray, NumberOfElements);
+        antiPredictor.antiPredict(inputArray, outputArray, numberOfElements);
     }
 
-    private AntiPredictorHigh0000To3320 AntiPredictor = new AntiPredictorHigh0000To3320();
+    private final AntiPredictorHigh0000To3320 antiPredictor = new AntiPredictorHigh0000To3320();
 
-    protected void AntiPredictorOffset(int[] Input_Array, int[] Output_Array, int Number_of_Elements, int g, int dm, int Max_Order) {
+    protected static void antiPredictorOffset(int[] inputArray, int[] outputArray, int numberOfElements, int g, int dm, int maxOrder) {
 
         int q;
 
-        if ((g == 0) || (Number_of_Elements <= Max_Order)) {
-            System.arraycopy(Input_Array, 0, Output_Array, 0, Number_of_Elements);
+        if ((g == 0) || (numberOfElements <= maxOrder)) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        System.arraycopy(Input_Array, 0, Output_Array, 0, Max_Order);
+        System.arraycopy(inputArray, 0, outputArray, 0, maxOrder);
 
         int m = 512;
 
         if (dm > 0)
-            for (q = Max_Order; q < Number_of_Elements; q++) {
-                Output_Array[q] = Input_Array[q] + ((Output_Array[q - g] * m) >> 12);
-                if ((Input_Array[q] ^ Output_Array[q - g]) > 0)
+            for (q = maxOrder; q < numberOfElements; q++) {
+                outputArray[q] = inputArray[q] + ((outputArray[q - g] * m) >> 12);
+                if ((inputArray[q] ^ outputArray[q - g]) > 0)
                     m += 8;
                 else
                     m -= 8;
             }
 
         else
-            for (q = Max_Order; q < Number_of_Elements; q++) {
-                Output_Array[q] = Input_Array[q] - ((Output_Array[q - g] * m) >> 12);
-                if ((Input_Array[q] ^ Output_Array[q - g]) > 0)
+            for (q = maxOrder; q < numberOfElements; q++) {
+                outputArray[q] = inputArray[q] - ((outputArray[q - g] * m) >> 12);
+                if ((inputArray[q] ^ outputArray[q - g]) > 0)
                     m -= 8;
                 else
                     m += 8;

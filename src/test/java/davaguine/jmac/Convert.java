@@ -31,12 +31,13 @@ public class Convert extends ProgressCallback {
 
     private static long g_nInitialTickCount;
 
-    public void callback(int persent) {
-        double dProgress = ((double) (pPercentageDone)) / 1000;
-        double dElapsedMS = (System.currentTimeMillis() - g_nInitialTickCount);
+    @Override
+    public void callback(int percent) {
+        double progress = ((double) (percentageDone)) / 1000;
+        double elapsedMS = (System.currentTimeMillis() - g_nInitialTickCount);
 
-        double dSecondsRemaining = (((dElapsedMS * 100) / dProgress) - dElapsedMS) / 1000;
-        System.out.println("Progress: " + dProgress + " (" + dSecondsRemaining + " seconds remaining)          ");
+        double secondsRemaining = (((elapsedMS * 100) / progress) - elapsedMS) / 1000;
+        System.out.println("Progress: " + progress + " (" + secondsRemaining + " seconds remaining)          ");
     }
 
     public static void main(String[] args) {
@@ -53,8 +54,8 @@ public class Convert extends ProgressCallback {
             //
             // variable declares
             //
-            String pFilename = args[0];        //the file to open
-            String pOFilename = args[1];    //the file to open
+            String filename = args[0]; // the file to open
+            String oFilename = args[1]; // the file to open
 
             //
             // attempt to verify the file
@@ -62,10 +63,10 @@ public class Convert extends ProgressCallback {
 
             // set the start time and display the starting message
             g_nInitialTickCount = System.currentTimeMillis();
-            System.out.println("Converting '" + pFilename + "'...");
+            System.out.println("Converting '" + filename + "'...");
 
             // do the verify (call unmac.dll)
-            APESimple.ConvertFile(pFilename, pOFilename, CompressionLevel.COMPRESSION_LEVEL_HIGH, new Convert());
+            APESimple.convertFile(filename, oFilename, CompressionLevel.COMPRESSION_LEVEL_HIGH, new Convert());
 
             // process the return value
         } catch (Exception e) {

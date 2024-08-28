@@ -48,13 +48,13 @@ public class ChangeTagInfo {
                 return;
             }
 
-            APEInfo apeInfo = IAPEDecompress.CreateAPEInfo(in);
+            APEInfo apeInfo = IAPEDecompress.createAPEInfo(in);
             APETag tag = apeInfo.getApeInfoTag();
-            tag.Remove(false);
-            tag.SetFieldString(args[1], args[2]);
+            tag.remove(false);
+            tag.setFieldString(args[1], args[2]);
             ID3Tag id3 = new ID3Tag();
-            tag.CreateID3Tag(id3);
-            tag.Save();
+            tag.createID3Tag(id3);
+            tag.save();
 
             apeInfo.close();
         } catch (Exception e) {

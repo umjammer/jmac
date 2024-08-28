@@ -36,221 +36,232 @@ import davaguine.jmac.tools.JMACException;
 public class APECompress extends IAPECompress {
 
     public APECompress() {
-        m_nBufferHead = 0;
-        m_nBufferTail = 0;
-        m_nBufferSize = 0;
-        m_bBufferLocked = false;
-        m_bOwnsOutputIO = false;
-        m_pioOutput = null;
+        bufferHead = 0;
+        bufferTail = 0;
+        bufferSize = 0;
+        bufferLocked = false;
+        ownsOutputIO = false;
+        output = null;
 
-        m_spAPECompressCreate = new APECompressCreate();
+        apeCompressCreate = new APECompressCreate();
 
-        m_pBuffer = null;
+        buffer = null;
     }
 
+    @Override
     protected void finalize() {
-        Kill();
+        kill();
     }
 
     // start encoding
-    public void Start(String pOutputFilename, WaveFormat pwfeInput, int nMaxAudioBytes, int nCompressionLevel, byte[] pHeaderData, int nHeaderBytes) throws IOException {
-        m_pioOutput = File.createFile(pOutputFilename, "rw");
-        m_bOwnsOutputIO = true;
 
-        m_spAPECompressCreate.Start(m_pioOutput, pwfeInput, nMaxAudioBytes, nCompressionLevel,
-                pHeaderData, nHeaderBytes);
+    @Override
+    public void start(String outputFilename, WaveFormat wfeInput, int maxAudioBytes, int compressionLevel, byte[] headerData, int headerBytes) throws IOException {
+        output = File.createFile(outputFilename, "rw");
+        ownsOutputIO = true;
 
-        m_nBufferSize = m_spAPECompressCreate.GetFullFrameBytes();
-        m_pBuffer = new byte[m_nBufferSize];
-        m_wfeInput = pwfeInput;
+        apeCompressCreate.start(output, wfeInput, maxAudioBytes, compressionLevel,
+                headerData, headerBytes);
+
+        bufferSize = apeCompressCreate.getFullFrameBytes();
+        buffer = new byte[bufferSize];
+        this.wfeInput = wfeInput;
     }
 
-    public void StartEx(File pioOutput, WaveFormat pwfeInput, int nMaxAudioBytes, int nCompressionLevel, byte[] pHeaderData, int nHeaderBytes) throws IOException {
-        m_pioOutput = pioOutput;
-        m_bOwnsOutputIO = false;
+    @Override
+    public void startEx(File output, WaveFormat wfeInput, int maxAudioBytes, int compressionLevel, byte[] headerData, int headerBytes) throws IOException {
+        this.output = output;
+        ownsOutputIO = false;
 
-        m_spAPECompressCreate.Start(m_pioOutput, pwfeInput, nMaxAudioBytes, nCompressionLevel,
-                pHeaderData, nHeaderBytes);
+        apeCompressCreate.start(this.output, wfeInput, maxAudioBytes, compressionLevel,
+                headerData, headerBytes);
 
-        m_nBufferSize = m_spAPECompressCreate.GetFullFrameBytes();
-        m_pBuffer = new byte[m_nBufferSize];
-        m_wfeInput = pwfeInput;
+        bufferSize = apeCompressCreate.getFullFrameBytes();
+        buffer = new byte[bufferSize];
+        this.wfeInput = wfeInput;
     }
 
     // add data / compress data
 
-    // allows linear, immediate access to the buffer (fast)
-    public int GetBufferBytesAvailable() {
-        return m_nBufferSize - m_nBufferTail;
+    /** allows linear, immediate access to the buffer (fast) */
+    @Override
+    public int getBufferBytesAvailable() {
+        return bufferSize - bufferTail;
     }
 
-    public void UnlockBuffer(int nBytesAdded, boolean bProcess) throws IOException {
-        if (!m_bBufferLocked)
+    @Override
+    public void unlockBuffer(int bytesAdded, boolean process) throws IOException {
+        if (!bufferLocked)
             throw new JMACException("Error Undefined");
 
-        m_nBufferTail += nBytesAdded;
-        m_bBufferLocked = false;
+        bufferTail += bytesAdded;
+        bufferLocked = false;
 
-        if (bProcess)
-            ProcessBuffer();
+        if (process)
+            processBuffer();
     }
 
-    private ByteBuffer pBufferPointer = new ByteBuffer();
+    private final ByteBuffer bufferPointer = new ByteBuffer();
 
-    public ByteBuffer LockBuffer(IntegerPointer pBytesAvailable) {
-        if (m_pBuffer == null) {
+    @Override
+    public ByteBuffer lockBuffer(IntegerPointer bytesAvailable) {
+        if (buffer == null) {
             return null;
         }
 
-        if (m_bBufferLocked)
+        if (bufferLocked)
             return null;
 
-        m_bBufferLocked = true;
+        bufferLocked = true;
 
-        if (pBytesAvailable != null)
-            pBytesAvailable.value = GetBufferBytesAvailable();
+        if (bytesAvailable != null)
+            bytesAvailable.value = getBufferBytesAvailable();
 
-        pBufferPointer.reset(m_pBuffer, m_nBufferTail);
-        return pBufferPointer;
+        bufferPointer.reset(buffer, bufferTail);
+        return bufferPointer;
     }
 
-    // slower, but easier than locking and unlocking (copies data)
-    private IntegerPointer m_nAddDataBytesAvailable = new IntegerPointer();
+    /** slower, but easier than locking and unlocking (copies data) */
+    private final IntegerPointer addDataBytesAvailable = new IntegerPointer();
 
-    public void AddData(byte[] pData, int nBytes) throws IOException {
-        int nBytesDone = 0;
+    @Override
+    public void addData(byte[] data, int bytes) throws IOException {
+        int bytesDone = 0;
 
-        while (nBytesDone < nBytes) {
+        while (bytesDone < bytes) {
             // lock the buffer
-            m_nAddDataBytesAvailable.value = 0;
-            ByteBuffer pBuffer = LockBuffer(m_nAddDataBytesAvailable);
-            if (pBuffer == null || m_nAddDataBytesAvailable.value <= 0)
+            addDataBytesAvailable.value = 0;
+            ByteBuffer buffer = lockBuffer(addDataBytesAvailable);
+            if (buffer == null || addDataBytesAvailable.value <= 0)
                 throw new JMACException("Error Undefined");
 
             // calculate how many bytes to copy and add that much to the buffer
-            int nBytesToProcess = Math.min(m_nAddDataBytesAvailable.value, nBytes - nBytesDone);
-            pBuffer.append(pData, nBytesDone, nBytesToProcess);
+            int bytesToProcess = Math.min(addDataBytesAvailable.value, bytes - bytesDone);
+            buffer.append(data, bytesDone, bytesToProcess);
 
             // unlock the buffer (fail if not successful)
-            UnlockBuffer(nBytesToProcess);
+            unlockBuffer(bytesToProcess);
 
             // update our progress
-            nBytesDone += nBytesToProcess;
+            bytesDone += bytesToProcess;
         }
     }
 
     // use a CIO (input source) to add data
-    private IntegerPointer m_nAddDataFromInputSourceBytesAvailavle = new IntegerPointer();
+    private final IntegerPointer addDataFromInputSourceBytesAvailavle = new IntegerPointer();
 
-    public int AddDataFromInputSource(InputSource pInputSource, int nMaxBytes) throws IOException {
+    @Override
+    public int addDataFromInputSource(InputSource inputSource, int maxBytes) throws IOException {
         // error check the parameters
-        if (pInputSource == null)
+        if (inputSource == null)
             throw new JMACException("Bad Parameters");
 
         // initialize
-        int pBytesAdded = 0;
-        int nBytesRead = 0;
+        int bytesAdded = 0;
+        int bytesRead = 0;
 
         // lock the buffer
-        m_nAddDataFromInputSourceBytesAvailavle.value = 0;
-        ByteBuffer pBuffer = LockBuffer(m_nAddDataFromInputSourceBytesAvailavle);
+        addDataFromInputSourceBytesAvailavle.value = 0;
+        ByteBuffer buffer = lockBuffer(addDataFromInputSourceBytesAvailavle);
 
         // calculate the 'ideal' number of bytes
-        int nIdealBytes = m_spAPECompressCreate.GetFullFrameBytes() - (m_nBufferTail - m_nBufferHead);
-        if (nIdealBytes > 0) {
+        int idealBytes = apeCompressCreate.getFullFrameBytes() - (bufferTail - bufferHead);
+        if (idealBytes > 0) {
             // get the data
-            int nBytesToAdd = m_nAddDataFromInputSourceBytesAvailavle.value;
+            int bytesToAdd = addDataFromInputSourceBytesAvailavle.value;
 
-            if (nMaxBytes > 0) {
-                if (nBytesToAdd > nMaxBytes) nBytesToAdd = nMaxBytes;
+            if (maxBytes > 0) {
+                if (bytesToAdd > maxBytes) bytesToAdd = maxBytes;
             }
 
-            if (nBytesToAdd > nIdealBytes) nBytesToAdd = nIdealBytes;
+            if (bytesToAdd > idealBytes) bytesToAdd = idealBytes;
 
             // always make requests along block boundaries
-            while ((nBytesToAdd % m_wfeInput.nBlockAlign) != 0)
-                nBytesToAdd--;
+            while ((bytesToAdd % wfeInput.blockAlign) != 0)
+                bytesToAdd--;
 
-            int nBlocksToAdd = nBytesToAdd / m_wfeInput.nBlockAlign;
+            int blocksToAdd = bytesToAdd / wfeInput.blockAlign;
 
             // get data
-            int nBlocksAdded = pInputSource.GetData(pBuffer, nBlocksToAdd);
-            nBytesRead = (nBlocksAdded * m_wfeInput.nBlockAlign);
+            int blocksAdded = inputSource.getData(buffer, blocksToAdd);
+            bytesRead = (blocksAdded * wfeInput.blockAlign);
 
             // store the bytes read
-            pBytesAdded = nBytesRead;
+            bytesAdded = bytesRead;
         }
 
         // unlock the data and process
-        UnlockBuffer(nBytesRead, true);
+        unlockBuffer(bytesRead, true);
 
-        return pBytesAdded;
+        return bytesAdded;
     }
 
     // finish / kill
-    public void Finish(byte[] pTerminatingData, int nTerminatingBytes, int nWAVTerminatingBytes) throws IOException {
-        ProcessBuffer(true);
-        m_spAPECompressCreate.Finish(pTerminatingData, nTerminatingBytes, nWAVTerminatingBytes);
+    @Override
+    public void finish(byte[] terminatingData, int terminatingBytes, int wavTerminatingBytes) throws IOException {
+        processBuffer(true);
+        apeCompressCreate.finish(terminatingData, terminatingBytes, wavTerminatingBytes);
     }
 
-    public void Kill() {
-        if (m_pioOutput != null) {
+    @Override
+    public void kill() {
+        if (output != null) {
             try {
-                if (m_bOwnsOutputIO)
-                    m_pioOutput.close();
+                if (ownsOutputIO)
+                    output.close();
             } catch (IOException e) {
                 throw new JMACException("Error while closing output stream", e);
             }
         }
-        m_pioOutput = null;
+        output = null;
     }
 
-    private void ProcessBuffer() throws IOException {
-        ProcessBuffer(false);
+    private void processBuffer() throws IOException {
+        processBuffer(false);
     }
 
-    private ByteArrayReader pByteReader = new ByteArrayReader();
+    private final ByteArrayReader byteReader = new ByteArrayReader();
 
-    private void ProcessBuffer(boolean bFinalize) throws IOException {
-        if (m_pBuffer == null)
+    private void processBuffer(boolean finalize) throws IOException {
+        if (buffer == null)
             throw new JMACException("Error Undefined");
 
         // process as much as possible
-        int nThreshold = (bFinalize) ? 0 : m_spAPECompressCreate.GetFullFrameBytes();
+        int threshold = (finalize) ? 0 : apeCompressCreate.getFullFrameBytes();
 
-        while ((m_nBufferTail - m_nBufferHead) >= nThreshold) {
-            int nFrameBytes = Math.min(m_spAPECompressCreate.GetFullFrameBytes(), m_nBufferTail - m_nBufferHead);
+        while ((bufferTail - bufferHead) >= threshold) {
+            int frameBytes = Math.min(apeCompressCreate.getFullFrameBytes(), bufferTail - bufferHead);
 
-            if (nFrameBytes == 0)
+            if (frameBytes == 0)
                 break;
 
-            pByteReader.reset(m_pBuffer, m_nBufferHead);
-            m_spAPECompressCreate.EncodeFrame(pByteReader, nFrameBytes);
+            byteReader.reset(buffer, bufferHead);
+            apeCompressCreate.encodeFrame(byteReader, frameBytes);
 
-            m_nBufferHead += nFrameBytes;
+            bufferHead += frameBytes;
         }
 
         // shift the buffer
-        if (m_nBufferHead != 0) {
-            int nBytesLeft = m_nBufferTail - m_nBufferHead;
+        if (bufferHead != 0) {
+            int bytesLeft = bufferTail - bufferHead;
 
-            if (nBytesLeft != 0)
-                System.arraycopy(m_pBuffer, m_nBufferHead, m_pBuffer, 0, nBytesLeft);
+            if (bytesLeft != 0)
+                System.arraycopy(buffer, bufferHead, buffer, 0, bytesLeft);
 
-            m_nBufferTail -= m_nBufferHead;
-            m_nBufferHead = 0;
+            bufferTail -= bufferHead;
+            bufferHead = 0;
         }
     }
 
-    private APECompressCreate m_spAPECompressCreate;
+    private final APECompressCreate apeCompressCreate;
 
-    private int m_nBufferHead;
-    private int m_nBufferTail;
-    private int m_nBufferSize;
-    private byte[] m_pBuffer;
-    private boolean m_bBufferLocked;
+    private int bufferHead;
+    private int bufferTail;
+    private int bufferSize;
+    private byte[] buffer;
+    private boolean bufferLocked;
 
-    private File m_pioOutput;
-    private boolean m_bOwnsOutputIO;
-    private WaveFormat m_wfeInput;
+    private File output;
+    private boolean ownsOutputIO;
+    private WaveFormat wfeInput;
 }

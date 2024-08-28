@@ -25,28 +25,29 @@ package davaguine.jmac.decoder;
  */
 public class AntiPredictorHigh3320To3600 extends AntiPredictor {
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //short frame handling
-        if (NumberOfElements < 8) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // short frame handling
+        if (numberOfElements < 8) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //do the offset anti-prediction
-        AntiPredictorOffset.AntiPredict(pInputArray, pOutputArray, NumberOfElements, 2, 12);
-        AntiPredictorOffset.AntiPredict(pOutputArray, pInputArray, NumberOfElements, 3, 12);
+        // do the offset anti-prediction
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(inputArray, outputArray, numberOfElements, 2, 12);
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(outputArray, inputArray, numberOfElements, 3, 12);
 
-        AntiPredictorOffset.AntiPredict(pInputArray, pOutputArray, NumberOfElements, 4, 12);
-        AntiPredictorOffset.AntiPredict(pOutputArray, pInputArray, NumberOfElements, 5, 12);
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(inputArray, outputArray, numberOfElements, 4, 12);
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(outputArray, inputArray, numberOfElements, 5, 12);
 
-        AntiPredictorOffset.AntiPredict(pInputArray, pOutputArray, NumberOfElements, 6, 12);
-        AntiPredictorOffset.AntiPredict(pOutputArray, pInputArray, NumberOfElements, 7, 12);
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(inputArray, outputArray, numberOfElements, 6, 12);
+        davaguine.jmac.decoder.AntiPredictorOffset.antiPredict(outputArray, inputArray, numberOfElements, 7, 12);
 
 
-        //use the normal mode
-        AntiPredictor.AntiPredict(pInputArray, pOutputArray, NumberOfElements);
+        // use the normal mode
+        antiPredictor.antiPredict(inputArray, outputArray, numberOfElements);
     }
 
-    private AntiPredictorOffset AntiPredictorOffset = new AntiPredictorOffset();
-    private AntiPredictorNormal3320To3800 AntiPredictor = new AntiPredictorNormal3320To3800();
+    private final AntiPredictorOffset antiPredictorOffset = new AntiPredictorOffset();
+    private final AntiPredictorNormal3320To3800 antiPredictor = new AntiPredictorNormal3320To3800();
 }

@@ -28,6 +28,7 @@ public class JavaSoundAudioDeviceFactory extends AudioDeviceFactory {
 
     private static final String DEVICE_CLASS_NAME = "davaguine.jmac.player.JavaSoundAudioDevice";
 
+    @Override
     public synchronized AudioDevice createAudioDevice() {
         if (!tested) {
             testAudioDevice();
@@ -36,9 +37,7 @@ public class JavaSoundAudioDeviceFactory extends AudioDeviceFactory {
 
         try {
             return createAudioDeviceImpl();
-        } catch (Exception ex) {
-            throw new JMACPlayerException("unable to create JavaSound device: " + ex);
-        } catch (LinkageError ex) {
+        } catch (Exception | LinkageError ex) {
             throw new JMACPlayerException("unable to create JavaSound device: " + ex);
         }
     }
@@ -48,9 +47,7 @@ public class JavaSoundAudioDeviceFactory extends AudioDeviceFactory {
         try {
             JavaSoundAudioDevice dev = (JavaSoundAudioDevice) instantiate(loader, DEVICE_CLASS_NAME);
             return dev;
-        } catch (Exception ex) {
-            throw new JMACPlayerException("Cannot create JavaSound device", ex);
-        } catch (LinkageError ex) {
+        } catch (Exception | LinkageError ex) {
             throw new JMACPlayerException("Cannot create JavaSound device", ex);
         }
     }

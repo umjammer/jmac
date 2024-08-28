@@ -20,6 +20,7 @@ package davaguine.jmac.info;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -36,7 +37,7 @@ import davaguine.jmac.tools.RandomAccessFile;
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
-public class APETag implements Comparator {
+public class APETag implements Comparator<APETagField> {
 
     public final static String APE_TAG_FIELD_TITLE = "Title";
     public final static String APE_TAG_FIELD_ARTIST = "Artist";
@@ -63,11 +64,8 @@ public class APETag implements Comparator {
     public final static String APE_TAG_FIELD_COMPOSER = "Composer";
     public final static String APE_TAG_FIELD_KEYWORDS = "Keywords";
 
-    /**
-     * **************************************************************************************
-     * Footer (and header) flags
-     * ***************************************************************************************
-     */
+    // Footer (and header) flags
+
     public final static int APE_TAG_FLAG_CONTAINS_HEADER = (1 << 31);
     public final static int APE_TAG_FLAG_CONTAINS_FOOTER = (1 << 30);
     public final static int APE_TAG_FLAG_IS_HEADER = (1 << 29);
@@ -76,181 +74,188 @@ public class APETag implements Comparator {
 
     public final static String APE_TAG_GENRE_UNDEFINED = "Undefined";
 
-    // create an APE tag
-    // bAnalyze determines whether it will analyze immediately or on the first request
-    // be careful with multiple threads / file pointer movement if you don't analyze immediately
-    public APETag(File pIO) throws IOException {
-        this(pIO, true);
+    /**
+     * create an APE tag
+     * be careful with multiple threads / file pointer movement if you don't analyze immediately
+     */
+    public APETag(File io) throws IOException {
+        this(io, true);
     }
 
-    public APETag(File pIO, boolean bAnalyze) throws IOException {
-        m_spIO = pIO; // we don't own the IO source
+    /**
+     * create an APE tag
+     * be careful with multiple threads / file pointer movement if you don't analyze immediately
+     *
+     * @param analyze determines whether it will analyze immediately or on the first request
+     */
+    public APETag(File io, boolean analyze) throws IOException {
+        this.io = io; // we don't own the IO source
 
-        if (bAnalyze)
-            Analyze();
+        if (analyze)
+            analyze();
     }
 
-    public APETag(String pFilename) throws IOException {
-        this(pFilename, true);
+    public APETag(String filename) throws IOException {
+        this(filename, true);
     }
 
-    public APETag(String pFilename, boolean bAnalyze) throws IOException {
-        m_spIO = new RandomAccessFile(new java.io.File(pFilename), "r");
+    public APETag(String filename, boolean analyze) throws IOException {
+        io = new RandomAccessFile(new java.io.File(filename), "r");
 
-        if (bAnalyze)
-            Analyze();
+        if (analyze)
+            analyze();
     }
 
     // save the tag to the I/O source (bUseOldID3 forces it to save as an ID3v1.1 tag instead of an APE tag)
-    public void Save() throws IOException {
-        Save(false);
+    public void save() throws IOException {
+        save(false);
     }
 
-    public void Save(boolean bUseOldID3) throws IOException {
-        Remove(false);
+    public void save(boolean useOldID3) throws IOException {
+        remove(false);
 
-        if (m_aryFields.size() <= 0)
+        if (fields.size() == 0)
             return;
 
-        if (!bUseOldID3) {
+        if (!useOldID3) {
             int z = 0;
 
             // calculate the size of the whole tag
-            int nFieldBytes = 0;
-            for (z = 0; z < m_aryFields.size(); z++)
-                nFieldBytes += ((APETagField) m_aryFields.get(z)).GetFieldSize();
+            int fieldBytes = 0;
+            for (z = 0; z < fields.size(); z++)
+                fieldBytes += fields.get(z).getFieldSize();
 
             // sort the fields
-            SortFields();
+            sortFields();
 
             // build the footer
-            APETagFooter APETagFooter = new APETagFooter(m_aryFields.size(), nFieldBytes);
+            APETagFooter apeTagFooter = new APETagFooter(fields.size(), fieldBytes);
 
             // make a buffer for the tag
-            int nTotalTagBytes = APETagFooter.GetTotalTagBytes();
+            int totalTagBytes = apeTagFooter.getTotalTagBytes();
 
             // save the fields
-            ByteArrayWriter writer = new ByteArrayWriter(nTotalTagBytes);
-            for (z = 0; z < m_aryFields.size(); z++)
-                ((APETagField) m_aryFields.get(z)).SaveField(writer);
+            ByteArrayWriter writer = new ByteArrayWriter(totalTagBytes);
+            for (z = 0; z < fields.size(); z++)
+                fields.get(z).saveField(writer);
 
             // add the footer to the buffer
-            APETagFooter.write(writer);
+            apeTagFooter.write(writer);
 
             // dump the tag to the I/O source
-            WriteBufferToEndOfIO(writer.getBytes());
+            writeBufferToEndOfIO(writer.getBytes());
         } else {
             // build the ID3 tag
             ID3Tag id3tag = new ID3Tag();
-            CreateID3Tag(id3tag);
+            createID3Tag(id3tag);
             ByteArrayWriter writer = new ByteArrayWriter(ID3Tag.ID3_TAG_BYTES);
             id3tag.write(writer);
-            WriteBufferToEndOfIO(writer.getBytes());
+            writeBufferToEndOfIO(writer.getBytes());
         }
     }
 
-    // removes any tags from the file (bUpdate determines whether is should re-analyze after removing the tag)
-    public void Remove() throws IOException {
-        Remove(true);
+    /** removes any tags from the file (bUpdate determines whether is should re-analyze after removing the tag) */
+    public void remove() throws IOException {
+        remove(true);
     }
 
-    public void Remove(boolean bUpdate) throws IOException {
+    public void remove(boolean update) throws IOException {
         // variables
-        long nOriginalPosition = m_spIO.getFilePointer();
+        long originalPosition = io.getFilePointer();
 
-        boolean bID3Removed = true;
-        boolean bAPETagRemoved = true;
+        boolean id3Removed = true;
+        boolean apeTagRemoved = true;
 
-        while (bID3Removed || bAPETagRemoved) {
-            bID3Removed = false;
-            bAPETagRemoved = false;
+        while (id3Removed || apeTagRemoved) {
+            id3Removed = false;
+            apeTagRemoved = false;
 
             // ID3 tag
-            ID3Tag id3tag = ID3Tag.read(m_spIO);
+            ID3Tag id3tag = ID3Tag.read(io);
             if (id3tag != null) {
-                m_spIO.setLength(m_spIO.length() - ID3Tag.ID3_TAG_BYTES);
-                bID3Removed = true;
+                io.setLength(io.length() - ID3Tag.ID3_TAG_BYTES);
+                id3Removed = true;
             }
 
             // APE Tag
-            APETagFooter footer = APETagFooter.read(m_spIO);
-            if (footer.GetIsValid(true)) {
-                m_spIO.setLength(m_spIO.length() - footer.GetTotalTagBytes());
-                bAPETagRemoved = true;
+            APETagFooter footer = APETagFooter.read(io);
+            if (footer.isValid(true)) {
+                io.setLength(io.length() - footer.getTotalTagBytes());
+                apeTagRemoved = true;
             }
-
         }
 
-        m_spIO.seek(nOriginalPosition);
+        io.seek(originalPosition);
 
-        if (bUpdate)
-            Analyze();
+        if (update)
+            analyze();
     }
 
-    public void SetFieldString(String pFieldName, String pFieldValue) throws IOException {
+    public void setFieldString(String fieldName, String fieldValue) throws IOException {
         // remove if empty
-        if ((pFieldValue == null) || (pFieldValue.length() <= 0))
-            RemoveField(pFieldName);
-
-        byte[] fieldValue = pFieldValue.getBytes("UTF-8");
-        byte[] value = new byte[fieldValue.length];
-        System.arraycopy(fieldValue, 0, value, 0, fieldValue.length);
-        SetFieldBinary(pFieldName, value, APETagField.TAG_FIELD_FLAG_DATA_TYPE_TEXT_UTF8);
+        if ((fieldValue == null) || (fieldValue.isEmpty()))
+            removeField(fieldName);
+        else {
+            byte[] fieldValue_ = fieldValue.getBytes(StandardCharsets.UTF_8);
+            byte[] value = new byte[fieldValue_.length];
+            System.arraycopy(fieldValue_, 0, value, 0, fieldValue_.length);
+            setFieldBinary(fieldName, value, APETagField.TAG_FIELD_FLAG_DATA_TYPE_TEXT_UTF8);
+        }
     }
 
-    public void SetFieldBinary(String pFieldName, byte[] pFieldValue, int nFieldFlags) throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
+    public void setFieldBinary(String fieldName, byte[] fieldValue, int fieldFlags) throws IOException {
+        if (!analyzed)
+            analyze();
 
-        if (pFieldName == null)
+        if (fieldName == null)
             return;
 
         // check to see if we're trying to remove the field (by setting it to NULL or an empty string)
-        boolean bRemoving = (pFieldValue == null) || (pFieldValue.length <= 0);
+        boolean removing = (fieldValue == null) || (fieldValue.length == 0);
 
         // get the index
-        int nFieldIndex = GetTagFieldIndex(pFieldName);
-        if (nFieldIndex >= 0) {
+        int fieldIndex = getTagFieldIndex(fieldName);
+        if (fieldIndex >= 0) {
             // existing field
 
             // fail if we're read-only (and not ignoring the read-only flag)
-            if ((!m_bIgnoreReadOnly) && ((APETagField) m_aryFields.get(nFieldIndex)).GetIsReadOnly())
+            if ((!ignoreReadOnly) && fields.get(fieldIndex).isReadOnly())
                 return;
 
             // erase the existing field
-            if (bRemoving)
-                RemoveField(nFieldIndex);
+            if (removing)
+                removeField(fieldIndex);
 
-            m_aryFields.set(nFieldIndex, new APETagField(pFieldName, pFieldValue, nFieldFlags));
+            fields.set(fieldIndex, new APETagField(fieldName, fieldValue, fieldFlags));
         } else {
-            if (bRemoving)
+            if (removing)
                 return;
 
-            m_aryFields.add(new APETagField(pFieldName, pFieldValue, nFieldFlags));
+            fields.add(new APETagField(fieldName, fieldValue, fieldFlags));
         }
     }
 
     // gets the value of a field (returns -1 and an empty buffer if the field doesn't exist)
-    public byte[] GetFieldBinary(String pFieldName) throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
+    public byte[] getFieldBinary(String fieldName) throws IOException {
+        if (!analyzed)
+            analyze();
 
-        APETagField pAPETagField = GetTagField(pFieldName);
-        if (pAPETagField == null)
+        APETagField apeTagField = getTagField(fieldName);
+        if (apeTagField == null)
             return null;
         else
-            return pAPETagField.GetFieldValue();
+            return apeTagField.getFieldValue();
     }
 
-    public String GetFieldString(String pFieldName) throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
+    public String getFieldString(String fieldName) throws IOException {
+        if (!analyzed)
+            analyze();
 
         String ret = null;
 
-        APETagField pAPETagField = GetTagField(pFieldName);
-        if (pAPETagField != null) {
-            byte[] b = pAPETagField.GetFieldValue();
+        APETagField apeTagField = getTagField(fieldName);
+        if (apeTagField != null) {
+            byte[] b = apeTagField.getFieldValue();
             int boundary = 0;
             int index = b.length - 1;
             while (index >= 0 && b[index] == 0) {
@@ -260,160 +265,165 @@ public class APETag implements Comparator {
             if (index < 0)
                 ret = "";
             else {
-                if (pAPETagField.GetIsUTF8Text() || (m_nAPETagVersion < 2000)) {
-                    if (m_nAPETagVersion >= 2000)
-                        ret = new String(b, 0, b.length + boundary, "UTF-8");
+                if (apeTagField.getIsUTF8Text() || (apeTagVersion < 2000)) {
+                    if (apeTagVersion >= 2000)
+                        ret = new String(b, 0, b.length + boundary, StandardCharsets.UTF_8);
                     else
-                        ret = new String(b, 0, b.length + boundary, "US-ASCII");
+                        ret = new String(b, 0, b.length + boundary, StandardCharsets.US_ASCII);
                 } else
-                    ret = new String(b, 0, b.length + boundary, "UTF-16");
+                    ret = new String(b, 0, b.length + boundary, StandardCharsets.UTF_16);
             }
         }
         return ret;
     }
 
-    // remove a specific field
-    public void RemoveField(String pFieldName) throws IOException {
-        RemoveField(GetTagFieldIndex(pFieldName));
+    /** remove a specific field */
+    public void removeField(String fieldName) throws IOException {
+        removeField(getTagFieldIndex(fieldName));
     }
 
-    public void RemoveField(int nIndex) {
-        m_aryFields.remove(nIndex);
+    public void removeField(int index) {
+        fields.remove(index);
     }
 
-    // clear all the fields
-    public void ClearFields() {
-        m_aryFields.clear();
+    /** clear all the fields */
+    public void clearFields() {
+        fields.clear();
     }
 
-    // get the total tag bytes in the file from the last analyze
-    // need to call Save() then Analyze() to update any changes
-    public int GetTagBytes() throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
+    /**
+     * get the total tag bytes in the file from the last analyze
+     * need to call Save() then Analyze() to update any changes
+     */
+    public int getTagBytes() throws IOException {
+        if (!analyzed)
+            analyze();
 
-        return m_nTagBytes;
+        return tagBytes;
     }
 
-    // see whether the file has an ID3 or APE tag
-    public boolean GetHasID3Tag() throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
-        return m_bHasID3Tag;
+    /** see whether the file has an ID3 or APE tag */
+    public boolean hasID3Tag() throws IOException {
+        if (!analyzed)
+            analyze();
+        return hasID3Tag;
     }
 
-    public boolean GetHasAPETag() throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
-        return m_bHasAPETag;
+    public boolean hasAPETag() throws IOException {
+        if (!analyzed)
+            analyze();
+        return hasAPETag;
     }
 
-    public int GetAPETagVersion() throws IOException {
-        return GetHasAPETag() ? m_nAPETagVersion : -1;
+    public int getAPETagVersion() throws IOException {
+        return hasAPETag() ? apeTagVersion : -1;
     }
 
-    // gets a desired tag field (returns NULL if not found)
-    // again, be careful, because this a pointer to the actual field in this class
-    public APETagField GetTagField(String pFieldName) throws IOException {
-        int nIndex = GetTagFieldIndex(pFieldName);
-        return (nIndex != -1) ? (APETagField) m_aryFields.get(nIndex) : null;
+    /**
+     * gets a desired tag field (returns NULL if not found)
+     * again, be careful, because this a pointer to the actual field in this class
+     */
+    public APETagField getTagField(String fieldName) throws IOException {
+        int index = getTagFieldIndex(fieldName);
+        return (index != -1) ? fields.get(index) : null;
     }
 
-    public APETagField GetTagField(int nIndex) throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
+    public APETagField getTagField(int index) throws IOException {
+        if (!analyzed)
+            analyze();
 
-        if ((nIndex >= 0) && (nIndex < m_aryFields.size()))
-            return (APETagField) m_aryFields.get(nIndex);
+        if ((index >= 0) && (index < fields.size()))
+            return fields.get(index);
 
         return null;
     }
 
-    public void SetIgnoreReadOnly(boolean bIgnoreReadOnly) {
-        m_bIgnoreReadOnly = bIgnoreReadOnly;
+    public void setIgnoreReadOnly(boolean ignoreReadOnly) {
+        this.ignoreReadOnly = ignoreReadOnly;
     }
 
-    // fills in an ID3_TAG using the current fields (useful for quickly converting the tag)
-    public void CreateID3Tag(ID3Tag pID3Tag) throws IOException {
-        if (pID3Tag == null)
+    /** fills in an ID3_TAG using the current fields (useful for quickly converting the tag) */
+    public void createID3Tag(ID3Tag id3Tag) throws IOException {
+        if (id3Tag == null)
             return;
 
-        if (!m_bAnalyzed)
-            Analyze();
+        if (!analyzed)
+            analyze();
 
-        if (m_aryFields.size() <= 0)
+        if (fields.isEmpty())
             return;
 
-        pID3Tag.Header = "TAG";
-        pID3Tag.Artist = GetFieldID3String(APE_TAG_FIELD_ARTIST);
-        pID3Tag.Album = GetFieldID3String(APE_TAG_FIELD_ALBUM);
-        pID3Tag.Title = GetFieldID3String(APE_TAG_FIELD_TITLE);
-        pID3Tag.Comment = GetFieldID3String(APE_TAG_FIELD_COMMENT);
-        pID3Tag.Year = GetFieldID3String(APE_TAG_FIELD_YEAR);
-        String track = GetFieldString(APE_TAG_FIELD_TRACK);
+        id3Tag.header = "TAG";
+        id3Tag.artist = getFieldID3String(APE_TAG_FIELD_ARTIST);
+        id3Tag.album = getFieldID3String(APE_TAG_FIELD_ALBUM);
+        id3Tag.title = getFieldID3String(APE_TAG_FIELD_TITLE);
+        id3Tag.comment = getFieldID3String(APE_TAG_FIELD_COMMENT);
+        id3Tag.year = getFieldID3String(APE_TAG_FIELD_YEAR);
+        String track = getFieldString(APE_TAG_FIELD_TRACK);
         try {
-            pID3Tag.Track = Short.parseShort(track);
+            id3Tag.track = Short.parseShort(track);
         } catch (Exception e) {
-            pID3Tag.Track = 255;
+            id3Tag.track = 255;
         }
-        pID3Tag.Genre = (short) (new ID3Genre(GetFieldString(APE_TAG_FIELD_GENRE)).getGenre());
+        id3Tag.genre = (short) (new ID3Genre(getFieldString(APE_TAG_FIELD_GENRE)).getGenre());
     }
 
     // private functions
-    private void Analyze() throws IOException {
-        // clean-up
-        ClearFields();
-        m_nTagBytes = 0;
 
-        m_bAnalyzed = true;
+    private void analyze() throws IOException {
+        // clean-up
+        clearFields();
+        tagBytes = 0;
+
+        analyzed = true;
 
         // store the original location
-        long nOriginalPosition = m_spIO.getFilePointer();
+        long originalPosition = io.getFilePointer();
 
         // check for a tag
-        m_bHasID3Tag = false;
-        m_bHasAPETag = false;
-        m_nAPETagVersion = -1;
-        final ID3Tag tag = ID3Tag.read(m_spIO);
+        hasID3Tag = false;
+        hasAPETag = false;
+        apeTagVersion = -1;
+        ID3Tag tag = ID3Tag.read(io);
 
         if (tag != null) {
-            m_bHasID3Tag = true;
-            m_nTagBytes += ID3Tag.ID3_TAG_BYTES;
+            hasID3Tag = true;
+            tagBytes += ID3Tag.ID3_TAG_BYTES;
         }
 
         // set the fields
-        if (m_bHasID3Tag) {
-            SetFieldID3String(APE_TAG_FIELD_ARTIST, tag.Artist);
-            SetFieldID3String(APE_TAG_FIELD_ALBUM, tag.Album);
-            SetFieldID3String(APE_TAG_FIELD_TITLE, tag.Title);
-            SetFieldID3String(APE_TAG_FIELD_COMMENT, tag.Comment);
-            SetFieldID3String(APE_TAG_FIELD_YEAR, tag.Year);
-            SetFieldString(APE_TAG_FIELD_TRACK, String.valueOf(tag.Track));
+        if (hasID3Tag && tag != null) {
+            setFieldID3String(APE_TAG_FIELD_ARTIST, tag.artist);
+            setFieldID3String(APE_TAG_FIELD_ALBUM, tag.album);
+            setFieldID3String(APE_TAG_FIELD_TITLE, tag.title);
+            setFieldID3String(APE_TAG_FIELD_COMMENT, tag.comment);
+            setFieldID3String(APE_TAG_FIELD_YEAR, tag.year);
+            setFieldString(APE_TAG_FIELD_TRACK, String.valueOf(tag.track));
 
-            if ((tag.Genre == ID3Genre.GENRE_UNDEFINED) || (tag.Genre >= ID3Genre.genreCount()))
-                SetFieldString(APE_TAG_FIELD_GENRE, APE_TAG_GENRE_UNDEFINED);
+            if ((tag.genre == ID3Genre.GENRE_UNDEFINED) || (tag.genre >= ID3Genre.genreCount()))
+                setFieldString(APE_TAG_FIELD_GENRE, APE_TAG_GENRE_UNDEFINED);
             else
-                SetFieldString(APE_TAG_FIELD_GENRE, ID3Genre.genreString(tag.Genre));
+                setFieldString(APE_TAG_FIELD_GENRE, ID3Genre.genreString(tag.genre));
         }
 
         // try loading the APE tag
-        if (!m_bHasID3Tag) {
-            m_footer = APETagFooter.read(m_spIO);
-            if (m_footer != null && m_footer.GetIsValid(false)) {
-                m_bHasAPETag = true;
-                m_nAPETagVersion = m_footer.GetVersion();
+        if (!hasID3Tag) {
+            footer = APETagFooter.read(io);
+            if (footer != null && footer.isValid(false)) {
+                hasAPETag = true;
+                apeTagVersion = footer.getVersion();
 
-                int nRawFieldBytes = m_footer.GetFieldBytes();
-                m_nTagBytes += m_footer.GetTotalTagBytes();
+                int rawFieldBytes = footer.getFieldBytes();
+                tagBytes += footer.getTotalTagBytes();
 
-                m_spIO.seek(m_spIO.length() - m_footer.GetTotalTagBytes() - m_footer.GetFieldsOffset());
+                io.seek(io.length() - footer.getTotalTagBytes() - footer.getFieldsOffset());
 
                 try {
-                    final ByteArrayReader reader = new ByteArrayReader(m_spIO, nRawFieldBytes);
+                    ByteArrayReader reader = new ByteArrayReader(io, rawFieldBytes);
 
                     // parse out the raw fields
-                    for (int z = 0; z < m_footer.GetNumberFields(); z++)
-                        LoadField(reader);
+                    for (int z = 0; z < footer.getNumberFields(); z++)
+                        loadField(reader);
                 } catch (EOFException e) {
                     throw new JMACException("Can't Read APE Tag Fields");
                 }
@@ -421,77 +431,75 @@ public class APETag implements Comparator {
         }
 
         // restore the file pointer
-        m_spIO.seek(nOriginalPosition);
+        io.seek(originalPosition);
     }
 
-    private int GetTagFieldIndex(String pFieldName) throws IOException {
-        if (!m_bAnalyzed)
-            Analyze();
-        if (pFieldName == null) return -1;
+    private int getTagFieldIndex(String fieldName) throws IOException {
+        if (!analyzed)
+            analyze();
+        if (fieldName == null) return -1;
 
-        for (int z = 0; z < m_aryFields.size(); z++) {
-            if (pFieldName.toLowerCase().equals(((APETagField) m_aryFields.get(z)).GetFieldName().toLowerCase()))
+        for (int z = 0; z < fields.size(); z++) {
+            if (fieldName.equalsIgnoreCase(fields.get(z).getFieldName()))
                 return z;
         }
 
         return -1;
     }
 
-    private void WriteBufferToEndOfIO(byte[] pBuffer) throws IOException {
-        long nOriginalPosition = m_spIO.getFilePointer();
-        m_spIO.seek(m_spIO.length());
-        m_spIO.write(pBuffer);
-        m_spIO.seek(nOriginalPosition);
+    private void writeBufferToEndOfIO(byte[] buffer) throws IOException {
+        long originalPosition = io.getFilePointer();
+        io.seek(io.length());
+        io.write(buffer);
+        io.seek(originalPosition);
     }
 
-    private void LoadField(ByteArrayReader reader) throws IOException {
+    private void loadField(ByteArrayReader reader) throws IOException {
         // size and flags
-        int nFieldValueSize = reader.readInt();
-        int nFieldFlags = reader.readInt();
+        int fieldValueSize = reader.readInt();
+        int fieldFlags = reader.readInt();
 
         String fieldName = reader.readString("UTF-8");
 
         // value
-        byte[] fieldValue = new byte[nFieldValueSize];
+        byte[] fieldValue = new byte[fieldValueSize];
         reader.readFully(fieldValue);
 
         // set
-        SetFieldBinary(fieldName, fieldValue, nFieldFlags);
+        setFieldBinary(fieldName, fieldValue, fieldFlags);
     }
 
-    private void SortFields() {
+    private void sortFields() {
         // sort the tag fields by size (so that the smallest fields are at the front of the tag)
-        Arrays.sort(m_aryFields.toArray(), this);
+        Arrays.sort(fields.toArray(APETagField[]::new), this);
     }
 
-    public int compare(Object pA, Object pB) {
-        APETagField pFieldA = (APETagField) pA;
-        APETagField pFieldB = (APETagField) pB;
-
-        return pFieldA.GetFieldSize() - pFieldB.GetFieldSize();
+    @Override
+    public int compare(APETagField a, APETagField b) {
+        return a.getFieldSize() - b.getFieldSize();
     }
 
     // helper set / get field functions
-    private String GetFieldID3String(String pFieldName) throws IOException {
-        return GetFieldString(pFieldName);
+    private String getFieldID3String(String fieldName) throws IOException {
+        return getFieldString(fieldName);
     }
 
-    private void SetFieldID3String(String pFieldName, String pFieldValue) throws IOException {
-        SetFieldString(pFieldName, pFieldValue.trim());
+    private void setFieldID3String(String fieldName, String fieldValue) throws IOException {
+        setFieldString(fieldName, fieldValue.trim());
     }
 
     public APETagFooter getFooter() {
-        return m_footer;
+        return footer;
     }
 
     // private data
-    private File m_spIO;
-    private boolean m_bAnalyzed = false;
-    private int m_nTagBytes = 0;
-    private List m_aryFields = new ArrayList();
-    private boolean m_bHasAPETag;
-    private int m_nAPETagVersion;
-    private boolean m_bHasID3Tag;
-    private boolean m_bIgnoreReadOnly = false;
-    private APETagFooter m_footer = null;
+    private final File io;
+    private boolean analyzed = false;
+    private int tagBytes = 0;
+    private final List<APETagField> fields = new ArrayList<>();
+    private boolean hasAPETag;
+    private int apeTagVersion;
+    private boolean hasID3Tag;
+    private boolean ignoreReadOnly = false;
+    private APETagFooter footer = null;
 }

@@ -29,22 +29,22 @@ public class ScaledFirstOrderFilter {
         this.shift = shift;
     }
 
-    public void Flush() {
-        m_nLastValue = 0;
+    public void flush() {
+        lastValue = 0;
     }
 
-    public int Compress(int nInput) {
-        int nRetVal = nInput - ((m_nLastValue * multiply) >> shift);
-        m_nLastValue = nInput;
-        return nRetVal;
+    public int compress(int input) {
+        int retVal = input - ((lastValue * multiply) >> shift);
+        lastValue = input;
+        return retVal;
     }
 
-    public int Decompress(int nInput) {
-        m_nLastValue = nInput + ((m_nLastValue * multiply) >> shift);
-        return m_nLastValue;
+    public int Decompress(int input) {
+        lastValue = input + ((lastValue * multiply) >> shift);
+        return lastValue;
     }
 
-    protected int m_nLastValue;
-    protected int multiply;
-    protected int shift;
+    protected int lastValue;
+    protected final int multiply;
+    protected final int shift;
 }

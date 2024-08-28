@@ -24,6 +24,7 @@ package davaguine.jmac.player;
  */
 public class NullAudioDevice extends AudioDeviceBase {
 
+    @Override
     public int getPosition() {
         return 0;
     }

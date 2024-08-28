@@ -31,158 +31,166 @@ import davaguine.jmac.tools.JMACException;
  */
 public class UnBitArrayBase {
 
-    private final static long POWERS_OF_TWO_MINUS_ONE[] = {0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, 2147483647, 4294967295L};
+    private final static long[] POWERS_OF_TWO_MINUS_ONE = {
+            0, 1, 3, 7, 15, 31, 63, 127,
+            255, 511, 1023, 2047, 4095, 8191, 16383, 32767,
+            65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607,
+            16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, 2147483647,
+            4294967295L
+    };
 
-    //construction/destruction
+    // construction/destruction
+
     public UnBitArrayBase() {
     }
 
-    //functions
-    public void FillBitArray() throws IOException {
-        //get the bit array index
-        long nBitArrayIndex = m_nCurrentBitIndex >> 5;
-        long al[];
+    // functions
+
+    public void fillBitArray() throws IOException {
+        // get the bit array index
+        long bitArrayIndex = currentBitIndex >> 5;
+        long[] al;
         int j;
 
-        //move the remaining data to the front
-        System.arraycopy(al = m_pBitArray, j = (int) nBitArrayIndex, al, 0, (int) (al.length - nBitArrayIndex));
+        // move the remaining data to the front
+        System.arraycopy(al = bitArray, j = (int) bitArrayIndex, al, 0, (int) (al.length - bitArrayIndex));
 
-        //read the new data
-        ByteArrayReader reader = m_pReader;
-        reader.reset(m_pIO, j << 2);
+        // read the new data
+        ByteArrayReader reader = this.reader;
+        reader.reset(io, j << 2);
         long l1;
-        int i = (int) ((l1 = m_nElements) - nBitArrayIndex);
+        int i = (int) ((l1 = elements) - bitArrayIndex);
         if ((long) i < l1)
             do {
                 al[i] = reader.readUnsignedInt();
                 i++;
             } while ((long) i < l1);
 
-        //adjust the m_Bit pointer
-        m_nCurrentBitIndex &= 31;
+        // adjust the bit pointer
+        currentBitIndex &= 31;
     }
 
-    public void FillAndResetBitArray() throws IOException {
-        FillAndResetBitArray(-1, 0);
+    public void fillAndResetBitArray() throws IOException {
+        fillAndResetBitArray(-1, 0);
     }
 
-    public void FillAndResetBitArray(int nFileLocation) throws IOException {
-        FillAndResetBitArray(nFileLocation, 0);
+    public void fillAndResetBitArray(int fileLocation) throws IOException {
+        fillAndResetBitArray(fileLocation, 0);
     }
 
-    public void FillAndResetBitArray(int nFileLocation, int nNewBitIndex) throws IOException {
-        //reset the bit index
-        m_nCurrentBitIndex = nNewBitIndex;
+    public void fillAndResetBitArray(int fileLocation, int newBitIndex) throws IOException {
+        // reset the bit index
+        currentBitIndex = newBitIndex;
 
-        //seek if necessary
-        if (nFileLocation != -1)
-            m_pIO.seek(nFileLocation);
+        // seek if necessary
+        if (fileLocation != -1)
+            io.seek(fileLocation);
 
-        //read the new data into the bit array
-        ByteArrayReader reader = m_pReader;
-        reader.reset(m_pIO, (int) m_nBytes);
-        long al[] = m_pBitArray;
-        long l = m_nElements;
+        // read the new data into the bit array
+        ByteArrayReader reader = this.reader;
+        reader.reset(io, (int) bytes);
+        long[] al = bitArray;
+        long l = elements;
         for (int i = 0; i < l; i++)
             al[i] = reader.readUnsignedInt();
     }
 
-    public void GenerateArray(int[] pOutputArray, int nElements) throws IOException {
-        GenerateArray(pOutputArray, nElements, -1);
+    public void generateArray(int[] outputArray, int elements) throws IOException {
+        generateArray(outputArray, elements, -1);
     }
 
-    public void GenerateArray(int[] pOutputArray, int nElements, int nBytesRequired) throws IOException {
+    public void generateArray(int[] outputArray, int elements, int bytesRequired) throws IOException {
     }
 
-    public long DecodeValue(int DecodeMethod) throws IOException {
-        return DecodeValue(DecodeMethod, 0, 0);
+    public long decodeValue(int decodeMethod) throws IOException {
+        return decodeValue(decodeMethod, 0, 0);
     }
 
-    public long DecodeValue(int DecodeMethod, int nParam1) throws IOException {
-        return DecodeValue(DecodeMethod, nParam1, 0);
+    public long decodeValue(int decodeMethod, int param1) throws IOException {
+        return decodeValue(decodeMethod, param1, 0);
     }
 
-    public long DecodeValue(int DecodeMethod, int nParam1, int nParam2) throws IOException {
+    public long decodeValue(int decodeMethod, int param1, int param2) throws IOException {
         return 0;
     }
 
-    public void AdvanceToByteBoundary() {
-        long nMod = m_nCurrentBitIndex % 8L;
-        if (nMod != 0)
-            m_nCurrentBitIndex += 8L - nMod;
+    public void advanceToByteBoundary() {
+        long mod = currentBitIndex % 8L;
+        if (mod != 0)
+            currentBitIndex += 8L - mod;
     }
 
-    public int DecodeValueRange(UnBitArrayState BitArrayState) throws IOException {
+    public int decodeValueRange(UnBitArrayState bitArrayState) throws IOException {
         return 0;
     }
 
-    public void FlushState(UnBitArrayState BitArrayState) {
+    public void flushState(UnBitArrayState bitArrayState) {
     }
 
-    public void FlushBitArray() {
+    public void flushBitArray() {
     }
 
-    public void Finalize() {
+    protected void finalize_() {
     }
 
-    protected void CreateHelper(File pIO, int nBytes, int nVersion) {
-        //check the parameters
-        if ((pIO == null) || (nBytes <= 0))
+    protected void createHelper(File io, int bytes, int version) {
+        // check the parameters
+        if ((io == null) || (bytes <= 0))
             throw new JMACException("Bad Parameter");
 
-        //save the size
-        m_nElements = nBytes / 4;
-        m_nBytes = m_nElements * 4;
-        m_nBits = m_nBytes * 8;
+        // save the size
+        elements = bytes / 4;
+        this.bytes = elements * 4;
+        bits = this.bytes * 8;
 
-        //set the variables
-        m_pIO = pIO;
-        m_nVersion = nVersion;
-        m_nCurrentBitIndex = 0;
+        // set the variables
+        this.io = io;
+        this.version = version;
+        currentBitIndex = 0;
 
-        //create the bitarray
-        m_pBitArray = new long[(int) m_nElements];
-        m_pReader = new ByteArrayReader((int) m_nBytes);
+        // create the bitarray
+        bitArray = new long[(int) elements];
+        reader = new ByteArrayReader((int) this.bytes);
     }
 
-    protected long DecodeValueXBits(long nBits) throws IOException {
-        //get more data if necessary
-        long nBitArrayIndex;
-        if (((nBitArrayIndex = m_nCurrentBitIndex) + nBits) >= m_nBits)
-            FillBitArray();
+    protected long decodeValueXBits(long bits) throws IOException {
+        // get more data if necessary
+        long bitArrayIndex;
+        if (((bitArrayIndex = currentBitIndex) + bits) >= this.bits)
+            fillBitArray();
 
-        //variable declares
-        long nLeftBits = 32 - (nBitArrayIndex & 31);
-        nBitArrayIndex >>= 5;
-        m_nCurrentBitIndex += nBits;
+        // variable declares
+        long leftBits = 32 - (bitArrayIndex & 31);
+        bitArrayIndex >>= 5;
+        currentBitIndex += bits;
 
-        //if their isn't an overflow to the right value, get the value and exit
-        if (nLeftBits >= nBits)
-            return ((long) (m_pBitArray[(int) nBitArrayIndex] & (POWERS_OF_TWO_MINUS_ONE[(int) nLeftBits]))) >> (nLeftBits - nBits);
+        // if there isn't an overflow to the right value, get the value and exit
+        if (leftBits >= bits)
+            return (bitArray[(int) bitArrayIndex] & (POWERS_OF_TWO_MINUS_ONE[(int) leftBits])) >> (leftBits - bits);
 
-        //must get the "split" value from left and right
-        long nRightBits = nBits - nLeftBits;
+        // must get the "split" value from left and right
+        long rightBits = bits - leftBits;
 
-        long nLeftValue = ((long) (m_pBitArray[(int) nBitArrayIndex] & POWERS_OF_TWO_MINUS_ONE[(int) nLeftBits])) << nRightBits;
-        long nRightValue = (m_pBitArray[(int) nBitArrayIndex + 1] >> (32 - nRightBits));
-        return (nLeftValue | nRightValue);
+        long leftValue = (bitArray[(int) bitArrayIndex] & POWERS_OF_TWO_MINUS_ONE[(int) leftBits]) << rightBits;
+        long rightValue = (bitArray[(int) bitArrayIndex + 1] >> (32 - rightBits));
+        return (leftValue | rightValue);
     }
 
-    public static UnBitArrayBase CreateUnBitArray(IAPEDecompress pAPEDecompress, int nVersion) {
-        if (nVersion >= 3900)
-            return (UnBitArrayBase) new UnBitArray(pAPEDecompress.getApeInfoIoSource(), nVersion);
+    public static UnBitArrayBase createUnBitArray(IAPEDecompress apeDecompress, int version) {
+        if (version >= 3900)
+            return new UnBitArray(apeDecompress.getApeInfoIoSource(), version);
         else
-            return (UnBitArrayBase) new UnBitArrayOld(pAPEDecompress, nVersion);
+            return new UnBitArrayOld(apeDecompress, version);
     }
 
-    protected long m_nElements;
-    protected long m_nBytes;
-    protected long m_nBits;
+    protected long elements;
+    protected long bytes;
+    protected long bits;
 
-    protected int m_nVersion;
-    protected File m_pIO;
+    protected int version;
+    protected File io;
 
-    protected long m_nCurrentBitIndex;
-    protected long[] m_pBitArray;
-    protected ByteArrayReader m_pReader;
+    protected long currentBitIndex;
+    protected long[] bitArray;
+    protected ByteArrayReader reader;
 }

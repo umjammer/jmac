@@ -20,6 +20,7 @@ package davaguine.jmac.info;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.File;
@@ -32,33 +33,43 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEHeaderOld {
 
-    public String cID;                    // should equal 'MAC '
-    public int nVersion;                // version number * 1000 (3.81 = 3810)
-    public int nCompressionLevel;        // the compression level
-    public int nFormatFlags;            // any format flags (for future use)
-    public int nChannels;                // the number of channels (1 or 2)
-    public long nSampleRate;            // the sample rate (typically 44100)
-    public long nHeaderBytes;            // the bytes after the MAC header that compose the WAV header
-    public long nTerminatingBytes;        // the bytes after that raw data (for extended info)
-    public long nTotalFrames;            // the number of frames in the file
-    public long nFinalFrameBlocks;        // the number of samples in the final frame
+    /** should equal 'MAC ' */
+    public String id;
+    /** version number * 1000 (3.81 = 3810) */
+    public int version;
+    /** the compression level */
+    public int compressionLevel;
+    /** any format flags (for future use) */
+    public int formatFlags;
+    /** the number of channels (1 or 2) */
+    public int channels;
+    /** the sample rate (typically 44100) */
+    public long sampleRate;
+    /** the bytes after the MAC header that compose the WAV header */
+    public long headerBytes;
+    /** the bytes after that raw data (for extended info) */
+    public long terminatingBytes;
+    /** the number of frames in the file */
+    public long totalFrames;
+    /** the number of samples in the final frame */
+    public long finalFrameBlocks;
 
     public final static int APE_HEADER_OLD_BYTES = 32;
 
-    public static APEHeaderOld read(final File file) throws IOException {
+    public static APEHeaderOld read(File file) throws IOException {
         try {
             APEHeaderOld header = new APEHeaderOld();
-            final ByteArrayReader reader = new ByteArrayReader(file, APE_HEADER_OLD_BYTES);
-            header.cID = reader.readString(4, "US-ASCII");
-            header.nVersion = reader.readUnsignedShort();
-            header.nCompressionLevel = reader.readUnsignedShort();
-            header.nFormatFlags = reader.readUnsignedShort();
-            header.nChannels = reader.readUnsignedShort();
-            header.nSampleRate = reader.readUnsignedInt();
-            header.nHeaderBytes = reader.readUnsignedInt();
-            header.nTerminatingBytes = reader.readUnsignedInt();
-            header.nTotalFrames = reader.readUnsignedInt();
-            header.nFinalFrameBlocks = reader.readUnsignedInt();
+            ByteArrayReader reader = new ByteArrayReader(file, APE_HEADER_OLD_BYTES);
+            header.id = reader.readString(4, StandardCharsets.US_ASCII.name());
+            header.version = reader.readUnsignedShort();
+            header.compressionLevel = reader.readUnsignedShort();
+            header.formatFlags = reader.readUnsignedShort();
+            header.channels = reader.readUnsignedShort();
+            header.sampleRate = reader.readUnsignedInt();
+            header.headerBytes = reader.readUnsignedInt();
+            header.terminatingBytes = reader.readUnsignedInt();
+            header.totalFrames = reader.readUnsignedInt();
+            header.finalFrameBlocks = reader.readUnsignedInt();
             return header;
         } catch (EOFException e) {
             throw new JMACException("Unsupported Format");

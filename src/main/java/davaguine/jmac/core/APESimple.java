@@ -48,62 +48,62 @@ public class APESimple {
     public final static int UNMAC_DECODER_OUTPUT_NONE = 0;
     public final static int BLOCKS_PER_DECODE = 9216;
 
-    public static void VerifyFile(String pInputFilename, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
+    public static void verifyFile(String inputFilename, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
         // error check the function parameters
-        if (pInputFilename == null)
+        if (inputFilename == null)
             throw new JMACException("Bad Parameters");
 
-        // see if we can quick verify
-        File file = File.createFile(pInputFilename, "r");
-        IAPEDecompress spAPEDecompress = null;
+        // see if we can quickly verify
+        File file = File.createFile(inputFilename, "r");
+        IAPEDecompress apeDecompress = null;
         try {
-            spAPEDecompress = IAPEDecompress.CreateIAPEDecompress(file);
+            apeDecompress = IAPEDecompress.createAPEDecompress(file);
 
-            APEFileInfo pInfo = spAPEDecompress.getApeInfoInternalInfo();
+            APEFileInfo info = apeDecompress.getApeInfoInternalInfo();
 
-            if ((pInfo.nVersion < 3980) || (pInfo.spAPEDescriptor == null))
-                DecompressCore(spAPEDecompress, null, UNMAC_DECODER_OUTPUT_NONE, -1, progressor);
+            if ((info.version < 3980) || (info.apeDescriptor == null))
+                decompressCore(apeDecompress, null, UNMAC_DECODER_OUTPUT_NONE, -1, progressor);
             else {
                 MD5 MD5Helper = new MD5();
 
-                File pIO = spAPEDecompress.getApeInfoIoSource();
+                File io = apeDecompress.getApeInfoIoSource();
 
-                int nHead = (int) (pInfo.nJunkHeaderBytes + pInfo.spAPEDescriptor.nDescriptorBytes);
-                int nStart = (int) (nHead + pInfo.spAPEDescriptor.nHeaderBytes + pInfo.spAPEDescriptor.nSeekTableBytes);
+                int head = (int) (info.junkHeaderBytes + info.apeDescriptor.descriptorBytes);
+                int start = (int) (head + info.apeDescriptor.headerBytes + info.apeDescriptor.seekTableBytes);
 
-                pIO.seek(nHead);
-                int nHeadBytes = nStart - nHead;
-                byte[] spHeadBuffer = new byte[nHeadBytes];
-                pIO.readFully(spHeadBuffer);
+                io.seek(head);
+                int headBytes = start - head;
+                byte[] headBuffer = new byte[headBytes];
+                io.readFully(headBuffer);
 
-                int nBytesLeft = (int) (pInfo.spAPEDescriptor.nHeaderDataBytes + pInfo.spAPEDescriptor.nAPEFrameDataBytes + pInfo.spAPEDescriptor.nTerminatingDataBytes);
+                int bytesLeft = (int) (info.apeDescriptor.headerDataBytes + info.apeDescriptor.apeFrameDataBytes + info.apeDescriptor.terminatingDataBytes);
                 // create the progress helper
-                ProgressHelper spMACProgressHelper = new ProgressHelper(nBytesLeft / 16384, progressor);
-                byte[] spBuffer = new byte[16384];
-                int nBytesRead = 1;
-                while ((nBytesLeft > 0) && (nBytesRead > 0)) {
-                    int nBytesToRead = Math.min(16384, nBytesLeft);
-                    nBytesRead = pIO.read(spBuffer, 0, nBytesToRead);
+                ProgressHelper macProgressHelper = new ProgressHelper(bytesLeft / 16384, progressor);
+                byte[] buffer = new byte[16384];
+                int bytesRead = 1;
+                while ((bytesLeft > 0) && (bytesRead > 0)) {
+                    int bytesToRead = Math.min(16384, bytesLeft);
+                    bytesRead = io.read(buffer, 0, bytesToRead);
 
-                    MD5Helper.Update(spBuffer, nBytesRead);
-                    nBytesLeft -= nBytesRead;
+                    MD5Helper.update(buffer, bytesRead);
+                    bytesLeft -= bytesRead;
 
-                    spMACProgressHelper.UpdateProgress();
-                    if (spMACProgressHelper.isKillFlag())
+                    macProgressHelper.updateProgress();
+                    if (macProgressHelper.isKillFlag())
                         throw new JMACStoppedByUserException();
                 }
 
-                if (nBytesLeft != 0)
+                if (bytesLeft != 0)
                     throw new JMACException("The File Is Broken");
 
-                MD5Helper.Update(spHeadBuffer, nHeadBytes);
+                MD5Helper.update(headBuffer, headBytes);
 
                 // fire the "complete" progress notification
-                spMACProgressHelper.UpdateProgressComplete();
+                macProgressHelper.updateProgressComplete();
 
-                byte[] cResult = MD5Helper.Final();
+                byte[] result = MD5Helper.final_();
                 for (int i = 0; i < 16; i++)
-                    if (cResult[i] != pInfo.spAPEDescriptor.cFileMD5[i])
+                    if (result[i] != info.apeDescriptor.fileMD5[i])
                         throw new JMACException("Invalid Checksum");
             }
         } finally {
@@ -112,208 +112,204 @@ public class APESimple {
     }
 
     /**
-     * **************************************************************************************
      * Convert file
-     * ***************************************************************************************
      */
-    public static void ConvertFile(String pInputFilename, String pOutputFilename, int nCompressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
-        DecompressCore(pInputFilename, pOutputFilename, UNMAC_DECODER_OUTPUT_APE, nCompressionLevel, progressor);
+    public static void convertFile(String inputFilename, String outputFilename, int compressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
+        decompressCore(inputFilename, outputFilename, UNMAC_DECODER_OUTPUT_APE, compressionLevel, progressor);
     }
 
     /**
-     * **************************************************************************************
      * Decompress file
-     * ***************************************************************************************
      */
-    public static void DecompressFile(String pInputFilename, String pOutputFilename, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
-        if (pOutputFilename == null)
-            VerifyFile(pInputFilename, progressor);
+    public static void decompressFile(String inputFilename, String outputFilename, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
+        if (outputFilename == null)
+            verifyFile(inputFilename, progressor);
         else
-            DecompressCore(pInputFilename, pOutputFilename, UNMAC_DECODER_OUTPUT_WAV, -1, progressor);
+            decompressCore(inputFilename, outputFilename, UNMAC_DECODER_OUTPUT_WAV, -1, progressor);
     }
 
-    public static void DecompressCore(String pInputFilename, String pOutputFilename, int nOutputMode, int nCompressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
+    public static void decompressCore(String inputFilename, String outputFilename, int outputMode, int compressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
         // error check the function parameters
-        if (pInputFilename == null)
+        if (inputFilename == null)
             throw new JMACException("Bad Parameters");
 
         // variable declares
-        IAPEDecompress spAPEDecompress = null;
-        File file = File.createFile(pInputFilename, "r");
+        IAPEDecompress apeDecompress;
+        File file = File.createFile(inputFilename, "r");
         try {
-            spAPEDecompress = IAPEDecompress.CreateIAPEDecompress(file);
-            DecompressCore(spAPEDecompress, pOutputFilename, nOutputMode, nCompressionLevel, progressor);
+            apeDecompress = IAPEDecompress.createAPEDecompress(file);
+            decompressCore(apeDecompress, outputFilename, outputMode, compressionLevel, progressor);
         } finally {
             file.close();
         }
     }
 
-    public static void DecompressCore(IAPEDecompress spAPEDecompress, String pOutputFilename, int nOutputMode, int nCompressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
+    public static void decompressCore(IAPEDecompress apeDecompress, String outputFilename, int outputMode, int compressionLevel, ProgressCallback progressor) throws IOException, JMACSkippedException, JMACStoppedByUserException {
         // variable declares
-        java.io.RandomAccessFile spioOutput = null;
-        IAPECompress spAPECompress = null;
+        java.io.RandomAccessFile output = null;
+        IAPECompress apeCompress = null;
 
         try {
             // create the core
-            WaveFormat wfeInput = spAPEDecompress.getApeInfoWaveFormatEx();
+            WaveFormat wfeInput = apeDecompress.getApeInfoWaveFormatEx();
 
             // allocate space for the header
-            byte[] waveHeaderBuffer = spAPEDecompress.getApeInfoWavHeaderData(spAPEDecompress.getApeInfoWavHeaderBytes());
+            byte[] waveHeaderBuffer = apeDecompress.getApeInfoWavHeaderData(apeDecompress.getApeInfoWavHeaderBytes());
 
             // initialize the output
-            if (nOutputMode == UNMAC_DECODER_OUTPUT_WAV) {
+            if (outputMode == UNMAC_DECODER_OUTPUT_WAV) {
                 // create the file
-                spioOutput = new RandomAccessFile(pOutputFilename, "rw");
+                output = new RandomAccessFile(outputFilename, "rw");
 
                 // output the header
-                spioOutput.write(waveHeaderBuffer);
-            } else if (nOutputMode == UNMAC_DECODER_OUTPUT_APE) {
+                output.write(waveHeaderBuffer);
+            } else if (outputMode == UNMAC_DECODER_OUTPUT_APE) {
                 // quit if there is nothing to do
-                if (spAPEDecompress.getApeInfoFileVersion() == Globals.MAC_VERSION_NUMBER && spAPEDecompress.getApeInfoCompressionLevel() == nCompressionLevel)
+                if (apeDecompress.getApeInfoFileVersion() == Globals.MAC_VERSION_NUMBER && apeDecompress.getApeInfoCompressionLevel() == compressionLevel)
                     throw new JMACSkippedException();
 
                 // create and start the compressor
-                spAPECompress = IAPECompress.CreateIAPECompress();
-                spAPECompress.Start(pOutputFilename, wfeInput, spAPEDecompress.getApeInfoDecompressTotalBlocks() * spAPEDecompress.getApeInfoBlockAlign(),
-                        nCompressionLevel, waveHeaderBuffer, spAPEDecompress.getApeInfoWavHeaderBytes());
+                apeCompress = IAPECompress.createIAPECompress();
+                apeCompress.start(outputFilename, wfeInput, apeDecompress.getApeInfoDecompressTotalBlocks() * apeDecompress.getApeInfoBlockAlign(),
+                        compressionLevel, waveHeaderBuffer, apeDecompress.getApeInfoWavHeaderBytes());
             }
 
-            int blockAlign = spAPEDecompress.getApeInfoBlockAlign();
+            int blockAlign = apeDecompress.getApeInfoBlockAlign();
             // allocate space for decompression
-            byte[] spTempBuffer = new byte[blockAlign * BLOCKS_PER_DECODE];
+            byte[] tempBuffer = new byte[blockAlign * BLOCKS_PER_DECODE];
 
-            int nBlocksLeft = spAPEDecompress.getApeInfoDecompressTotalBlocks();
+            int blocksLeft = apeDecompress.getApeInfoDecompressTotalBlocks();
 
             // create the progress helper
-            ProgressHelper spMACProgressHelper = new ProgressHelper(nBlocksLeft / BLOCKS_PER_DECODE, progressor);
+            ProgressHelper macProgressHelper = new ProgressHelper(blocksLeft / BLOCKS_PER_DECODE, progressor);
 
             // main decoding loop
-            while (nBlocksLeft > 0) {
+            while (blocksLeft > 0) {
                 // decode data
-                int nBlocksDecoded = spAPEDecompress.GetData(spTempBuffer, BLOCKS_PER_DECODE);
+                int blocksDecoded = apeDecompress.getData(tempBuffer, BLOCKS_PER_DECODE);
 
                 // handle the output
-                if (nOutputMode == UNMAC_DECODER_OUTPUT_WAV)
-                    spioOutput.write(spTempBuffer, 0, nBlocksDecoded * blockAlign);
-                else if (nOutputMode == UNMAC_DECODER_OUTPUT_APE)
-                    spAPECompress.AddData(spTempBuffer, nBlocksDecoded * spAPEDecompress.getApeInfoBlockAlign());
+                if (outputMode == UNMAC_DECODER_OUTPUT_WAV)
+                    output.write(tempBuffer, 0, blocksDecoded * blockAlign);
+                else if (outputMode == UNMAC_DECODER_OUTPUT_APE)
+                    apeCompress.addData(tempBuffer, blocksDecoded * apeDecompress.getApeInfoBlockAlign());
 
                 // update amount remaining
-                nBlocksLeft -= nBlocksDecoded;
+                blocksLeft -= blocksDecoded;
 
                 // update progress and kill flag
-                spMACProgressHelper.UpdateProgress();
-                if (spMACProgressHelper.isKillFlag())
+                macProgressHelper.updateProgress();
+                if (macProgressHelper.isKillFlag())
                     throw new JMACStoppedByUserException();
             }
 
             // terminate the output
-            if (nOutputMode == UNMAC_DECODER_OUTPUT_WAV) {
+            if (outputMode == UNMAC_DECODER_OUTPUT_WAV) {
                 // write any terminating WAV data
-                if (spAPEDecompress.getApeInfoWavTerminatingBytes() > 0) {
-                    byte[] termData = spAPEDecompress.getApeInfoWavTerminatingData(spAPEDecompress.getApeInfoWavTerminatingBytes());
+                if (apeDecompress.getApeInfoWavTerminatingBytes() > 0) {
+                    byte[] termData = apeDecompress.getApeInfoWavTerminatingData(apeDecompress.getApeInfoWavTerminatingBytes());
 
-                    int nBytesToWrite = spAPEDecompress.getApeInfoWavTerminatingBytes();
-                    spioOutput.write(termData, 0, nBytesToWrite);
+                    int bytesToWrite = apeDecompress.getApeInfoWavTerminatingBytes();
+                    output.write(termData, 0, bytesToWrite);
                 }
-            } else if (nOutputMode == UNMAC_DECODER_OUTPUT_APE) {
+            } else if (outputMode == UNMAC_DECODER_OUTPUT_APE) {
                 // write the WAV data and any tag
-                int nTagBytes = spAPEDecompress.getApeInfoTag().GetTagBytes();
-                boolean bHasTag = (nTagBytes > 0);
-                int nTerminatingBytes = nTagBytes;
-                nTerminatingBytes += spAPEDecompress.getApeInfoWavTerminatingBytes();
+                int tagBytes = apeDecompress.getApeInfoTag().getTagBytes();
+                boolean hasTag = (tagBytes > 0);
+                int terminatingBytes = tagBytes;
+                terminatingBytes += apeDecompress.getApeInfoWavTerminatingBytes();
 
-                if (nTerminatingBytes > 0) {
-                    spTempBuffer = spAPEDecompress.getApeInfoWavTerminatingData(nTerminatingBytes);
+                if (terminatingBytes > 0) {
+                    tempBuffer = apeDecompress.getApeInfoWavTerminatingData(terminatingBytes);
 
-                    if (bHasTag) {
-                        spAPEDecompress.getApeInfoIoSource().seek(spAPEDecompress.getApeInfoIoSource().length() - nTagBytes);
-                        spAPEDecompress.getApeInfoIoSource().read(spTempBuffer, spAPEDecompress.getApeInfoWavTerminatingBytes(), nTagBytes);
+                    if (hasTag) {
+                        apeDecompress.getApeInfoIoSource().seek(apeDecompress.getApeInfoIoSource().length() - tagBytes);
+                        apeDecompress.getApeInfoIoSource().read(tempBuffer, apeDecompress.getApeInfoWavTerminatingBytes(), tagBytes);
                     }
 
-                    spAPECompress.Finish(spTempBuffer, nTerminatingBytes, spAPEDecompress.getApeInfoWavTerminatingBytes());
+                    apeCompress.finish(tempBuffer, terminatingBytes, apeDecompress.getApeInfoWavTerminatingBytes());
                 } else
-                    spAPECompress.Finish(null, 0, 0);
+                    apeCompress.finish(null, 0, 0);
             }
 
             // fire the "complete" progress notification
-            spMACProgressHelper.UpdateProgressComplete();
+            macProgressHelper.updateProgressComplete();
         } finally {
-            if (spioOutput != null)
-                spioOutput.close();
-            if (spAPECompress != null)
-                spAPECompress.Kill();
+            if (output != null)
+                output.close();
+            if (apeCompress != null)
+                apeCompress.kill();
         }
     }
 
-    public static void CompressFile(String pInputFilename, String pOutputFilename, int nCompressionLevel, ProgressCallback progressor) throws IOException, JMACStoppedByUserException {
+    public static void compressFile(String inputFilename, String outputFilename, int compressionLevel, ProgressCallback progressor) throws IOException, JMACStoppedByUserException {
         // declare the variables
-        IAPECompress spAPECompress = null;
-        InputSource spInputSource = null;
+        IAPECompress apeCompress = null;
+        InputSource inputSource = null;
 
         try {
-            byte[] spBuffer = null;
+            byte[] buffer = null;
 
-            WaveFormat WaveFormatEx = new WaveFormat();
+            WaveFormat waveFormatEx = new WaveFormat();
 
             // create the input source
-            IntegerPointer nAudioBlocks = new IntegerPointer();
-            nAudioBlocks.value = 0;
-            IntegerPointer nHeaderBytes = new IntegerPointer();
-            nHeaderBytes.value = 0;
-            IntegerPointer nTerminatingBytes = new IntegerPointer();
-            nTerminatingBytes.value = 0;
-            spInputSource = InputSource.CreateInputSource(pInputFilename, WaveFormatEx, nAudioBlocks,
-                    nHeaderBytes, nTerminatingBytes);
+            IntegerPointer audioBlocks = new IntegerPointer();
+            audioBlocks.value = 0;
+            IntegerPointer headerBytes = new IntegerPointer();
+            headerBytes.value = 0;
+            IntegerPointer terminatingBytes = new IntegerPointer();
+            terminatingBytes.value = 0;
+            inputSource = InputSource.createInputSource(inputFilename, waveFormatEx, audioBlocks,
+                    headerBytes, terminatingBytes);
 
             // create the compressor
-            spAPECompress = IAPECompress.CreateIAPECompress();
+            apeCompress = IAPECompress.createIAPECompress();
 
             // figure the audio bytes
-            int nAudioBytes = nAudioBlocks.value * WaveFormatEx.nBlockAlign;
+            int audioBytes = audioBlocks.value * waveFormatEx.blockAlign;
 
             // start the encoder
-            if (nHeaderBytes.value > 0) spBuffer = new byte[nHeaderBytes.value];
-            spInputSource.GetHeaderData(spBuffer);
-            spAPECompress.Start(pOutputFilename, WaveFormatEx, nAudioBytes,
-                    nCompressionLevel, spBuffer, nHeaderBytes.value);
+            if (headerBytes.value > 0) buffer = new byte[headerBytes.value];
+            inputSource.getHeaderData(buffer);
+            apeCompress.start(outputFilename, waveFormatEx, audioBytes,
+                    compressionLevel, buffer, headerBytes.value);
 
             // set-up the progress
-            ProgressHelper spMACProgressHelper = new ProgressHelper(nAudioBytes, progressor);
+            ProgressHelper macProgressHelper = new ProgressHelper(audioBytes, progressor);
 
             // master loop
-            int nBytesLeft = nAudioBytes;
+            int bytesLeft = audioBytes;
 
-            spMACProgressHelper.UpdateStatus("Process data by compressor");
+            macProgressHelper.updateStatus("Process data by compressor");
 
-            while (nBytesLeft > 0) {
-                int nBytesAdded = spAPECompress.AddDataFromInputSource(spInputSource, nBytesLeft);
+            while (bytesLeft > 0) {
+                int bytesAdded = apeCompress.addDataFromInputSource(inputSource, bytesLeft);
 
-                nBytesLeft -= nBytesAdded;
+                bytesLeft -= bytesAdded;
 
                 // update the progress
-                spMACProgressHelper.UpdateProgress(nAudioBytes - nBytesLeft);
+                macProgressHelper.updateProgress(audioBytes - bytesLeft);
 
                 // process the kill flag
-                if (spMACProgressHelper.isKillFlag())
+                if (macProgressHelper.isKillFlag())
                     throw new JMACStoppedByUserException();
             }
 
-            spMACProgressHelper.UpdateStatus("Finishing compression");
+            macProgressHelper.updateStatus("Finishing compression");
 
             // finalize the file
-            if (nTerminatingBytes.value > 0) spBuffer = new byte[nTerminatingBytes.value];
-            spInputSource.GetTerminatingData(spBuffer);
-            spAPECompress.Finish(spBuffer, nTerminatingBytes.value, nTerminatingBytes.value);
+            if (terminatingBytes.value > 0) buffer = new byte[terminatingBytes.value];
+            inputSource.getTerminatingData(buffer);
+            apeCompress.finish(buffer, terminatingBytes.value, terminatingBytes.value);
 
             // update the progress to 100%
-            spMACProgressHelper.UpdateStatus("Compression finished");
+            macProgressHelper.updateStatus("Compression finished");
         } finally {
             // kill the compressor if we failed
-            if (spAPECompress != null)
-                spAPECompress.Kill();
-            if (spInputSource != null)
-                spInputSource.Close();
+            if (apeCompress != null)
+                apeCompress.kill();
+            if (inputSource != null)
+                inputSource.close();
         }
     }
 }

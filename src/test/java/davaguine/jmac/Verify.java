@@ -30,12 +30,13 @@ public class Verify extends ProgressCallback {
 
     private static long g_nInitialTickCount;
 
-    public void callback(int persent) {
-        double dProgress = ((double) (pPercentageDone)) / 1000;
-        double dElapsedMS = (System.currentTimeMillis() - g_nInitialTickCount);
+    @Override
+    public void callback(int percent) {
+        double progress = ((double) (percentageDone)) / 1000;
+        double elapsedMS = (System.currentTimeMillis() - g_nInitialTickCount);
 
-        double dSecondsRemaining = (((dElapsedMS * 100) / dProgress) - dElapsedMS) / 1000;
-        System.out.println("Progress: " + dProgress + " (" + dSecondsRemaining + " seconds remaining)          ");
+        double secondsRemaining = (((elapsedMS * 100) / progress) - elapsedMS) / 1000;
+        System.out.println("Progress: " + progress + " (" + secondsRemaining + " seconds remaining)          ");
     }
 
     public static void main(String[] args) {
@@ -48,16 +49,16 @@ public class Verify extends ProgressCallback {
             }
 
             // variable declares
-            String pFilename = args[0];        //the file to open
+            String filename = args[0]; // the file to open
 
             // attempt to verify the file
 
             // set the start time and display the starting message
             g_nInitialTickCount = System.currentTimeMillis();
-            System.out.println("Verifying '" + pFilename + "'...");
+            System.out.println("Verifying '" + filename + "'...");
 
             // do the verify (call unmac.dll)
-            APESimple.VerifyFile(pFilename, new Verify());
+            APESimple.verifyFile(filename, new Verify());
 
             // process the return value
         } catch (Exception e) {

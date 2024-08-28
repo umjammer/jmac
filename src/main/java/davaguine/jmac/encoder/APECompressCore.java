@@ -37,120 +37,117 @@ import davaguine.jmac.tools.Prepare;
  */
 public class APECompressCore {
 
-    public APECompressCore(File pIO, WaveFormat pwfeInput, int nMaxFrameBlocks, int nCompressionLevel) {
-        m_spBitArray = new BitArray(pIO);
-        m_spDataX = new int[nMaxFrameBlocks];
-        m_spDataY = new int[nMaxFrameBlocks];
-        m_spPrepare = new Prepare();
-        m_spPredictorX = new PredictorCompressNormal(nCompressionLevel);
-        m_spPredictorY = new PredictorCompressNormal(nCompressionLevel);
+    public APECompressCore(File io, WaveFormat wfeInput, int maxFrameBlocks, int compressionLevel) {
+        bitArray = new BitArray(io);
+        dataX = new int[maxFrameBlocks];
+        dataY = new int[maxFrameBlocks];
+        predictorX = new PredictorCompressNormal(compressionLevel);
+        predictorY = new PredictorCompressNormal(compressionLevel);
 
-        m_wfeInput = pwfeInput;
-        m_nPeakLevel.value = 0;
+        this.wfeInput = wfeInput;
+        peakLevel.value = 0;
     }
 
-    private IntegerPointer m_nSpecialCodes = new IntegerPointer();
+    private final IntegerPointer specialCodes = new IntegerPointer();
 
-    public void EncodeFrame(ByteArrayReader pInputData, int nInputBytes) throws IOException {
+    public void encodeFrame(ByteArrayReader inputData, int inputBytes) throws IOException {
         // variables
-        int nInputBlocks = nInputBytes / m_wfeInput.nBlockAlign;
-        m_nSpecialCodes.value = 0;
+        int inputBlocks = inputBytes / wfeInput.blockAlign;
+        specialCodes.value = 0;
 
         // always start a new frame on a byte boundary
-        m_spBitArray.AdvanceToByteBoundary();
+        bitArray.advanceToByteBoundary();
 
         // do the preparation stage
-        Prepare(pInputData, nInputBytes, m_nSpecialCodes);
+        prepare(inputData, inputBytes, specialCodes);
 
-        m_spPredictorX.Flush();
-        m_spPredictorY.Flush();
+        predictorX.flush();
+        predictorY.flush();
 
-        m_spBitArray.FlushState(m_BitArrayStateX);
-        m_spBitArray.FlushState(m_BitArrayStateY);
+        bitArray.flushState(bitArrayStateX);
+        bitArray.flushState(bitArrayStateY);
 
-        m_spBitArray.FlushBitArray();
+        bitArray.flushBitArray();
 
-        if (m_wfeInput.nChannels == 2) {
-            boolean bEncodeX = true;
-            boolean bEncodeY = true;
+        if (wfeInput.channels == 2) {
+            boolean encodeX = true;
+            boolean encodeY = true;
 
-            if ((m_nSpecialCodes.value & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0 &&
-                    (m_nSpecialCodes.value & SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE) > 0) {
-                bEncodeX = false;
-                bEncodeY = false;
+            if ((specialCodes.value & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0 &&
+                    (specialCodes.value & SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE) > 0) {
+                encodeX = false;
+                encodeY = false;
             }
 
-            if ((m_nSpecialCodes.value & SpecialFrame.SPECIAL_FRAME_PSEUDO_STEREO) > 0) {
-                bEncodeY = false;
+            if ((specialCodes.value & SpecialFrame.SPECIAL_FRAME_PSEUDO_STEREO) > 0) {
+                encodeY = false;
             }
 
-            if (bEncodeX && bEncodeY) {
-                int nLastX = 0;
-                for (int z = 0; z < nInputBlocks; z++) {
-                    m_spBitArray.EncodeValue(m_spPredictorY.CompressValue(m_spDataY[z], nLastX), m_BitArrayStateY);
-                    m_spBitArray.EncodeValue(m_spPredictorX.CompressValue(m_spDataX[z], m_spDataY[z]), m_BitArrayStateX);
+            if (encodeX && encodeY) {
+                int lastX = 0;
+                for (int z = 0; z < inputBlocks; z++) {
+                    bitArray.encodeValue(predictorY.compressValue(dataY[z], lastX), bitArrayStateY);
+                    bitArray.encodeValue(predictorX.compressValue(dataX[z], dataY[z]), bitArrayStateX);
 
-                    nLastX = m_spDataX[z];
+                    lastX = dataX[z];
                 }
-            } else if (bEncodeX) {
-                for (int z = 0; z < nInputBlocks; z++) {
-                    m_spBitArray.EncodeValue(m_spPredictorX.CompressValue(m_spDataX[z]), m_BitArrayStateX);
+            } else if (encodeX) {
+                for (int z = 0; z < inputBlocks; z++) {
+                    bitArray.encodeValue(predictorX.compressValue(dataX[z]), bitArrayStateX);
                 }
-            } else if (bEncodeY) {
-                for (int z = 0; z < nInputBlocks; z++) {
-                    m_spBitArray.EncodeValue(m_spPredictorY.CompressValue(m_spDataY[z]), m_BitArrayStateY);
+            } else if (encodeY) {
+                for (int z = 0; z < inputBlocks; z++) {
+                    bitArray.encodeValue(predictorY.compressValue(dataY[z]), bitArrayStateY);
                 }
             }
-        } else if (m_wfeInput.nChannels == 1) {
-            if ((m_nSpecialCodes.value & SpecialFrame.SPECIAL_FRAME_MONO_SILENCE) <= 0) {
-                for (int z = 0; z < nInputBlocks; z++) {
-                    m_spBitArray.EncodeValue(m_spPredictorX.CompressValue(m_spDataX[z]), m_BitArrayStateX);
+        } else if (wfeInput.channels == 1) {
+            if ((specialCodes.value & SpecialFrame.SPECIAL_FRAME_MONO_SILENCE) <= 0) {
+                for (int z = 0; z < inputBlocks; z++) {
+                    bitArray.encodeValue(predictorX.compressValue(dataX[z]), bitArrayStateX);
                 }
             }
         }
 
-        m_spBitArray.Finalize();
+        bitArray.finalize_();
     }
 
-    public BitArray GetBitArray() {
-        return m_spBitArray;
+    public BitArray getBitArray() {
+        return bitArray;
     }
 
-    public int GetPeakLevel() {
-        return m_nPeakLevel.value;
+    public int getPeakLevel() {
+        return peakLevel.value;
     }
 
-    private BitArray m_spBitArray;
-    private IPredictorCompress m_spPredictorX;
-    private IPredictorCompress m_spPredictorY;
+    private final BitArray bitArray;
+    private final IPredictorCompress predictorX;
+    private final IPredictorCompress predictorY;
 
-    private BitArrayState m_BitArrayStateX = new BitArrayState();
-    private BitArrayState m_BitArrayStateY = new BitArrayState();
+    private final BitArrayState bitArrayStateX = new BitArrayState();
+    private final BitArrayState bitArrayStateY = new BitArrayState();
 
-    private int[] m_spDataX;
-    private int[] m_spDataY;
+    private final int[] dataX;
+    private final int[] dataY;
 
-    private Prepare m_spPrepare;
+    private final WaveFormat wfeInput;
 
-    private WaveFormat m_wfeInput;
+    private final IntegerPointer peakLevel = new IntegerPointer();
 
-    private IntegerPointer m_nPeakLevel = new IntegerPointer();
+    private final Crc32 crc = new Crc32();
 
-    private Crc32 crc = new Crc32();
-
-    private void Prepare(ByteArrayReader pInputData, int nInputBytes, IntegerPointer pSpecialCodes) throws IOException {
+    private void prepare(ByteArrayReader inputData, int inputBytes, IntegerPointer specialCodes) throws IOException {
         // variable declares
-        pSpecialCodes.value = 0;
+        specialCodes.value = 0;
 
         // do the preparation
-        m_spPrepare.prepare(pInputData, nInputBytes, m_wfeInput, m_spDataX, m_spDataY,
-                crc, pSpecialCodes, m_nPeakLevel);
+        Prepare.prepare(inputData, inputBytes, wfeInput, dataX, dataY,
+                crc, specialCodes, peakLevel);
 
         // store the CRC
-        m_spBitArray.EncodeUnsignedLong(crc.getCrc());
+        bitArray.encodeUnsignedLong(crc.getCrc());
 
         // store any special codes
-        if (pSpecialCodes.value != 0)
-            m_spBitArray.EncodeUnsignedLong(pSpecialCodes.value);
+        if (specialCodes.value != 0)
+            bitArray.encodeUnsignedLong(specialCodes.value);
     }
 }

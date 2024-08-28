@@ -34,98 +34,100 @@ public class PredictorDecompress3950toCurrent extends IPredictorDecompress {
     public final static int M_COUNT = 8;
     private final static int WINDOW_BLOCKS = 512;
 
-    public PredictorDecompress3950toCurrent(int nCompressionLevel, int nVersion) {
-        super(nCompressionLevel, nVersion);
-        m_nVersion = nVersion;
+    public PredictorDecompress3950toCurrent(int compressionLevel, int version) {
+        super(compressionLevel, version);
+        this.version = version;
 
-        if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_FAST) {
-            m_pNNFilter = null;
-            m_pNNFilter1 = null;
-            m_pNNFilter2 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_NORMAL) {
-            m_pNNFilter = new NNFilter16(11, nVersion);
-            m_pNNFilter1 = null;
-            m_pNNFilter2 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_HIGH) {
-            m_pNNFilter = new NNFilter64(11, nVersion);
-            m_pNNFilter1 = null;
-            m_pNNFilter2 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH) {
-            m_pNNFilter = new NNFilter256(13, nVersion);
-            m_pNNFilter1 = new NNFilter32(10, nVersion);
-            m_pNNFilter2 = null;
-        } else if (nCompressionLevel == CompressionLevel.COMPRESSION_LEVEL_INSANE) {
-            m_pNNFilter = new NNFilter1280(15, nVersion);
-            m_pNNFilter1 = new NNFilter256(13, nVersion);
-            m_pNNFilter2 = new NNFilter16(11, nVersion);
+        if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_FAST) {
+            nnFilter = null;
+            nnFilter1 = null;
+            nnFilter2 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_NORMAL) {
+            nnFilter = new NNFilter16(11, version);
+            nnFilter1 = null;
+            nnFilter2 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_HIGH) {
+            nnFilter = new NNFilter64(11, version);
+            nnFilter1 = null;
+            nnFilter2 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH) {
+            nnFilter = new NNFilter256(13, version);
+            nnFilter1 = new NNFilter32(10, version);
+            nnFilter2 = null;
+        } else if (compressionLevel == CompressionLevel.COMPRESSION_LEVEL_INSANE) {
+            nnFilter = new NNFilter1280(15, version);
+            nnFilter1 = new NNFilter256(13, version);
+            nnFilter2 = new NNFilter16(11, version);
         } else {
             throw new JMACException("Unknown Compression Type");
         }
     }
 
-    public int DecompressValue(int nA) {
-        return DecompressValue(nA, 0);
+    @Override
+    public int decompressValue(int a) {
+        return decompressValue(a, 0);
     }
 
-    public int DecompressValue(int nA, int nB) {
-        if (m_nCurrentIndex == WINDOW_BLOCKS) {
+    @Override
+    public int decompressValue(int a, int b) {
+        if (currentIndex == WINDOW_BLOCKS) {
             // copy forward and adjust pointers
-            m_rbPredictionA.Roll();
-            m_rbPredictionB.Roll();
-            m_rbAdaptA.Roll();
-            m_rbAdaptB.Roll();
+            predictionA.roll();
+            predictionB.roll();
+            adaptA.roll();
+            adaptB.roll();
 
-            m_nCurrentIndex = 0;
+            currentIndex = 0;
         }
 
         // stage 2: NNFilter
         Object obj;
-        if ((obj = m_pNNFilter2) != null)
-            nA = ((NNFilter) (obj)).Decompress(nA);
-        if ((obj = m_pNNFilter1) != null)
-            nA = ((NNFilter) (obj)).Decompress(nA);
-        if ((obj = m_pNNFilter) != null)
-            nA = ((NNFilter) (obj)).Decompress(nA);
+        if ((obj = nnFilter2) != null)
+            a = ((NNFilter) (obj)).decompress(a);
+        if ((obj = nnFilter1) != null)
+            a = ((NNFilter) (obj)).decompress(a);
+        if ((obj = nnFilter) != null)
+            a = ((NNFilter) (obj)).decompress(a);
 
         // stage 1: multiple predictors (order 2 and offset 1)
-        int indexA = ((RollBufferFastInt) (obj = m_rbPredictionA)).index;
+        int indexA = ((RollBufferFastInt) (obj = predictionA)).index;
         RollBufferFastInt predictB;
-        int indexB = (predictB = m_rbPredictionB).index;
-        int ai[];
+        int indexB = (predictB = predictionB).index;
+        int[] ai;
         int l;
-        (ai = ((RollBufferFastInt) (obj)).m_pData)[indexA] = l = m_nLastValueA;
+        (ai = ((RollBufferFastInt) (obj)).data)[indexA] = l = lastValueA;
         int l1 = indexA - 1;
         ai[l1] = l - ai[l1];
 
-        int ai3[] = predictB.m_pData;
+        int[] ai3 = predictB.data;
 
-        ai3[indexB] = nB - ((scaledFilterBLV * 31) >> 5);
-        scaledFilterBLV = nB;
+        ai3[indexB] = b - ((scaledFilterBLV * 31) >> 5);
+        scaledFilterBLV = b;
 
-//        ai3[indexB] = m_Stage1FilterB.Compress(nB);
+//        ai3[indexB] = stage1FilterB.compress(nB);
         int k2 = indexB - 1;
         ai3[k2] = ai3[indexB] - ai3[k2];
 
-        int ai2[];
-        int ai4[];
-        int nPredictionA = (l * (ai2 = m_aryMA)[0]) + (ai[l1] * ai2[1]) + (ai[indexA - 2] * ai2[2]) + (ai[indexA - 3] * ai2[3]);
-        int nPredictionB = (ai3[indexB] * (ai4 = m_aryMB)[0]) + (ai3[k2] * ai4[1]) + (ai3[indexB - 2] * ai4[2]) + (ai3[indexB - 3] * ai4[3]) + (ai3[indexB - 4] * ai4[4]);
+        int[] ai2;
+        int[] ai4;
+        int predictionA = (l * (ai2 = ma)[0]) + (ai[l1] * ai2[1]) + (ai[indexA - 2] * ai2[2]) + (ai[indexA - 3] * ai2[3]);
+        int predictionB = (ai3[indexB] * (ai4 = mb)[0]) + (ai3[k2] * ai4[1]) + (ai3[indexB - 2] * ai4[2]) + (ai3[indexB - 3] * ai4[3]) + (ai3[indexB - 4] * ai4[4]);
 
-        int nCurrentA = nA + ((nPredictionA + (nPredictionB >> 1)) >> 10);
+        int currentA = a + ((predictionA + (predictionB >> 1)) >> 10);
 
         RollBufferFastInt adaptA;
         RollBufferFastInt adaptB;
-        int indexAA = (adaptA = m_rbAdaptA).index;
-        int indexAB = (adaptB = m_rbAdaptB).index;
-        int ai1[];
-        (ai1 = m_rbAdaptA.m_pData)[indexAA] = (l != 0) ? ((l >> 30) & 2) - 1 : 0;
+        int indexAA = (adaptA = this.adaptA).index;
+        int indexAB = (adaptB = this.adaptB).index;
+        int[] ai1;
+        (ai1 = this.adaptA.data)[indexAA] = (l != 0) ? ((l >> 30) & 2) - 1 : 0;
         ai1[indexAA - 1] = (ai[l1] != 0) ? ((ai[l1] >> 30) & 2) - 1 : 0;
 
-        int ai5[];
-        (ai5 = m_rbAdaptB.m_pData)[indexAB] = (ai3[indexB] != 0) ? ((ai3[indexB] >> 30) & 2) - 1 : 0;
+        int[] ai5;
+        (ai5 = this.adaptB.data)[indexAB] = (ai3[indexB] != 0) ? ((ai3[indexB] >> 30) & 2) - 1 : 0;
         ai5[indexAB - 1] = (ai3[k2] != 0) ? ((ai3[k2] >> 30) & 2) - 1 : 0;
 
-        if (nA > 0) {
+        if (a > 0) {
             ai2[0] -= ai1[indexAA];
             ai2[1] -= ai1[indexAA - 1];
             ai2[2] -= ai1[indexAA - 2];
@@ -136,7 +138,7 @@ public class PredictorDecompress3950toCurrent extends IPredictorDecompress {
             ai4[2] -= ai5[indexAB - 2];
             ai4[3] -= ai5[indexAB - 3];
             ai4[4] -= ai5[indexAB - 4];
-        } else if (nA < 0) {
+        } else if (a < 0) {
             ai2[0] += ai1[indexAA];
             ai2[1] += ai1[indexAA - 1];
             ai2[2] += ai1[indexAA - 2];
@@ -149,74 +151,75 @@ public class PredictorDecompress3950toCurrent extends IPredictorDecompress {
             ai4[4] += ai5[indexAB - 4];
         }
 
-//        int nRetVal = m_Stage1FilterA.Decompress(nCurrentA);
-        scaledFilterALV = nCurrentA + ((scaledFilterALV * 31) >> 5);
-        m_nLastValueA = nCurrentA;
+//        int retVal = stage1FilterA.decompress(currentA);
+        scaledFilterALV = currentA + ((scaledFilterALV * 31) >> 5);
+        lastValueA = currentA;
 
         ((RollBufferFastInt) (obj)).index++;
         predictB.index++;
         adaptA.index++;
         adaptB.index++;
 
-        m_nCurrentIndex++;
+        currentIndex++;
 
         return scaledFilterALV;
     }
 
-    public void Flush() {
+    @Override
+    public void flush() {
         NNFilter nnfilter;
-        if ((nnfilter = m_pNNFilter) != null)
-            nnfilter.Flush();
-        if ((nnfilter = m_pNNFilter1) != null)
-            nnfilter.Flush();
-        if ((nnfilter = m_pNNFilter2) != null)
-            nnfilter.Flush();
+        if ((nnfilter = nnFilter) != null)
+            nnfilter.flush();
+        if ((nnfilter = nnFilter1) != null)
+            nnfilter.flush();
+        if ((nnfilter = nnFilter2) != null)
+            nnfilter.flush();
 
-        Arrays.fill(m_aryMA, 0);
-        Arrays.fill(m_aryMB, 0);
+        Arrays.fill(ma, 0);
+        Arrays.fill(mb, 0);
 
-        m_rbPredictionA.Flush();
-        m_rbPredictionB.Flush();
-        m_rbAdaptA.Flush();
-        m_rbAdaptB.Flush();
+        predictionA.flush();
+        predictionB.flush();
+        adaptA.flush();
+        adaptB.flush();
 
-        int ai[];
-        (ai = m_aryMA)[0] = 360;
+        int[] ai;
+        (ai = ma)[0] = 360;
         ai[1] = 317;
         ai[2] = -109;
         ai[3] = 98;
 
-//        m_Stage1FilterA.Flush();
+//        stage1FilterA.flush();
         scaledFilterALV = 0;
-//        m_Stage1FilterB.Flush();
+//        stage1FilterB.flush();
         scaledFilterBLV = 0;
 
-        m_nLastValueA = 0;
+        lastValueA = 0;
 
-        m_nCurrentIndex = 0;
+        currentIndex = 0;
     }
 
     // adaption
-    protected int m_aryMA[] = new int[M_COUNT];
-    protected int m_aryMB[] = new int[M_COUNT];
+    protected final int[] ma = new int[M_COUNT];
+    protected final int[] mb = new int[M_COUNT];
 
     // buffer pointers
-    protected RollBufferFastInt m_rbPredictionA = new RollBufferFastInt(WINDOW_BLOCKS, 8);
-    protected RollBufferFastInt m_rbPredictionB = new RollBufferFastInt(WINDOW_BLOCKS, 8);
+    protected final RollBufferFastInt predictionA = new RollBufferFastInt(WINDOW_BLOCKS, 8);
+    protected final RollBufferFastInt predictionB = new RollBufferFastInt(WINDOW_BLOCKS, 8);
 
-    protected RollBufferFastInt m_rbAdaptA = new RollBufferFastInt(WINDOW_BLOCKS, 8);
-    protected RollBufferFastInt m_rbAdaptB = new RollBufferFastInt(WINDOW_BLOCKS, 8);
+    protected final RollBufferFastInt adaptA = new RollBufferFastInt(WINDOW_BLOCKS, 8);
+    protected final RollBufferFastInt adaptB = new RollBufferFastInt(WINDOW_BLOCKS, 8);
 
-    //    protected ScaledFirstOrderFilter m_Stage1FilterA = new ScaledFirstOrderFilter(31, 5);
+//    protected ScaledFirstOrderFilter stage1FilterA = new ScaledFirstOrderFilter(31, 5);
     protected int scaledFilterALV;
-    //    protected ScaledFirstOrderFilter m_Stage1FilterB = new ScaledFirstOrderFilter(31, 5);
+//    protected ScaledFirstOrderFilter stage1FilterB = new ScaledFirstOrderFilter(31, 5);
     protected int scaledFilterBLV;
 
     // other
-    protected int m_nCurrentIndex;
-    protected int m_nLastValueA;
-    protected int m_nVersion;
-    protected NNFilter m_pNNFilter;
-    protected NNFilter m_pNNFilter1;
-    protected NNFilter m_pNNFilter2;
+    protected int currentIndex;
+    protected int lastValueA;
+    protected final int version;
+    protected NNFilter nnFilter;
+    protected NNFilter nnFilter1;
+    protected NNFilter nnFilter2;
 }

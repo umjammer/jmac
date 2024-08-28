@@ -33,196 +33,204 @@ import davaguine.jmac.tools.JMACException;
 public class WAVInputSource extends InputSource {
 
     // construction / destruction
-    public WAVInputSource(File pIO, WaveFormat pwfeSource, IntegerPointer pTotalBlocks, IntegerPointer pHeaderBytes, IntegerPointer pTerminatingBytes) throws IOException {
-        super(pIO, pwfeSource, pTotalBlocks, pHeaderBytes, pTerminatingBytes);
-        m_bIsValid = false;
 
-        if (pIO == null || pwfeSource == null)
+    public WAVInputSource(File io, WaveFormat wfeSource, IntegerPointer totalBlocks, IntegerPointer headerBytes, IntegerPointer terminatingBytes) throws IOException {
+        super(io, wfeSource, totalBlocks, headerBytes, terminatingBytes);
+        isValid = false;
+
+        if (io == null || wfeSource == null)
             throw new JMACException("Bad Parameters");
 
-        m_spIO = pIO;
-        m_bOwnsInputIO = false;
+        this.io = io;
+        ownsInputIO = false;
 
-        AnalyzeSource();
+        analyzeSource();
 
         // fill in the parameters
-        pwfeSource = m_wfeSource;
-        if (pTotalBlocks != null) pTotalBlocks.value = m_nDataBytes / m_wfeSource.nBlockAlign;
-        if (pHeaderBytes != null) pHeaderBytes.value = m_nHeaderBytes;
-        if (pTerminatingBytes != null) pTerminatingBytes.value = m_nTerminatingBytes;
+        wfeSource = this.wfeSource;
+        if (totalBlocks != null) totalBlocks.value = dataBytes / this.wfeSource.blockAlign;
+        if (headerBytes != null) headerBytes.value = this.headerBytes;
+        if (terminatingBytes != null) terminatingBytes.value = this.terminatingBytes;
 
-        m_bIsValid = true;
+        isValid = true;
     }
 
-    public WAVInputSource(String pSourceName, WaveFormat pwfeSource, IntegerPointer pTotalBlocks, IntegerPointer pHeaderBytes, IntegerPointer pTerminatingBytes) throws IOException {
-        super(pSourceName, pwfeSource, pTotalBlocks, pHeaderBytes, pTerminatingBytes);
-        m_bIsValid = false;
+    public WAVInputSource(String sourceName, WaveFormat wfeSource, IntegerPointer totalBlocks, IntegerPointer headerBytes, IntegerPointer terminatingBytes) throws IOException {
+        super(sourceName, wfeSource, totalBlocks, headerBytes, terminatingBytes);
+        isValid = false;
 
-        if (pSourceName == null || pwfeSource == null)
+        if (sourceName == null || wfeSource == null)
             throw new JMACException("Bad Parameters");
 
-        m_spIO = File.createFile(pSourceName, "r");
-        m_bOwnsInputIO = true;
+        io = File.createFile(sourceName, "r");
+        ownsInputIO = true;
 
-        AnalyzeSource();
+        analyzeSource();
         // fill in the parameters
-        pwfeSource.wFormatTag = m_wfeSource.wFormatTag;
-        pwfeSource.nChannels = m_wfeSource.nChannels;
-        pwfeSource.nSamplesPerSec = m_wfeSource.nSamplesPerSec;
-        pwfeSource.nAvgBytesPerSec = m_wfeSource.nAvgBytesPerSec;
-        pwfeSource.nBlockAlign = m_wfeSource.nBlockAlign;
-        pwfeSource.wBitsPerSample = m_wfeSource.wBitsPerSample;
-        if (pTotalBlocks != null) pTotalBlocks.value = m_nDataBytes / m_wfeSource.nBlockAlign;
-        if (pHeaderBytes != null) pHeaderBytes.value = m_nHeaderBytes;
-        if (pTerminatingBytes != null) pTerminatingBytes.value = m_nTerminatingBytes;
+        this.wfeSource.formatTag = wfeSource.formatTag;
+        this.wfeSource.channels = wfeSource.channels;
+        this.wfeSource.samplesPerSec = wfeSource.samplesPerSec;
+        this.wfeSource.avgBytesPerSec = wfeSource.avgBytesPerSec;
+        this.wfeSource.blockAlign = wfeSource.blockAlign;
+        this.wfeSource.bitsPerSample = wfeSource.bitsPerSample;
+        if (totalBlocks != null) totalBlocks.value = dataBytes / wfeSource.blockAlign;
+        if (headerBytes != null) headerBytes.value = this.headerBytes;
+        if (terminatingBytes != null) terminatingBytes.value = this.terminatingBytes;
 
-        m_bIsValid = true;
+        isValid = true;
     }
 
-    public void Close() throws IOException {
-        if (m_bIsValid && m_bOwnsInputIO && m_spIO != null)
-            m_spIO.close();
-        m_spIO = null;
+    @Override
+    public void close() throws IOException {
+        if (isValid && ownsInputIO && io != null)
+            io.close();
+        io = null;
     }
 
+    @Override
     protected void finalize() {
         try {
-            Close();
+            close();
         } catch (IOException e) {
             throw new JMACException("Error while closing input stream.");
         }
     }
 
     // get data
-    public int GetData(ByteBuffer pBuffer, int nBlocks) throws IOException {
-        if (!m_bIsValid)
+
+    @Override
+    public int getData(ByteBuffer buffer, int blocks) throws IOException {
+        if (!isValid)
             throw new JMACException("Undefined Error");
 
-        int nBytes = (m_wfeSource.nBlockAlign * nBlocks);
+        int bytes = (wfeSource.blockAlign * blocks);
 
-        int nBytesRead = m_spIO.read(pBuffer.getBytes(), pBuffer.getIndex(), nBytes);
+        int bytesRead = io.read(buffer.getBytes(), buffer.getIndex(), bytes);
 
-        return nBytesRead / m_wfeSource.nBlockAlign;
+        return bytesRead / wfeSource.blockAlign;
     }
 
     // get header / terminating data
-    public void GetHeaderData(byte[] pBuffer) throws IOException {
-        if (!m_bIsValid)
+
+    @Override
+    public void getHeaderData(byte[] buffer) throws IOException {
+        if (!isValid)
             throw new JMACException("Undefined Error");
 
-        if (m_nHeaderBytes > 0) {
-            long nOriginalFileLocation = m_spIO.getFilePointer();
+        if (headerBytes > 0) {
+            long originalFileLocation = io.getFilePointer();
 
-            m_spIO.seek(0);
+            io.seek(0);
 
-            if (m_spIO.read(pBuffer, 0, m_nHeaderBytes) != m_nHeaderBytes)
+            if (io.read(buffer, 0, headerBytes) != headerBytes)
                 throw new JMACException("Undefined Error");
 
-            m_spIO.seek(nOriginalFileLocation);
+            io.seek(originalFileLocation);
         }
     }
 
-    public void GetTerminatingData(byte[] pBuffer) throws IOException {
-        if (!m_bIsValid)
+    @Override
+    public void getTerminatingData(byte[] buffer) throws IOException {
+        if (!isValid)
             throw new JMACException("Undefined Error");
 
-        if (m_nTerminatingBytes > 0) {
-            long nOriginalFileLocation = m_spIO.getFilePointer();
+        if (terminatingBytes > 0) {
+            long originalFileLocation = io.getFilePointer();
 
-            m_spIO.seek(m_spIO.length() - m_nTerminatingBytes);
+            io.seek(io.length() - terminatingBytes);
 
-            if (m_spIO.read(pBuffer, 0, m_nTerminatingBytes) != m_nTerminatingBytes)
+            if (io.read(buffer, 0, terminatingBytes) != terminatingBytes)
                 throw new JMACException("Undefined Error");
 
-            m_spIO.seek(nOriginalFileLocation);
+            io.seek(originalFileLocation);
         }
     }
 
-    private void AnalyzeSource() throws IOException {
+    private void analyzeSource() throws IOException {
         // seek to the beginning (just in case)
-        m_spIO.seek(0);
+        io.seek(0);
 
         // get the file size
-        m_nFileBytes = (int) m_spIO.length();
+        fileBytes = (int) io.length();
 
         // get the RIFF header
-        int riffSignature = m_spIO.readInt();
+        int riffSignature = io.readInt();
         int goalSignature = ('R' << 24) | ('I' << 16) | ('F' << 8) | ('F');
         if (riffSignature != goalSignature)
             throw new JMACException("Invalid Input File");
 
-        m_spIO.readInt();
+        io.readInt();
 
         // read the data type header
-        int dataTypeSignature = m_spIO.readInt();
+        int dataTypeSignature = io.readInt();
         goalSignature = ('W' << 24) | ('A' << 16) | ('V' << 8) | ('E');
         // make sure it's the right data type
         if (dataTypeSignature != goalSignature)
             throw new JMACException("Invalid Input File");
 
         // find the 'fmt ' chunk
-        RiffChunkHeader RIFFChunkHeader = new RiffChunkHeader();
-        RIFFChunkHeader.read(m_spIO);
+        RiffChunkHeader riffChunkHeader = new RiffChunkHeader();
+        riffChunkHeader.read(io);
         goalSignature = (' ' << 24) | ('t' << 16) | ('m' << 8) | ('f');
-        while (RIFFChunkHeader.cChunkLabel != goalSignature) {
+        while (riffChunkHeader.chunkLabel != goalSignature) {
             // move the file pointer to the end of this chunk
-            m_spIO.seek(m_spIO.getFilePointer() + RIFFChunkHeader.nChunkBytes);
+            io.seek(io.getFilePointer() + riffChunkHeader.chunkBytes);
 
             // check again for the data chunk
-            RIFFChunkHeader.read(m_spIO);
+            riffChunkHeader.read(io);
         }
 
         // read the format info
-        WaveFormat WAVFormatHeader = new WaveFormat();
-        WAVFormatHeader.readHeader(m_spIO);
+        WaveFormat wavFormatHeader = new WaveFormat();
+        wavFormatHeader.readHeader(io);
 
         // error check the header to see if we support it
-        if (WAVFormatHeader.wFormatTag != 1)
+        if (wavFormatHeader.formatTag != 1)
             throw new JMACException("Invalid Input File");
 
         // copy the format information to the WAVEFORMATEX passed in
-        WaveFormat.FillWaveFormatEx(m_wfeSource, WAVFormatHeader.nSamplesPerSec, WAVFormatHeader.wBitsPerSample, WAVFormatHeader.nChannels);
+        WaveFormat.fillWaveFormatEx(wfeSource, wavFormatHeader.samplesPerSec, wavFormatHeader.bitsPerSample, wavFormatHeader.channels);
 
         // skip over any extra data in the header
-        int nWAVFormatHeaderExtra = (int) (RIFFChunkHeader.nChunkBytes - WaveFormat.WAV_HEADER_SIZE);
-        if (nWAVFormatHeaderExtra < 0)
+        int wavFormatHeaderExtra = (int) (riffChunkHeader.chunkBytes - WaveFormat.WAV_HEADER_SIZE);
+        if (wavFormatHeaderExtra < 0)
             throw new JMACException("Invalid Input File");
         else
-            m_spIO.seek(m_spIO.getFilePointer() + nWAVFormatHeaderExtra);
+            io.seek(io.getFilePointer() + wavFormatHeaderExtra);
 
         // find the data chunk
-        RIFFChunkHeader.read(m_spIO);
+        riffChunkHeader.read(io);
         goalSignature = ('a' << 24) | ('t' << 16) | ('a' << 8) | ('d');
 
-        while (RIFFChunkHeader.cChunkLabel != goalSignature) {
+        while (riffChunkHeader.chunkLabel != goalSignature) {
             // move the file pointer to the end of this chunk
-            m_spIO.seek(m_spIO.getFilePointer() + RIFFChunkHeader.nChunkBytes);
+            io.seek(io.getFilePointer() + riffChunkHeader.chunkBytes);
 
             // check again for the data chunk
-            RIFFChunkHeader.read(m_spIO);
+            riffChunkHeader.read(io);
         }
 
         // we're at the data block
-        m_nHeaderBytes = (int) m_spIO.getFilePointer();
-        m_nDataBytes = (int) RIFFChunkHeader.nChunkBytes;
-        if (m_nDataBytes < 0)
-            m_nDataBytes = m_nFileBytes - m_nHeaderBytes;
+        headerBytes = (int) io.getFilePointer();
+        dataBytes = (int) riffChunkHeader.chunkBytes;
+        if (dataBytes < 0)
+            dataBytes = fileBytes - headerBytes;
 
         // make sure the data bytes is a whole number of blocks
-        if ((m_nDataBytes % m_wfeSource.nBlockAlign) != 0)
+        if ((dataBytes % wfeSource.blockAlign) != 0)
             throw new JMACException("Invalid Input File");
 
         // calculate the terminating byts
-        m_nTerminatingBytes = m_nFileBytes - m_nDataBytes - m_nHeaderBytes;
+        terminatingBytes = fileBytes - dataBytes - headerBytes;
     }
 
-    private File m_spIO;
-    private boolean m_bOwnsInputIO;
+    private File io;
+    private final boolean ownsInputIO;
 
-    private WaveFormat m_wfeSource = new WaveFormat();
-    private int m_nHeaderBytes;
-    private int m_nDataBytes;
-    private int m_nTerminatingBytes;
-    private int m_nFileBytes;
-    private boolean m_bIsValid;
+    private final WaveFormat wfeSource = new WaveFormat();
+    private int headerBytes;
+    private int dataBytes;
+    private int terminatingBytes;
+    private int fileBytes;
+    private boolean isValid;
 }

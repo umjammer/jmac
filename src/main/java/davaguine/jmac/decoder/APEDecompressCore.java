@@ -32,138 +32,138 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEDecompressCore {
 
-    public APEDecompressCore(IAPEDecompress pAPEDecompress) {
-        m_pAPEDecompress = pAPEDecompress;
+    public APEDecompressCore(IAPEDecompress apeDecompress) {
+        this.apeDecompress = apeDecompress;
 
-        //initialize the bit array
-        m_pUnBitArray = UnBitArrayBase.CreateUnBitArray(pAPEDecompress, pAPEDecompress.getApeInfoFileVersion());
+        // initialize the bit array
+        unBitArray = UnBitArrayBase.createUnBitArray(apeDecompress, apeDecompress.getApeInfoFileVersion());
 
-        if (pAPEDecompress.getApeInfoFileVersion() >= 3930)
+        if (apeDecompress.getApeInfoFileVersion() >= 3930)
             throw new JMACException("Wrong Version");
 
-        m_pAntiPredictorX = AntiPredictor.CreateAntiPredictor(pAPEDecompress.getApeInfoCompressionLevel(), pAPEDecompress.getApeInfoFileVersion());
-        m_pAntiPredictorY = AntiPredictor.CreateAntiPredictor(pAPEDecompress.getApeInfoCompressionLevel(), pAPEDecompress.getApeInfoFileVersion());
+        antiPredictorX = AntiPredictor.createAntiPredictor(apeDecompress.getApeInfoCompressionLevel(), apeDecompress.getApeInfoFileVersion());
+        antiPredictorY = AntiPredictor.createAntiPredictor(apeDecompress.getApeInfoCompressionLevel(), apeDecompress.getApeInfoFileVersion());
 
-        m_pDataX = new int[pAPEDecompress.getApeInfoBlocksPerFrame() + 16];
-        m_pDataY = new int[pAPEDecompress.getApeInfoBlocksPerFrame() + 16];
-        m_pTempData = new int[pAPEDecompress.getApeInfoBlocksPerFrame() + 16];
+        dataX = new int[apeDecompress.getApeInfoBlocksPerFrame() + 16];
+        dataY = new int[apeDecompress.getApeInfoBlocksPerFrame() + 16];
+        tempData = new int[apeDecompress.getApeInfoBlocksPerFrame() + 16];
 
-        m_nBlocksProcessed = 0;
+        blocksProcessed = 0;
     }
 
-    public void GenerateDecodedArrays(int nBlocks, int nSpecialCodes, int nFrameIndex) throws IOException {
-        if (m_pAPEDecompress.getApeInfoChannels() == 2) {
-            if ((nSpecialCodes & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0 && (nSpecialCodes & SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE) > 0) {
-                Arrays.fill(m_pDataX, 0, nBlocks, 0);
-                Arrays.fill(m_pDataY, 0, nBlocks, 0);
-            } else if ((nSpecialCodes & SpecialFrame.SPECIAL_FRAME_PSEUDO_STEREO) > 0) {
-                GenerateDecodedArray(m_pDataX, nBlocks, nFrameIndex, m_pAntiPredictorX);
-                Arrays.fill(m_pDataY, 0, nBlocks, 0);
+    public void generateDecodedArrays(int blocks, int specialCodes, int frameIndex) throws IOException {
+        if (apeDecompress.getApeInfoChannels() == 2) {
+            if ((specialCodes & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0 && (specialCodes & SpecialFrame.SPECIAL_FRAME_RIGHT_SILENCE) > 0) {
+                Arrays.fill(dataX, 0, blocks, 0);
+                Arrays.fill(dataY, 0, blocks, 0);
+            } else if ((specialCodes & SpecialFrame.SPECIAL_FRAME_PSEUDO_STEREO) > 0) {
+                generateDecodedArray(dataX, blocks, frameIndex, antiPredictorX);
+                Arrays.fill(dataY, 0, blocks, 0);
             } else {
-                GenerateDecodedArray(m_pDataX, nBlocks, nFrameIndex, m_pAntiPredictorX);
-                GenerateDecodedArray(m_pDataY, nBlocks, nFrameIndex, m_pAntiPredictorY);
+                generateDecodedArray(dataX, blocks, frameIndex, antiPredictorX);
+                generateDecodedArray(dataY, blocks, frameIndex, antiPredictorY);
             }
         } else {
-            if ((nSpecialCodes & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0)
-                Arrays.fill(m_pDataX, 0, nBlocks, 0);
+            if ((specialCodes & SpecialFrame.SPECIAL_FRAME_LEFT_SILENCE) > 0)
+                Arrays.fill(dataX, 0, blocks, 0);
             else
-                GenerateDecodedArray(m_pDataX, nBlocks, nFrameIndex, m_pAntiPredictorX);
+                generateDecodedArray(dataX, blocks, frameIndex, antiPredictorX);
         }
     }
 
-    public void GenerateDecodedArray(int[] Input_Array, int Number_of_Elements, int Frame_Index, AntiPredictor pAntiPredictor) throws IOException {
-        final int nFrameBytes = m_pAPEDecompress.getApeInfoFrameBytes(Frame_Index);
+    public void generateDecodedArray(int[] inputArray, int numberOfElements, int frameIndex, AntiPredictor antiPredictor) throws IOException {
+        int frameBytes = apeDecompress.getApeInfoFrameBytes(frameIndex);
 
-        //run the prediction sequence
-        switch (m_pAPEDecompress.getApeInfoCompressionLevel()) {
+        // run the prediction sequence
+        switch (apeDecompress.getApeInfoCompressionLevel()) {
 
             case CompressionLevel.COMPRESSION_LEVEL_FAST:
-                if (m_pAPEDecompress.getApeInfoFileVersion() < 3320) {
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    pAntiPredictor.AntiPredict(m_pTempData, Input_Array, Number_of_Elements);
+                if (apeDecompress.getApeInfoFileVersion() < 3320) {
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    antiPredictor.antiPredict(tempData, inputArray, numberOfElements);
                 } else {
-                    m_pUnBitArray.GenerateArray(Input_Array, Number_of_Elements, nFrameBytes);
-                    pAntiPredictor.AntiPredict(Input_Array, null, Number_of_Elements);
+                    unBitArray.generateArray(inputArray, numberOfElements, frameBytes);
+                    antiPredictor.antiPredict(inputArray, null, numberOfElements);
                 }
 
                 break;
 
             case CompressionLevel.COMPRESSION_LEVEL_NORMAL: {
-                //get the array from the bitstream
-                m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                pAntiPredictor.AntiPredict(m_pTempData, Input_Array, Number_of_Elements);
+                // get the array from the bitstream
+                unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                antiPredictor.antiPredict(tempData, inputArray, numberOfElements);
                 break;
             }
 
             case CompressionLevel.COMPRESSION_LEVEL_HIGH:
-                //get the array from the bitstream
-                m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                pAntiPredictor.AntiPredict(m_pTempData, Input_Array, Number_of_Elements);
+                // get the array from the bitstream
+                unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                antiPredictor.antiPredict(tempData, inputArray, numberOfElements);
                 break;
 
             case CompressionLevel.COMPRESSION_LEVEL_EXTRA_HIGH:
-                long nNumberOfCoefficients;
+                long numberOfCoefficients;
 
-                if (m_pAPEDecompress.getApeInfoFileVersion() < 3320) {
-                    nNumberOfCoefficients = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 4);
-                    for (int z = 0; z <= nNumberOfCoefficients; z++) {
-                        aryCoefficientsA[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
-                        aryCoefficientsB[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                if (apeDecompress.getApeInfoFileVersion() < 3320) {
+                    numberOfCoefficients = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 4);
+                    for (int z = 0; z <= numberOfCoefficients; z++) {
+                        coefficientsA[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                        coefficientsB[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
                     }
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    ((AntiPredictorExtraHigh0000To3320) pAntiPredictor).AntiPredict(m_pTempData, Input_Array, Number_of_Elements, (int) nNumberOfCoefficients, aryCoefficientsA, aryCoefficientsB);
-                } else if (m_pAPEDecompress.getApeInfoFileVersion() < 3600) {
-                    nNumberOfCoefficients = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
-                    for (int z = 0; z <= nNumberOfCoefficients; z++) {
-                        aryCoefficientsA[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 5);
-                        aryCoefficientsB[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 5);
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    ((AntiPredictorExtraHigh0000To3320) antiPredictor).antiPredict(tempData, inputArray, numberOfElements, (int) numberOfCoefficients, coefficientsA, coefficientsB);
+                } else if (apeDecompress.getApeInfoFileVersion() < 3600) {
+                    numberOfCoefficients = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
+                    for (int z = 0; z <= numberOfCoefficients; z++) {
+                        coefficientsA[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 5);
+                        coefficientsB[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 5);
                     }
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    ((AntiPredictorExtraHigh3320To3600) pAntiPredictor).AntiPredict(m_pTempData, Input_Array, Number_of_Elements, (int) nNumberOfCoefficients, aryCoefficientsA, aryCoefficientsB);
-                } else if (m_pAPEDecompress.getApeInfoFileVersion() < 3700) {
-                    nNumberOfCoefficients = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
-                    for (int z = 0; z <= nNumberOfCoefficients; z++) {
-                        aryCoefficientsA[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
-                        aryCoefficientsB[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    ((AntiPredictorExtraHigh3320To3600) antiPredictor).antiPredict(tempData, inputArray, numberOfElements, (int) numberOfCoefficients, coefficientsA, coefficientsB);
+                } else if (apeDecompress.getApeInfoFileVersion() < 3700) {
+                    numberOfCoefficients = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
+                    for (int z = 0; z <= numberOfCoefficients; z++) {
+                        coefficientsA[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                        coefficientsB[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
                     }
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    ((AntiPredictorExtraHigh3600To3700) pAntiPredictor).AntiPredict(m_pTempData, Input_Array, Number_of_Elements, (int) nNumberOfCoefficients, aryCoefficientsA, aryCoefficientsB);
-                } else if (m_pAPEDecompress.getApeInfoFileVersion() < 3800) {
-                    nNumberOfCoefficients = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
-                    for (int z = 0; z <= nNumberOfCoefficients; z++) {
-                        aryCoefficientsA[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
-                        aryCoefficientsB[z] = m_pUnBitArray.DecodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    ((AntiPredictorExtraHigh3600To3700) antiPredictor).antiPredict(tempData, inputArray, numberOfElements, (int) numberOfCoefficients, coefficientsA, coefficientsB);
+                } else if (apeDecompress.getApeInfoFileVersion() < 3800) {
+                    numberOfCoefficients = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 3);
+                    for (int z = 0; z <= numberOfCoefficients; z++) {
+                        coefficientsA[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
+                        coefficientsB[z] = unBitArray.decodeValue(DecodeValueMethod.DECODE_VALUE_METHOD_X_BITS, 6);
                     }
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    ((AntiPredictorExtraHigh3700To3800) pAntiPredictor).AntiPredict(m_pTempData, Input_Array, Number_of_Elements, (int) nNumberOfCoefficients, aryCoefficientsA, aryCoefficientsB);
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    ((AntiPredictorExtraHigh3700To3800) antiPredictor).antiPredict(tempData, inputArray, numberOfElements, (int) numberOfCoefficients, coefficientsA, coefficientsB);
                 } else {
-                    m_pUnBitArray.GenerateArray(m_pTempData, Number_of_Elements, nFrameBytes);
-                    ((AntiPredictorExtraHigh3800ToCurrent) pAntiPredictor).AntiPredict(m_pTempData, Input_Array, Number_of_Elements, m_pAPEDecompress.getApeInfoFileVersion());
+                    unBitArray.generateArray(tempData, numberOfElements, frameBytes);
+                    ((AntiPredictorExtraHigh3800ToCurrent) antiPredictor).antiPredict(tempData, inputArray, numberOfElements, apeDecompress.getApeInfoFileVersion());
                 }
 
                 break;
         }
     }
 
-    public UnBitArrayBase GetUnBitArrray() {
-        return m_pUnBitArray;
+    public UnBitArrayBase getUnBitArray() {
+        return unBitArray;
     }
 
-    private long[] aryCoefficientsA = new long[64];
-    private long[] aryCoefficientsB = new long[64];
+    private final long[] coefficientsA = new long[64];
+    private final long[] coefficientsB = new long[64];
 
-    public int[] m_pTempData;
-    public int[] m_pDataX;
-    public int[] m_pDataY;
+    public int[] tempData;
+    public int[] dataX;
+    public int[] dataY;
 
-    public AntiPredictor m_pAntiPredictorX;
-    public AntiPredictor m_pAntiPredictorY;
+    public AntiPredictor antiPredictorX;
+    public AntiPredictor antiPredictorY;
 
-    public UnBitArrayBase m_pUnBitArray;
-    public UnBitArrayState m_BitArrayStateX = new UnBitArrayState();
-    public UnBitArrayState m_BitArrayStateY = new UnBitArrayState();
+    public final UnBitArrayBase unBitArray;
+    public UnBitArrayState bitArrayStateX = new UnBitArrayState();
+    public UnBitArrayState bitArrayStateY = new UnBitArrayState();
 
-    public IAPEDecompress m_pAPEDecompress;
+    public final IAPEDecompress apeDecompress;
 
-    public int m_nBlocksProcessed;
+    public int blocksProcessed;
 }

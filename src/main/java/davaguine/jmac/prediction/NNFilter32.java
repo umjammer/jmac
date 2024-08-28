@@ -25,113 +25,115 @@ package davaguine.jmac.prediction;
  */
 public class NNFilter32 extends NNFilter {
 
-    public NNFilter32(int nShift, int nVersion) {
-        super(32, nShift, nVersion);
-        orderPlusWindow = 544 /* NN_WINDOW_ELEMENTS + m_nOrder */;
+    public NNFilter32(int shift, int version) {
+        super(32, shift, version);
+        orderPlusWindow = 544 /* NN_WINDOW_ELEMENTS + order */;
     }
 
-    protected int CalculateDotProductNoMMX(short[] pA, int indexA, short[] pB, int indexB) {
-        return (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]) +
-                (pA[indexA++] * pB[indexB++]);
+    @Override
+    protected int calculateDotProductNoMMX(short[] a, int indexA, short[] b, int indexB) {
+        return (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]) +
+                (a[indexA++] * b[indexB++]);
     }
 
-    protected void AdaptNoMMX(short[] pM, int indexM, short[] pAdapt, int indexA, int nDirection) {
-        if (nDirection < 0) {
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-            pM[indexM++] += pAdapt[indexA++];
-        } else if (nDirection > 0) {
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
-            pM[indexM++] -= pAdapt[indexA++];
+    @Override
+    protected void adaptNoMMX(short[] m, int indexM, short[] adapt, int indexA, int direction) {
+        if (direction < 0) {
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+            m[indexM++] += adapt[indexA++];
+        } else if (direction > 0) {
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
+            m[indexM++] -= adapt[indexA++];
         }
     }
 }

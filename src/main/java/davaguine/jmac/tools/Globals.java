@@ -18,17 +18,24 @@
 
 package davaguine.jmac.tools;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
+import static java.lang.System.getLogger;
+
+
 /**
  * @author Dmitry Vaguine
  * @version 04.03.2004 14:51:31
  */
 public class Globals {
 
+    private static final Logger logger = getLogger(Globals.class.getName());
+
     private static final boolean SHOW_ACCESS_CONTROL_EXCEPTIONS = false;
     private static final String PROPERTY_PREFIX = "jmac.";
 
     public final static int MAC_VERSION_NUMBER = 3990;
-    public final static boolean DEBUG = getBooleanProperty("DEBUG");
     public final static boolean NATIVE = getBooleanProperty("NATIVE");
 
     private static boolean getBooleanProperty(String strName) {
@@ -38,8 +45,8 @@ public class Globals {
             strValue = System.getProperty(strPropertyName, "false");
         } catch (Exception e) {
             if (SHOW_ACCESS_CONTROL_EXCEPTIONS)
-                e.printStackTrace();
+                logger.log(Level.ERROR, e.getMessage(), e);
         }
-        return strValue.toLowerCase().equals("true");
+        return strValue.equalsIgnoreCase("true");
     }
 }

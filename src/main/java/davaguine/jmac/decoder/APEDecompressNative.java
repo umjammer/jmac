@@ -31,48 +31,64 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEDecompressNative extends APEDecompress {
 
-    private final int ID;
-    private int m_nRealFrame;
+    private final int id;
+    private final int realFrame_;
 
     static {
         System.loadLibrary("jmac");
     }
 
-    public APEDecompressNative(APEInfo pAPEInfo) {
-        this(pAPEInfo, -1, -1);
+    public APEDecompressNative(APEInfo apeInfo) {
+        this(apeInfo, -1, -1);
     }
 
-    public APEDecompressNative(APEInfo pAPEInfo, int nStartBlock) {
-        this(pAPEInfo, nStartBlock, -1);
+    public APEDecompressNative(APEInfo apeInfo, int startBlock) {
+        this(apeInfo, startBlock, -1);
     }
 
-    public APEDecompressNative(APEInfo pAPEInfo, int nStartBlock, int nFinishBlock) {
-        super(pAPEInfo, nStartBlock, nFinishBlock);
-        ID = registerDecoder(this.getApeInfoIoSource(), this.getApeInfoFileVersion(), this.getApeInfoCompressionLevel(), nStartBlock, nFinishBlock, this.getApeInfoTotalBlocks(), this.getApeInfoBlockAlign(), this.getApeInfoBlocksPerFrame(), this.getApeInfoSampleRate(), this.getApeInfoBitsPerSample(), this.getApeInfoChannels());
-        if (ID < 0)
+    public APEDecompressNative(APEInfo apeInfo, int startBlock, int finishBlock) {
+        super(apeInfo, startBlock, finishBlock);
+        id = registerDecoder(
+                this.getApeInfoIoSource(),
+                this.getApeInfoFileVersion(),
+                this.getApeInfoCompressionLevel(),
+                startBlock,
+                finishBlock,
+                this.getApeInfoTotalBlocks(),
+                this.getApeInfoBlockAlign(),
+                this.getApeInfoBlocksPerFrame(),
+                this.getApeInfoSampleRate(),
+                this.getApeInfoBitsPerSample(),
+                this.getApeInfoChannels());
+        if (id < 0)
             throw new JMACException("The Native APE Decoder Can't Be Instantiated");
-        m_nRealFrame = 0;
+        realFrame_ = 0;
     }
 
-    public void finalize() {
-        finalize(ID, this.getApeInfoIoSource());
+    @Override
+    protected void finalize() {
+        finalize(id, this.getApeInfoIoSource());
     }
 
-    public int GetData(byte[] pBuffer, int nBlocks) throws IOException {
-        int nBlocksRetrieved = GetData(ID, this.getApeInfoIoSource(), pBuffer, nBlocks);
-        m_nCurrentBlock += nBlocksRetrieved;
-        return nBlocksRetrieved;
+    @Override
+    public int getData(byte[] buffer, int blocks) throws IOException {
+        int blocksRetrieved = getData(id, this.getApeInfoIoSource(), buffer, blocks);
+        currentBlock += blocksRetrieved;
+        return blocksRetrieved;
     }
 
-    public void Seek(int nBlockOffset) throws IOException {
-        Seek(ID, this.getApeInfoIoSource(), nBlockOffset);
+    @Override
+    public void seek(int blockOffset) throws IOException {
+        seek(id, this.getApeInfoIoSource(), blockOffset);
     }
 
-    private native int registerDecoder(File io, int nVersion, int nCompressionLevel, int nStartBlock, int nFinishBlock, int nTotalBlocks, int nBlockAlign, int nBlocksPerFrame, int nSampleRate, int nBitsPerSample, int nChannels);
+    private native int registerDecoder(File io, int version, int compressionLevel, int startBlock, int finishBlock,
+                                       int totalBlocks, int blockAlign, int blocksPerFrame, int sampleRate,
+                                       int bitsPerSample, int channels);
 
-    private native void finalize(int ID, File io);
+    private native void finalize(int id, File io);
 
-    private native int GetData(int ID, File io, byte[] pBuffer, int nBlocks);
+    private native int getData(int id, File io, byte[] buffer, int blocks);
 
-    private native void Seek(int ID, File io, int nBlockOffset) throws IOException;
+    private native void seek(int id, File io, int blockOffset) throws IOException;
 }

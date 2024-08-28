@@ -27,38 +27,39 @@ public class AntiPredictorNormal3800ToCurrent extends AntiPredictor {
 
     private final static int FIRST_ELEMENT = 4;
 
-    public void AntiPredict(int[] pInputArray, int[] pOutputArray, int NumberOfElements) {
-        //short frame handling
-        if (NumberOfElements < 8) {
-            System.arraycopy(pInputArray, 0, pOutputArray, 0, NumberOfElements);
+    @Override
+    public void antiPredict(int[] inputArray, int[] outputArray, int numberOfElements) {
+        // short frame handling
+        if (numberOfElements < 8) {
+            System.arraycopy(inputArray, 0, outputArray, 0, numberOfElements);
             return;
         }
 
-        //make the first five samples identical in both arrays
-        System.arraycopy(pInputArray, 0, pOutputArray, 0, FIRST_ELEMENT);
+        // make the first five samples identical in both arrays
+        System.arraycopy(inputArray, 0, outputArray, 0, FIRST_ELEMENT);
 
-        //variable declares and initializations
+        // variable declares and initializations
         int m2 = 64, m3 = 115, m4 = 64, m5 = 740, m6 = 0;
-        int p4 = pInputArray[FIRST_ELEMENT - 1];
-        int p3 = (pInputArray[FIRST_ELEMENT - 1] - pInputArray[FIRST_ELEMENT - 2]) << 1;
-        int p2 = pInputArray[FIRST_ELEMENT - 1] + ((pInputArray[FIRST_ELEMENT - 3] - pInputArray[FIRST_ELEMENT - 2]) << 3);
+        int p4 = inputArray[FIRST_ELEMENT - 1];
+        int p3 = (inputArray[FIRST_ELEMENT - 1] - inputArray[FIRST_ELEMENT - 2]) << 1;
+        int p2 = inputArray[FIRST_ELEMENT - 1] + ((inputArray[FIRST_ELEMENT - 3] - inputArray[FIRST_ELEMENT - 2]) << 3);
         int op = FIRST_ELEMENT;
         int ip = FIRST_ELEMENT;
-        int IPP2 = pInputArray[ip - 2];
-        int p7 = 2 * pInputArray[ip - 1] - pInputArray[ip - 2];
-        int opp = pOutputArray[op - 1];
+        int ipp2 = inputArray[ip - 2];
+        int p7 = 2 * inputArray[ip - 1] - inputArray[ip - 2];
+        int opp = outputArray[op - 1];
 
-        //undo the initial prediction stuff
+        // undo the initial prediction stuff
         for (int q = 1; q < FIRST_ELEMENT; q++) {
-            pOutputArray[q] += pOutputArray[q - 1];
+            outputArray[q] += outputArray[q - 1];
         }
 
-        //pump the primary loop
-        for (; op < NumberOfElements; op++, ip++) {
+        // pump the primary loop
+        for (; op < numberOfElements; op++, ip++) {
 
-            int o = pOutputArray[op], i = pInputArray[ip];
+            int o = outputArray[op], i = inputArray[ip];
 
-            /////////////////////////////////////////////
+            //
             o = i + (((p2 * m2) + (p3 * m3) + (p4 * m4)) >> 11);
 
             if (i > 0) {
@@ -73,12 +74,12 @@ public class AntiPredictorNormal3800ToCurrent extends AntiPredictor {
             }
 
 
-            p2 = o + ((IPP2 - p4) << 3);
+            p2 = o + ((ipp2 - p4) << 3);
             p3 = (o - p4) << 1;
-            IPP2 = p4;
+            ipp2 = p4;
             p4 = o;
 
-            /////////////////////////////////////////////
+            //
             o += (((p7 * m5) - (opp * m6)) >> 10);
 
             if (p4 > 0) {
@@ -92,8 +93,8 @@ public class AntiPredictorNormal3800ToCurrent extends AntiPredictor {
             p7 = 2 * o - opp;
             opp = o;
 
-            /////////////////////////////////////////////
-            pOutputArray[op] = o + ((pOutputArray[op - 1] * 31) >> 5);
+            //
+            outputArray[op] = o + ((outputArray[op - 1] * 31) >> 5);
         }
     }
 }

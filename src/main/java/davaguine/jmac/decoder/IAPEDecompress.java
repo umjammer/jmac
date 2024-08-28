@@ -38,33 +38,23 @@ import davaguine.jmac.tools.JMACException;
  */
 public abstract class IAPEDecompress {
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // GetData(...) - gets raw decompressed audio
-    //
-    // Parameters:
-    //	char * pBuffer
-    //		a pointer to a buffer to put the data into
-    //	int nBlocks
-    //		the number of audio blocks desired (see note at intro about blocks vs. samples)
-    //	int * pBlocksRetrieved
-    //		the number of blocks actually retrieved (could be less at end of file or on critical failure)
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    public abstract int GetData(byte[] pBuffer, int nBlocks) throws IOException;
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // Seek(...) - seeks
-    //
-    // Parameters:
-    //	int nBlockOffset
-    //		the block to seek to (see note at intro about blocks vs. samples)
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    public abstract void Seek(int nBlockOffset) throws IOException;
+    /**
+     * Gets raw decompressed audio
+     *
+     * @param buffer a pointer to a buffer to put the data into
+     * @param blocks the number of audio blocks desired (see note at intro about blocks vs. samples)
+     */
+    public abstract int getData(byte[] buffer, int blocks) throws IOException;
 
     /**
-     * ******************************************************************************************
-     * Get Information
-     * *******************************************************************************************
+     * Seeks
+     *
+     * @param blockOffset the block to seek to (see note at intro about blocks vs. samples)
      */
+    public abstract void seek(int blockOffset) throws IOException;
+
+    // Get Information
+
     public abstract int getApeInfoDecompressCurrentBlock();
 
     public abstract int getApeInfoDecompressCurrentMS();
@@ -117,109 +107,108 @@ public abstract class IAPEDecompress {
 
     public abstract int getApeInfoAverageBitrate();
 
-    public abstract int getApeInfoSeekByte(int nFrame);
+    public abstract int getApeInfoSeekByte(int frame);
 
-    public abstract int getApeInfoFrameBytes(int nFrame) throws IOException;
+    public abstract int getApeInfoFrameBytes(int frame) throws IOException;
 
-    public abstract int getApeInfoFrameBlocks(int nFrame);
+    public abstract int getApeInfoFrameBlocks(int frame);
 
-    public abstract int getApeInfoFrameBitrate(int nFrame) throws IOException;
+    public abstract int getApeInfoFrameBitrate(int frame) throws IOException;
 
     public abstract int getApeInfoDecompressedBitrate();
 
     public abstract int getApeInfoPeakLevel();
 
-    public abstract int getApeInfoSeekBit(int nFrame);
+    public abstract int getApeInfoSeekBit(int frame);
 
     public abstract WaveFormat getApeInfoWaveFormatEx();
 
-    public abstract byte[] getApeInfoWavHeaderData(int nMaxBytes);
+    public abstract byte[] getApeInfoWavHeaderData(int maxBytes);
 
     public abstract APETag getApeInfoTag();
 
-    public abstract byte[] getApeInfoWavTerminatingData(int nMaxBytes) throws IOException;
+    public abstract byte[] getApeInfoWavTerminatingData(int maxBytes) throws IOException;
 
     public abstract APEFileInfo getApeInfoInternalInfo();
 
-    public static IAPEDecompress CreateIAPEDecompressCore(APEInfo pAPEInfo, int nStartBlock, int nFinishBlock) {
-        IAPEDecompress pAPEDecompress = null;
-        if (pAPEInfo != null) {
-            if (pAPEInfo.getApeInfoFileVersion() >= 3930) {
+    public static IAPEDecompress CreateIAPEDecompressCore(APEInfo apeInfo, int startBlock, int finishBlock) {
+        IAPEDecompress apeDecompress = null;
+        if (apeInfo != null) {
+            if (apeInfo.getApeInfoFileVersion() >= 3930) {
                 if (Globals.NATIVE)
-                    pAPEDecompress = new APEDecompressNative(pAPEInfo, nStartBlock, nFinishBlock);
+                    apeDecompress = new APEDecompressNative(apeInfo, startBlock, finishBlock);
                 else
-                    pAPEDecompress = new APEDecompress(pAPEInfo, nStartBlock, nFinishBlock);
+                    apeDecompress = new APEDecompress(apeInfo, startBlock, finishBlock);
             } else
-                pAPEDecompress = new APEDecompressOld(pAPEInfo, nStartBlock, nFinishBlock);
+                apeDecompress = new APEDecompressOld(apeInfo, startBlock, finishBlock);
         }
 
-        return pAPEDecompress;
+        return apeDecompress;
     }
 
-    public static APEInfo CreateAPEInfo(File in) throws IOException {
+    public static APEInfo createAPEInfo(File in) throws IOException {
         // variables
-        APEInfo pAPEInfo = null;
+        APEInfo apeInfo = null;
 
         // get the extension
         if (in.isLocal()) {
-            final String pExtension = in.getExtension();
+            String extension = in.getExtension();
 
             // take the appropriate action (based on the extension)
-            if (pExtension.toLowerCase().equals(".mac") || pExtension.toLowerCase().equals(".ape"))
+            if (extension.equalsIgnoreCase(".mac") || extension.equalsIgnoreCase(".ape"))
                 // plain .ape file
-                pAPEInfo = new APEInfo(in);
+                apeInfo = new APEInfo(in);
         } else
-            pAPEInfo = new APEInfo(in);
+            apeInfo = new APEInfo(in);
 
         // fail if we couldn't get the file information
-        if (pAPEInfo == null)
+        if (apeInfo == null)
             throw new JMACException("Invalid Input File");
-        return pAPEInfo;
+        return apeInfo;
     }
 
-    public static IAPEDecompress CreateIAPEDecompress(File in) throws IOException {
+    public static IAPEDecompress createAPEDecompress(File in) throws IOException {
         // variables
-        APEInfo pAPEInfo = null;
-        int nStartBlock = -1;
-        int nFinishBlock = -1;
+        APEInfo apeInfo = null;
+        int startBlock = -1;
+        int finishBlock = -1;
 
         // get the extension
         if (in.isLocal()) {
-            final String pFilename = in.getFilename();
-            final String pExtension = in.getExtension();
+            String filename = in.getFilename();
+            String extension = in.getExtension();
 
             // take the appropriate action (based on the extension)
-            if (pExtension.toLowerCase().equals(".apl")) {
+            if (extension.equalsIgnoreCase(".apl")) {
                 // "link" file (.apl linked large APE file)
-                APELink APELink = new APELink(pFilename);
-                if (APELink.GetIsLinkFile()) {
+                APELink apeLink = new APELink(filename);
+                if (apeLink.isLinkFile()) {
                     URL url = null;
                     try {
-                        url = new URL(APELink.GetImageFilename());
-                        pAPEInfo = new APEInfo(url);
+                        url = new URL(apeLink.getImageFilename());
+                        apeInfo = new APEInfo(url);
                     } catch (MalformedURLException e) {
-                        pAPEInfo = new APEInfo(new java.io.File(APELink.GetImageFilename()));
+                        apeInfo = new APEInfo(new java.io.File(apeLink.getImageFilename()));
                     }
-                    nStartBlock = APELink.GetStartBlock();
-                    nFinishBlock = APELink.GetFinishBlock();
+                    startBlock = apeLink.getStartBlock();
+                    finishBlock = apeLink.getFinishBlock();
                 }
-            } else if (pExtension.toLowerCase().equals(".mac") || pExtension.toLowerCase().equals(".ape"))
+            } else if (extension.equalsIgnoreCase(".mac") || extension.equalsIgnoreCase(".ape"))
                 // plain .ape file
-                pAPEInfo = new APEInfo(in);
+                apeInfo = new APEInfo(in);
         } else
-            pAPEInfo = new APEInfo(in);
+            apeInfo = new APEInfo(in);
 
         // fail if we couldn't get the file information
-        if (pAPEInfo == null)
+        if (apeInfo == null)
             throw new JMACException("Invalid Input File");
 
         // create and return
-        IAPEDecompress pAPEDecompress = CreateIAPEDecompressCore(pAPEInfo, nStartBlock, nFinishBlock);
-        return pAPEDecompress;
+        IAPEDecompress apeDecompress = CreateIAPEDecompressCore(apeInfo, startBlock, finishBlock);
+        return apeDecompress;
     }
 
-    public static IAPEDecompress CreateIAPEDecompressEx(APEInfo pAPEInfo, int nStartBlock, int nFinishBlock) {
-        return CreateIAPEDecompressCore(pAPEInfo, nStartBlock, nFinishBlock);
+    public static IAPEDecompress createIAPEDecompressEx(APEInfo apeInfo, int startBlock, int finishBlock) {
+        return CreateIAPEDecompressCore(apeInfo, startBlock, finishBlock);
     }
-
 }

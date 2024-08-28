@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,9 +36,10 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.sound.sampled.spi.AudioFileReader;
 
 import davaguine.jmac.decoder.IAPEDecompress;
-import davaguine.jmac.tools.Globals;
 import davaguine.jmac.tools.InputStreamFile;
 import davaguine.jmac.tools.JMACException;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -47,29 +50,30 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEAudioFileReader extends AudioFileReader {
 
+    private static final Logger logger = getLogger(APEAudioFileReader.class.getName());
+
     private final static int MAX_HEADER_SIZE = 16384;
 
     /**
      * Obtains the audio file format of the File provided. The File must point to valid audio file data.
      *
-     * @param file - the File from which file format information should be extracted
+     * @param file the File from which file format information should be extracted
      * @return an APEAudioFileFormat object describing the MAC audio file format
-     * @throws UnsupportedAudioFileException - if the File does not point to valid MAC audio file
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the File does not point to valid MAC audio file
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioFileFormat getAudioFileFormat(File file) throws UnsupportedAudioFileException, IOException {
-        if (Globals.DEBUG) System.out.println("APEAudioFileReader.getAudioFileFormat( File )");
+        logger.log(Level.TRACE, "APEAudioFileReader.getAudioFileFormat( File )");
         IAPEDecompress decoder;
         try {
-            decoder = IAPEDecompress.CreateIAPEDecompress(new davaguine.jmac.tools.RandomAccessFile(file, "r"));
-        } catch (JMACException e) {
-            throw new UnsupportedAudioFileException("Unsupported audio file");
-        } catch (EOFException e) {
+            decoder = IAPEDecompress.createAPEDecompress(new davaguine.jmac.tools.RandomAccessFile(file, "r"));
+        } catch (JMACException | EOFException e) {
             throw new UnsupportedAudioFileException("Unsupported audio file");
         }
 
-        Map fileProperties = new HashMap();
-        Map formatProperties = new HashMap();
+        Map<String, Object> fileProperties = new HashMap<>();
+        Map<String, Object> formatProperties = new HashMap<>();
         APEPropertiesHelper.readProperties(decoder, fileProperties, formatProperties);
 
         APEAudioFormat format = new APEAudioFormat(APEEncoding.APE, decoder.getApeInfoSampleRate(),
@@ -83,41 +87,38 @@ public class APEAudioFileReader extends AudioFileReader {
     /**
      * Obtains an audio input stream from the URL provided. The URL must point to valid MAC audio file data.
      *
-     * @param url - the URL from which file format information should be extracted
+     * @param url the URL from which file format information should be extracted
      * @return an APEAudioFileFormat object describing the MAC audio file format
-     * @throws UnsupportedAudioFileException - if the URL does not point to valid MAC audio file
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the URL does not point to valid MAC audio file
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioFileFormat getAudioFileFormat(URL url) throws UnsupportedAudioFileException, IOException {
-        InputStream inputStream = url.openStream();
-        try {
+        try (InputStream inputStream = url.openStream()) {
             return getAudioFileFormat(inputStream);
-        } finally {
-            inputStream.close();
         }
     }
 
     /**
      * Obtains the audio file format of the input stream provided. The stream must point to valid MAC audio file data.
      *
-     * @param stream - the input stream from which file format information should be extracted
+     * @param stream the input stream from which file format information should be extracted
      * @return an APEAudioFileFormat object describing the MAC audio file format
-     * @throws UnsupportedAudioFileException - if the stream does not point to valid MAC audio file
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the stream does not point to valid MAC audio file
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioFileFormat getAudioFileFormat(InputStream stream) throws UnsupportedAudioFileException, IOException {
-        if (Globals.DEBUG) System.out.println("APEAudioFileReader.getAudioFileFormat( InputStream )");
+        logger.log(Level.TRACE, "APEAudioFileReader.getAudioFileFormat( InputStream )");
         IAPEDecompress decoder;
         try {
-            decoder = IAPEDecompress.CreateIAPEDecompress(new InputStreamFile(stream));
-        } catch (JMACException e) {
-            throw new UnsupportedAudioFileException("Unsupported audio file");
-        } catch (EOFException e) {
+            decoder = IAPEDecompress.createAPEDecompress(new InputStreamFile(stream));
+        } catch (JMACException | EOFException e) {
             throw new UnsupportedAudioFileException("Unsupported audio file");
         }
 
-        Map fileProperties = new HashMap();
-        Map formatProperties = new HashMap();
+        Map<String, Object> fileProperties = new HashMap<>();
+        Map<String, Object> formatProperties = new HashMap<>();
         APEPropertiesHelper.readProperties(decoder, fileProperties, formatProperties);
 
         APEAudioFormat format = new APEAudioFormat(APEEncoding.APE, decoder.getApeInfoSampleRate(),
@@ -131,16 +132,17 @@ public class APEAudioFileReader extends AudioFileReader {
     /**
      * Obtains an audio input stream from the input stream provided. The stream must point to valid MAC audio file data.
      *
-     * @param stream - the input stream from which the AudioInputStream should be constructed
+     * @param stream the input stream from which the AudioInputStream should be constructed
      * @return an AudioInputStream object based on the audio file data contained in the input stream.
-     * @throws UnsupportedAudioFileException - if the stream does not point to valid MAC audio file data recognized by the system
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the stream does not point to valid MAC audio file data recognized by the system
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioInputStream getAudioInputStream(InputStream stream) throws UnsupportedAudioFileException, IOException {
         // Save byte header since this method must return the stream opened at byte 0.
-        final BufferedInputStream in = new BufferedInputStream(stream);
+        BufferedInputStream in = new BufferedInputStream(stream);
         in.mark(MAX_HEADER_SIZE);
-        final AudioFileFormat format = getAudioFileFormat(in);
+        AudioFileFormat format = getAudioFileFormat(in);
         in.reset();
         return new AudioInputStream(in, format.getFormat(), format.getFrameLength());
     }
@@ -148,19 +150,17 @@ public class APEAudioFileReader extends AudioFileReader {
     /**
      * Obtains an audio input stream from the File provided. The File must point to valid MAC audio file data.
      *
-     * @param file - the File for which the AudioInputStream should be constructed
+     * @param file the File for which the AudioInputStream should be constructed
      * @return an AudioInputStream object based on the audio file data contained in the input stream.
-     * @throws UnsupportedAudioFileException - if the file does not point to valid MAC audio file data recognized by the system
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the file does not point to valid MAC audio file data recognized by the system
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioInputStream getAudioInputStream(File file) throws UnsupportedAudioFileException, IOException {
         InputStream inputStream = new FileInputStream(file);
         try {
             return getAudioInputStream(inputStream);
-        } catch (UnsupportedAudioFileException e) {
-            inputStream.close();
-            throw e;
-        } catch (IOException e) {
+        } catch (UnsupportedAudioFileException | IOException e) {
             inputStream.close();
             throw e;
         }
@@ -169,22 +169,19 @@ public class APEAudioFileReader extends AudioFileReader {
     /**
      * Obtains the audio file format of the URL provided. The URL must point to valid MAC audio file data.
      *
-     * @param url - the URL for which the AudioInputStream should be constructed
+     * @param url the URL for which the AudioInputStream should be constructed
      * @return an AudioInputStream object based on the audio file data contained in the input stream.
-     * @throws UnsupportedAudioFileException - if the URL does not point to valid MAC audio file data recognized by the system
-     * @throws IOException                   - if an I/O exception occurs
+     * @throws UnsupportedAudioFileException if the URL does not point to valid MAC audio file data recognized by the system
+     * @throws IOException                   if an I/O exception occurs
      */
+    @Override
     public AudioInputStream getAudioInputStream(URL url) throws UnsupportedAudioFileException, IOException {
         InputStream inputStream = url.openStream();
         try {
             return getAudioInputStream(inputStream);
-        } catch (UnsupportedAudioFileException e) {
-            inputStream.close();
-            throw e;
-        } catch (IOException e) {
+        } catch (UnsupportedAudioFileException | IOException e) {
             inputStream.close();
             throw e;
         }
     }
-
 }

@@ -37,13 +37,13 @@ public class APEAudioFileFormat extends TAudioFileFormat {
     /**
      * Constructs an audio file format object for MAC audio format.
      *
-     * @param type        - the type of the audio file
-     * @param format      - the format of the audio data contained in the file
-     * @param byteLength  - the length of the file in bytes, or AudioSystem.NOT_SPECIFIED
-     * @param frameLength - the audio data length in sample frames, or AudioSystem.NOT_SPECIFIED
-     * @param properties  - the audio file format properties
+     * @param type        the type of the audio file
+     * @param format      the format of the audio data contained in the file
+     * @param byteLength  the length of the file in bytes, or AudioSystem.NOT_SPECIFIED
+     * @param frameLength the audio data length in sample frames, or AudioSystem.NOT_SPECIFIED
+     * @param properties  the audio file format properties
      */
-    public APEAudioFileFormat(Type type, AudioFormat format, int byteLength, int frameLength, Map properties) {
+    public APEAudioFileFormat(Type type, AudioFormat format, int byteLength, int frameLength, Map<String, Object> properties) {
         super(type, format, byteLength, frameLength, properties);
     }
 
@@ -64,7 +64,8 @@ public class APEAudioFileFormat extends TAudioFileFormat {
      * <li><b>genre</b> [String], The genre of the stream
      * </ul>
      */
-    public Map properties() {
+    @Override
+    public Map<String, Object> properties() {
         return super.properties();
     }
 }

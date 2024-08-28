@@ -21,12 +21,15 @@ package davaguine.jmac.info;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
 import java.net.URL;
 
 import davaguine.jmac.tools.File;
 import davaguine.jmac.tools.InputStreamFile;
 import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RandomAccessFile;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -35,282 +38,286 @@ import davaguine.jmac.tools.RandomAccessFile;
  */
 public class APEInfo {
 
+    private static final Logger logger = getLogger(APEInfo.class.getName());
+
     // construction and destruction
+
     public APEInfo(URL url) throws IOException {
         this(url, null);
     }
 
-    public APEInfo(URL url, APETag pTag) throws IOException {
-        this(url.openStream(), pTag);
+    public APEInfo(URL url, APETag tag) throws IOException {
+        this(url.openStream(), tag);
     }
 
     public APEInfo(java.io.File file) throws IOException {
         this(file, null);
     }
 
-    public APEInfo(java.io.File file, APETag pTag) throws IOException {
-        this(new RandomAccessFile(file, "r"), pTag);
+    public APEInfo(java.io.File file, APETag tag) throws IOException {
+        this(new RandomAccessFile(file, "r"), tag);
     }
 
-    public APEInfo(InputStream pIO) throws IOException {
-        this(pIO, null);
+    public APEInfo(InputStream io) throws IOException {
+        this(io, null);
     }
 
-    public APEInfo(InputStream pIO, APETag pTag) throws IOException {
-        this(new InputStreamFile(pIO), pTag);
+    public APEInfo(InputStream io, APETag tag) throws IOException {
+        this(new InputStreamFile(io), tag);
     }
 
-    public APEInfo(File pIO) throws IOException {
-        this(pIO, null);
+    public APEInfo(File io) throws IOException {
+        this(io, null);
     }
 
-    public APEInfo(File pIO, APETag pTag) throws IOException {
+    public APEInfo(File io, APETag tag) throws IOException {
         // open the file
-        m_spIO = pIO;
+        this.io = io;
+//logger.log(Level.DEBUG, "io: " + io);
 
         // get the file information
-        GetFileInformation();
+        getFileInformation();
 
         // get the tag (do this second so that we don't do it on failure)
-        if (pTag == null) {
+        if (tag == null) {
             // we don't want to analyze right away for non-local files
             // since a single I/O object is shared, we can't tag and read at the same time (i.e. in multiple threads)
 
-            m_spAPETag = new APETag(m_spIO, pIO.isLocal());
+            apeTag = new APETag(this.io, io.isLocal());
         } else
-            m_spAPETag = pTag;
+            apeTag = tag;
     }
 
     public void close() throws IOException {
-        m_APEFileInfo.spWaveHeaderData = null;
-        m_APEFileInfo.spSeekBitTable = null;
-        m_APEFileInfo.spSeekByteTable = null;
-        m_APEFileInfo.spAPEDescriptor = null;
-        m_spAPETag = null;
+        apeFileInfo.waveHeaderData = null;
+        apeFileInfo.seekBitTable = null;
+        apeFileInfo.seekByteTable = null;
+        apeFileInfo.apeDescriptor = null;
+        apeTag = null;
 
         // re-initialize variables
-        m_APEFileInfo.nSeekTableElements = 0;
-        m_bHasFileInformationLoaded = false;
+        apeFileInfo.seekTableElements = 0;
+        hasFileInformationLoaded = false;
     }
 
     public int getApeInfoFileVersion() {
-        return m_APEFileInfo.nVersion;
+        return apeFileInfo.version;
     }
 
     public int getApeInfoCompressionLevel() {
-        return m_APEFileInfo.nCompressionLevel;
+        return apeFileInfo.compressionLevel;
     }
 
     public int getApeInfoFormatFlags() {
-        return m_APEFileInfo.nFormatFlags;
+        return apeFileInfo.formatFlags;
     }
 
     public int getApeInfoSampleRate() {
-        return m_APEFileInfo.nSampleRate;
+        return apeFileInfo.sampleRate;
     }
 
     public int getApeInfoBitsPerSample() {
-        return m_APEFileInfo.nBitsPerSample;
+        return apeFileInfo.bitsPerSample;
     }
 
     public int getApeInfoBytesPerSample() {
-        return m_APEFileInfo.nBytesPerSample;
+        return apeFileInfo.bytesPerSample;
     }
 
     public int getApeInfoChannels() {
-        return m_APEFileInfo.nChannels;
+        return apeFileInfo.channels;
     }
 
     public int getApeInfoBlockAlign() {
-        return m_APEFileInfo.nBlockAlign;
+        return apeFileInfo.blockAlign;
     }
 
     public int getApeInfoBlocksPerFrame() {
-        return m_APEFileInfo.nBlocksPerFrame;
+        return apeFileInfo.blocksPerFrame;
     }
 
     public int getApeInfoFinalFrameBlocks() {
-        return m_APEFileInfo.nFinalFrameBlocks;
+        return apeFileInfo.finalFrameBlocks;
     }
 
     public int getApeInfoTotalFrames() {
-        return m_APEFileInfo.nTotalFrames;
+        return apeFileInfo.totalFrames;
     }
 
     public int getApeInfoWavHeaderBytes() {
-        return m_APEFileInfo.nWAVHeaderBytes;
+        return apeFileInfo.wavHeaderBytes;
     }
 
     public int getApeInfoWavTerminatingBytes() {
-        return m_APEFileInfo.nWAVTerminatingBytes;
+        return apeFileInfo.wavTerminatingBytes;
     }
 
     public int getApeInfoWavDataBytes() {
-        return m_APEFileInfo.nWAVDataBytes;
+        return apeFileInfo.wavDataBytes;
     }
 
     public int getApeInfoWavTotalBytes() {
-        return m_APEFileInfo.nWAVTotalBytes;
+        return apeFileInfo.wavTotalBytes;
     }
 
     public int getApeInfoApeTotalBytes() {
-        return m_APEFileInfo.nAPETotalBytes;
+        return apeFileInfo.apeTotalBytes;
     }
 
     public int getApeInfoTotalBlocks() {
-        return m_APEFileInfo.nTotalBlocks;
+        return apeFileInfo.totalBlocks;
     }
 
     public int getApeInfoLengthMs() {
-        return m_APEFileInfo.nLengthMS;
+        return apeFileInfo.lengthMS;
     }
 
     public int getApeInfoAverageBitrate() {
-        return m_APEFileInfo.nAverageBitrate;
+        return apeFileInfo.averageBitrate;
     }
 
-    public int getApeInfoSeekByte(int nFrame) {
-        return (nFrame < 0 || nFrame >= m_APEFileInfo.nTotalFrames) ? 0 : m_APEFileInfo.spSeekByteTable[nFrame] + m_APEFileInfo.nJunkHeaderBytes;
+    public int getApeInfoSeekByte(int frame) {
+        return (frame < 0 || frame >= apeFileInfo.totalFrames) ? 0 : apeFileInfo.seekByteTable[frame] + apeFileInfo.junkHeaderBytes;
     }
 
-    public int getApeInfoFrameBytes(int nFrame) throws IOException {
-        if ((nFrame < 0) || (nFrame >= m_APEFileInfo.nTotalFrames))
+    public int getApeInfoFrameBytes(int frame) throws IOException {
+        if ((frame < 0) || (frame >= apeFileInfo.totalFrames))
             return -1;
         else {
-            if (nFrame != (m_APEFileInfo.nTotalFrames - 1))
-                return getApeInfoSeekByte(nFrame + 1) - getApeInfoSeekByte(nFrame);
+            if (frame != (apeFileInfo.totalFrames - 1))
+                return getApeInfoSeekByte(frame + 1) - getApeInfoSeekByte(frame);
             else {
-                if (m_spIO.isLocal())
-                    return (int) m_spIO.length() - m_spAPETag.GetTagBytes() - m_APEFileInfo.nWAVTerminatingBytes - getApeInfoSeekByte(nFrame);
-                else if (nFrame > 0)
-                    return getApeInfoSeekByte(nFrame) - getApeInfoSeekByte(nFrame - 1);
+                if (io.isLocal())
+                    return (int) io.length() - apeTag.getTagBytes() - apeFileInfo.wavTerminatingBytes - getApeInfoSeekByte(frame);
+                else if (frame > 0)
+                    return getApeInfoSeekByte(frame) - getApeInfoSeekByte(frame - 1);
                 else
                     return -1;
             }
         }
     }
 
-    public int getApeInfoFrameBlocks(int nFrame) {
-        if ((nFrame < 0) || (nFrame >= m_APEFileInfo.nTotalFrames))
+    public int getApeInfoFrameBlocks(int frame) {
+        if ((frame < 0) || (frame >= apeFileInfo.totalFrames))
             return -1;
         else {
-            if (nFrame != (m_APEFileInfo.nTotalFrames - 1))
-                return m_APEFileInfo.nBlocksPerFrame;
+            if (frame != (apeFileInfo.totalFrames - 1))
+                return apeFileInfo.blocksPerFrame;
             else
-                return m_APEFileInfo.nFinalFrameBlocks;
+                return apeFileInfo.finalFrameBlocks;
         }
     }
 
-    public int getApeInfoFrameBitrate(int nFrame) throws IOException {
-        int nFrameBytes = getApeInfoFrameBytes(nFrame);
-        int nFrameBlocks = getApeInfoFrameBlocks(nFrame);
-        if ((nFrameBytes > 0) && (nFrameBlocks > 0) && m_APEFileInfo.nSampleRate > 0) {
-            int nFrameMS = (nFrameBlocks * 1000) / m_APEFileInfo.nSampleRate;
-            if (nFrameMS != 0) {
-                return (nFrameBytes * 8) / nFrameMS;
+    public int getApeInfoFrameBitrate(int frame) throws IOException {
+        int frameBytes = getApeInfoFrameBytes(frame);
+        int frameBlocks = getApeInfoFrameBlocks(frame);
+        if ((frameBytes > 0) && (frameBlocks > 0) && apeFileInfo.sampleRate > 0) {
+            int frameMS = (frameBlocks * 1000) / apeFileInfo.sampleRate;
+            if (frameMS != 0) {
+                return (frameBytes * 8) / frameMS;
             }
         }
-        return m_APEFileInfo.nAverageBitrate;
+        return apeFileInfo.averageBitrate;
     }
 
     public int getApeInfoDecompressedBitrate() {
-        return m_APEFileInfo.nDecompressedBitrate;
+        return apeFileInfo.decompressedBitrate;
     }
 
     public int getApeInfoPeakLevel() {
-        return m_APEFileInfo.nPeakLevel;
+        return apeFileInfo.peakLevel;
     }
 
-    public int getApeInfoSeekBit(int nFrame) {
+    public int getApeInfoSeekBit(int frame) {
         if (getApeInfoFileVersion() > 3800)
             return 0;
         else {
-            if (nFrame < 0 || nFrame >= m_APEFileInfo.nTotalFrames)
+            if (frame < 0 || frame >= apeFileInfo.totalFrames)
                 return 0;
             else
-                return m_APEFileInfo.spSeekBitTable[nFrame];
+                return apeFileInfo.seekBitTable[frame];
         }
     }
 
     public WaveFormat getApeInfoWaveFormatEx() {
-        final WaveFormat pWaveFormatEx = new WaveFormat();
-        WaveFormat.FillWaveFormatEx(pWaveFormatEx, m_APEFileInfo.nSampleRate, m_APEFileInfo.nBitsPerSample, m_APEFileInfo.nChannels);
-        return pWaveFormatEx;
+        WaveFormat waveFormatEx = new WaveFormat();
+        WaveFormat.fillWaveFormatEx(waveFormatEx, apeFileInfo.sampleRate, apeFileInfo.bitsPerSample, apeFileInfo.channels);
+        return waveFormatEx;
     }
 
-    public byte[] getApeInfoWavHeaderData(int nMaxBytes) {
-        if ((m_APEFileInfo.nFormatFlags & APEHeader.MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0) {
-            if (WaveHeader.WAVE_HEADER_BYTES > nMaxBytes)
+    public byte[] getApeInfoWavHeaderData(int maxBytes) {
+        if ((apeFileInfo.formatFlags & APEHeader.MAC_FORMAT_FLAG_CREATE_WAV_HEADER) > 0) {
+            if (WaveHeader.WAVE_HEADER_BYTES > maxBytes)
                 return null;
             else {
                 WaveFormat wfeFormat = getApeInfoWaveFormatEx();
                 WaveHeader WAVHeader = new WaveHeader();
-                WaveHeader.FillWaveHeader(WAVHeader, m_APEFileInfo.nWAVDataBytes, wfeFormat, m_APEFileInfo.nWAVTerminatingBytes);
+                WaveHeader.fillWaveHeader(WAVHeader, apeFileInfo.wavDataBytes, wfeFormat, apeFileInfo.wavTerminatingBytes);
                 return WAVHeader.write();
             }
         } else {
-            if (m_APEFileInfo.nWAVHeaderBytes > nMaxBytes)
+            if (apeFileInfo.wavHeaderBytes > maxBytes)
                 return null;
             else {
-                byte[] pBuffer = new byte[m_APEFileInfo.nWAVHeaderBytes];
-                System.arraycopy(m_APEFileInfo.spWaveHeaderData, 0, pBuffer, 0, m_APEFileInfo.nWAVHeaderBytes);
-                return pBuffer;
+                byte[] buffer = new byte[apeFileInfo.wavHeaderBytes];
+                System.arraycopy(apeFileInfo.waveHeaderData, 0, buffer, 0, apeFileInfo.wavHeaderBytes);
+                return buffer;
             }
         }
     }
 
     public File getApeInfoIoSource() {
-        return m_spIO;
+        return io;
     }
 
     public APETag getApeInfoTag() {
-        return m_spAPETag;
+        return apeTag;
     }
 
-    public byte[] getApeInfoWavTerminatingData(int nMaxBytes) throws IOException {
-        if (m_APEFileInfo.nWAVTerminatingBytes > nMaxBytes)
+    public byte[] getApeInfoWavTerminatingData(int maxBytes) throws IOException {
+        if (apeFileInfo.wavTerminatingBytes > maxBytes)
             return null;
         else {
-            if (m_APEFileInfo.nWAVTerminatingBytes > 0) {
+            if (apeFileInfo.wavTerminatingBytes > 0) {
                 // variables
-                long nOriginalFileLocation = m_spIO.getFilePointer();
+                long originalFileLocation = io.getFilePointer();
 
                 // check for a tag
-                m_spIO.seek(m_spIO.length() - (m_spAPETag.GetTagBytes() + m_APEFileInfo.nWAVTerminatingBytes));
-                byte[] pBuffer = new byte[m_APEFileInfo.nWAVTerminatingBytes];
+                io.seek(io.length() - (apeTag.getTagBytes() + apeFileInfo.wavTerminatingBytes));
+                byte[] buffer = new byte[apeFileInfo.wavTerminatingBytes];
                 try {
-                    m_spIO.readFully(pBuffer);
+                    io.readFully(buffer);
                 } catch (EOFException e) {
                     throw new JMACException("Can't Read WAV Terminating Bytes");
                 }
 
                 // restore the file pointer
-                m_spIO.seek(nOriginalFileLocation);
-                return pBuffer;
+                io.seek(originalFileLocation);
+                return buffer;
             }
             return null;
         }
     }
 
     public APEFileInfo getApeInfoInternalInfo() {
-        return m_APEFileInfo;
+        return apeFileInfo;
     }
 
-    private void GetFileInformation() throws IOException {
+    private void getFileInformation() throws IOException {
         // quit if the file information has already been loaded
-        if (m_bHasFileInformationLoaded)
+        if (hasFileInformationLoaded)
             return;
 
         // use a CAPEHeader class to help us analyze the file
-        APEHeader APEHeader = new APEHeader(m_spIO);
-        APEHeader.Analyze(m_APEFileInfo);
+        APEHeader apeHeader = new APEHeader(io);
+        apeHeader.analyze(apeFileInfo);
 
-        m_bHasFileInformationLoaded = true;
+        hasFileInformationLoaded = true;
     }
 
     // internal variables
-    private boolean m_bHasFileInformationLoaded;
-    private File m_spIO;
-    private APETag m_spAPETag;
-    private APEFileInfo m_APEFileInfo = new APEFileInfo();
+    private boolean hasFileInformationLoaded;
+    private final File io;
+    private APETag apeTag;
+    private final APEFileInfo apeFileInfo = new APEFileInfo();
 }

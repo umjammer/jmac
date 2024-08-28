@@ -27,35 +27,34 @@ import java.util.Arrays;
  */
 public class RollBufferFastInt {
 
-    public RollBufferFastInt(int nWindowElements, int nHistoryElements) {
-        m_pData = new int[nWindowElements + nHistoryElements];
-        m_nWindowElements = nWindowElements;
-        m_nHistoryElements = nHistoryElements;
-        windowPlusHistory = nWindowElements + nHistoryElements;
-        Flush();
+    public RollBufferFastInt(int windowElements, int historyElements) {
+        data = new int[windowElements + historyElements];
+        this.windowElements = windowElements;
+        this.historyElements = historyElements;
+        windowPlusHistory = windowElements + historyElements;
+        flush();
     }
 
-    public void Flush() {
-        Arrays.fill(m_pData, 0, m_nHistoryElements, 0);
-        index = m_nHistoryElements;
+    public void flush() {
+        Arrays.fill(data, 0, historyElements, 0);
+        index = historyElements;
     }
 
-    public void Roll() {
-        int ai[];
+    public void roll() {
+        int[] ai;
         int i;
-        System.arraycopy(ai = m_pData, index - (i = m_nHistoryElements), ai, 0, i);
+        System.arraycopy(ai = data, index - (i = historyElements), ai, 0, i);
         index = i;
     }
 
-    public void IncrementSafe() {
+    public void incrementSafe() {
         if ((++index) == windowPlusHistory)
-            Roll();
+            roll();
     }
 
-    public int[] m_pData;
+    public final int[] data;
     public int index;
-    protected int m_nHistoryElements;
-    protected int m_nWindowElements;
-    protected int windowPlusHistory;
-
+    protected final int historyElements;
+    protected final int windowElements;
+    protected final int windowPlusHistory;
 }

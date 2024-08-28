@@ -25,33 +25,60 @@ package davaguine.jmac.info;
  */
 public class APEFileInfo {
 
-    public int nVersion;                // file version number * 1000 (3.93 = 3930)
-    public int nCompressionLevel;       // the compression level
-    public int nFormatFlags;            // format flags
-    public int nTotalFrames;            // the total number frames (frames are used internally)
-    public int nBlocksPerFrame;         // the samples in a frame (frames are used internally)
-    public int nFinalFrameBlocks;        // the number of samples in the final frame
-    public int nChannels;                // audio channels
-    public int nSampleRate;             // audio samples per second
-    public int nBitsPerSample;          // audio bits per sample
-    public int nBytesPerSample;         // audio bytes per sample
-    public int nBlockAlign;             // audio block align (channels * bytes per sample)
-    public int nWAVHeaderBytes;         // header bytes of the original WAV
-    public int nWAVDataBytes;           // data bytes of the original WAV
-    public int nWAVTerminatingBytes;    // terminating bytes of the original WAV
-    public int nWAVTotalBytes;          // total bytes of the original WAV
-    public int nAPETotalBytes;          // total bytes of the APE file
-    public int nTotalBlocks;            // the total number audio blocks
-    public int nLengthMS;               // the length in milliseconds
-    public int nAverageBitrate;         // the kbps (i.e. 637 kpbs)
-    public int nDecompressedBitrate;    // the kbps of the decompressed audio (i.e. 1440 kpbs for CD audio)
-    public int nPeakLevel;                // the peak audio level (-1 if unknown)
+    /** file version number * 1000 (3.93 = 3930) */
+    public int version;
+    /** the compression level */
+    public int compressionLevel;
+    /** format flags */
+    public int formatFlags;
+    /** the total number frames (frames are used internally) */
+    public int totalFrames;
+    /** the samples in a frame (frames are used internally) */
+    public int blocksPerFrame;
+    /** the number of samples in the final frame */
+    public int finalFrameBlocks;
+    /** audio channels */
+    public int channels;
+    /** audio samples per second */
+    public int sampleRate;
+    /** audio bits per sample */
+    public int bitsPerSample;
+    /** audio bytes per sample */
+    public int bytesPerSample;
+    /** audio block align (channels * bytes per sample) */
+    public int blockAlign;
+    /** header bytes of the original WAV */
+    public int wavHeaderBytes;
+    /** data bytes of the original WAV */
+    public int wavDataBytes;
+    /** terminating bytes of the original WAV */
+    public int wavTerminatingBytes;
+    /** total bytes of the original WAV */
+    public int wavTotalBytes;
+    /** total bytes of the APE file */
+    public int apeTotalBytes;
+    /** the total number audio blocks */
+    public int totalBlocks;
+    /** the length in milliseconds */
+    public int lengthMS;
+    /** the kbps (i.e. 637 kpbs) */
+    public int averageBitrate;
+    /** the kbps of the decompressed audio (i.e. 1440 kpbs for CD audio) */
+    public int decompressedBitrate;
+    /** the peak audio level (-1 if unknown) */
+    public int peakLevel;
 
-    public int nJunkHeaderBytes;        // used for ID3v2, etc.
-    public int nSeekTableElements;        // the number of elements in the seek table(s)
+    /** used for ID3v2, etc. */
+    public int junkHeaderBytes;
+    /** the number of elements in the seek table(s) */
+    public int seekTableElements;
 
-    public int[] spSeekByteTable;      // the seek table (byte)
-    public byte[] spSeekBitTable;      // the seek table (bits -- legacy)
-    public byte[] spWaveHeaderData;        // the pre-audio header data
-    public APEDescriptor spAPEDescriptor;        // the descriptor (only with newer files)
+    /** the seek table (byte) */
+    public int[] seekByteTable;
+    /** the seek table (bits -- legacy) */
+    public byte[] seekBitTable;
+    /** the pre-audio header data */
+    public byte[] waveHeaderData;
+    /** the descriptor (only with newer files) */
+    public APEDescriptor apeDescriptor;
 }

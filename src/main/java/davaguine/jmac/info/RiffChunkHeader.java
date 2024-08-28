@@ -30,14 +30,16 @@ import davaguine.jmac.tools.File;
  */
 public class RiffChunkHeader {
 
-    public int cChunkLabel;        // should equal "data" indicating the data chunk (4 chars)
-    public long nChunkBytes;        // the bytes of the chunk
+    /** should equal "data" indicating the data chunk (4 chars) */
+    public int chunkLabel;
+    /** the bytes of the chunk */
+    public long chunkBytes;
 
     private final static int RIFF_CHUNK_HEADER_SIZE = 8;
 
     public void read(File io) throws IOException {
         ByteArrayReader reader = new ByteArrayReader(io, RIFF_CHUNK_HEADER_SIZE);
-        cChunkLabel = reader.readInt();
-        nChunkBytes = reader.readUnsignedInt();
+        chunkLabel = reader.readInt();
+        chunkBytes = reader.readUnsignedInt();
     }
 }

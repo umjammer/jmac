@@ -19,6 +19,10 @@
 package davaguine.jmac.player;
 
 import java.io.PrintStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -26,6 +30,8 @@ import java.io.PrintStream;
  * @version 04.03.2004 14:51:31
  */
 public class JMACPlayerException extends RuntimeException {
+
+    private static final Logger logger = getLogger(JMACPlayerException.class.getName());
 
     private Throwable exception;
 
@@ -45,16 +51,17 @@ public class JMACPlayerException extends RuntimeException {
         return exception;
     }
 
+    @Override
     public void printStackTrace() {
         printStackTrace(System.err);
     }
 
+    @Override
     public void printStackTrace(PrintStream ps) {
         if (this.exception == null) {
             super.printStackTrace(ps);
         } else {
-            exception.printStackTrace();
+            logger.log(Level.ERROR, exception.getMessage(), exception);
         }
     }
-
 }

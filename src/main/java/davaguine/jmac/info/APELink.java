@@ -19,9 +19,9 @@
 package davaguine.jmac.info;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import davaguine.jmac.tools.File;
-import davaguine.jmac.tools.JMACException;
 import davaguine.jmac.tools.RandomAccessFile;
 
 
@@ -36,111 +36,107 @@ public class APELink {
     private final static String APE_LINK_START_BLOCK_TAG = "Start Block=";
     private final static String APE_LINK_FINISH_BLOCK_TAG = "Finish Block=";
 
-    public APELink(String pFilename) throws IOException {
+    public APELink(String filename) throws IOException {
         // empty
-        m_bIsLinkFile = false;
-        m_nStartBlock = 0;
-        m_nFinishBlock = 0;
-        m_cImageFilename = "";
+        isLinkFile = false;
+        startBlock = 0;
+        finishBlock = 0;
+        imageFilename = "";
 
         // open the file
-        File ioLinkFile = new RandomAccessFile(new java.io.File(pFilename), "r");
+        File linkFile = new RandomAccessFile(new java.io.File(filename), "r");
         // create a buffer
-        byte[] spBuffer = new byte[1024];
+        byte[] buffer_ = new byte[1024];
 
         // fill the buffer from the file and null terminate it
-        int numRead = ioLinkFile.read(spBuffer);
+        int numRead = linkFile.read(buffer_);
 
         byte[] buffer = new byte[numRead];
-        System.arraycopy(spBuffer, 0, buffer, 0, numRead);
+        System.arraycopy(buffer_, 0, buffer, 0, numRead);
 
         // call the other constructor (uses a buffer instead of opening the file)
-        ParseData(buffer, pFilename);
+        parseData(buffer, filename);
     }
 
-    public APELink(byte[] pData, String pFilename) {
-        ParseData(pData, pFilename);
+    public APELink(byte[] data, String filename) {
+        parseData(data, filename);
     }
 
-    public boolean GetIsLinkFile() {
-        return m_bIsLinkFile;
+    public boolean isLinkFile() {
+        return isLinkFile;
     }
 
-    public int GetStartBlock() {
-        return m_nStartBlock;
+    public int getStartBlock() {
+        return startBlock;
     }
 
-    public int GetFinishBlock() {
-        return m_nFinishBlock;
+    public int getFinishBlock() {
+        return finishBlock;
     }
 
-    public String GetImageFilename() {
-        return m_cImageFilename;
+    public String getImageFilename() {
+        return imageFilename;
     }
 
-    protected boolean m_bIsLinkFile;
-    protected int m_nStartBlock;
-    protected int m_nFinishBlock;
-    protected String m_cImageFilename;
+    protected boolean isLinkFile;
+    protected int startBlock;
+    protected int finishBlock;
+    protected String imageFilename;
 
-    protected void ParseData(byte[] pData, String pFilename) {
+    protected void parseData(byte[] data, String filename) {
         // empty
-        m_bIsLinkFile = false;
-        m_nStartBlock = 0;
-        m_nFinishBlock = 0;
-        m_cImageFilename = "";
+        isLinkFile = false;
+        startBlock = 0;
+        finishBlock = 0;
+        imageFilename = "";
 
-        if (pData != null) {
-            String data = null;
-            try {
-                // parse out the information
-                data = new String(pData, "US-ASCII");
-            } catch (java.io.UnsupportedEncodingException e) {
-                throw new JMACException("Unsupported encoding", e);
-            }
+        if (data != null) {
+            String data_;
+            // parse out the information
+            data_ = new String(data, StandardCharsets.US_ASCII);
 
-            int pHeader = data.indexOf(APE_LINK_HEADER);
-            int pImageFile = data.indexOf(APE_LINK_IMAGE_FILE_TAG);
-            int pStartBlock = data.indexOf(APE_LINK_START_BLOCK_TAG);
-            int pFinishBlock = data.indexOf(APE_LINK_FINISH_BLOCK_TAG);
+            int header = data_.indexOf(APE_LINK_HEADER);
+            int imageFile = data_.indexOf(APE_LINK_IMAGE_FILE_TAG);
+            int startBlock = data_.indexOf(APE_LINK_START_BLOCK_TAG);
+            int finishBlock = data_.indexOf(APE_LINK_FINISH_BLOCK_TAG);
 
-            if (pHeader >= 0 && pImageFile >= 0 && pStartBlock >= 0 && pFinishBlock >= 0) {
+            if (header >= 0 && imageFile >= 0 && startBlock >= 0 && finishBlock >= 0) {
                 // get the start and finish blocks
-                int i1 = data.indexOf('\r', pStartBlock);
-                int i2 = data.indexOf('\n', pStartBlock);
+                int i1 = data_.indexOf('\r', startBlock);
+                int i2 = data_.indexOf('\n', startBlock);
                 int ii = i1 > 0 && i2 > 0 ? Math.min(i1, i2) : Math.max(i1, i2);
 
                 try {
-                    m_nStartBlock = Integer.parseInt(data.substring(pStartBlock + APE_LINK_START_BLOCK_TAG.length(), ii >= 0 ? ii : data.length()));
+                    startBlock = Integer.parseInt(data_.substring(startBlock + APE_LINK_START_BLOCK_TAG.length(), ii >= 0 ? ii : data_.length()));
                 } catch (Exception e) {
-                    m_nStartBlock = -1;
+                    startBlock = -1;
                 }
 
-                i1 = data.indexOf('\r', pFinishBlock);
-                i2 = data.indexOf('\n', pFinishBlock);
+                i1 = data_.indexOf('\r', finishBlock);
+                i2 = data_.indexOf('\n', finishBlock);
                 ii = i1 > 0 && i2 > 0 ? Math.min(i1, i2) : Math.max(i1, i2);
                 try {
-                    m_nFinishBlock = Integer.parseInt(data.substring(pFinishBlock + APE_LINK_FINISH_BLOCK_TAG.length(), ii >= 0 ? ii : data.length()));
+                    this.finishBlock = Integer.parseInt(data_.substring(finishBlock + APE_LINK_FINISH_BLOCK_TAG.length(), ii >= 0 ? ii : data_.length()));
                 } catch (Exception e) {
-                    m_nFinishBlock = -1;
+                    this.finishBlock = -1;
                 }
 
                 // get the path
-                i1 = data.indexOf('\r', pImageFile);
-                i2 = data.indexOf('\n', pImageFile);
+                i1 = data_.indexOf('\r', imageFile);
+                i2 = data_.indexOf('\n', imageFile);
                 ii = i1 > 0 && i2 > 0 ? Math.min(i1, i2) : Math.max(i1, i2);
-                String cImageFile = data.substring(pImageFile + APE_LINK_IMAGE_FILE_TAG.length(), ii >= 0 ? ii : data.length());
+                String imageFile_ = data_.substring(imageFile + APE_LINK_IMAGE_FILE_TAG.length(), ii >= 0 ? ii : data_.length());
 
                 // process the path
-                if (cImageFile.lastIndexOf('\\') < 0) {
-                    int ij = pFilename.lastIndexOf('\\');
-                    m_cImageFilename = ij >= 0 ? pFilename.substring(0, ij) + cImageFile : cImageFile;
+                if (imageFile_.lastIndexOf('\\') < 0) {
+                    int ij = filename.lastIndexOf('\\');
+                    imageFilename = ij >= 0 ? filename.substring(0, ij) + imageFile_ : imageFile_;
                 } else {
-                    m_cImageFilename = cImageFile;
+                    imageFilename = imageFile_;
                 }
 
                 // this is a valid link file
-                m_bIsLinkFile = true;
+                isLinkFile = true;
             }
         }
     }

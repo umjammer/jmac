@@ -37,358 +37,398 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APEDecompressOld extends IAPEDecompress {
 
-    public APEDecompressOld(APEInfo pAPEInfo) {
-        this(pAPEInfo, -1, -1);
+    public APEDecompressOld(APEInfo apeInfo) {
+        this(apeInfo, -1, -1);
     }
 
-    public APEDecompressOld(APEInfo pAPEInfo, int nStartBlock) {
-        this(pAPEInfo, nStartBlock, -1);
+    public APEDecompressOld(APEInfo apeInfo, int startBlock) {
+        this(apeInfo, startBlock, -1);
     }
 
-    public APEDecompressOld(APEInfo pAPEInfo, int nStartBlock, int nFinishBlock) {
+    public APEDecompressOld(APEInfo apeInfo, int startBlock, int finishBlock) {
         // open / analyze the file
-        m_spAPEInfo = pAPEInfo;
+        this.apeInfo = apeInfo;
 
         // version check (this implementation only works with 3.92 and earlier files)
         if (getApeInfoFileVersion() > 3920)
             throw new JMACException("Wrong Version");
 
         // create the buffer
-        m_nBlockAlign = getApeInfoBlockAlign();
+        blockAlign = getApeInfoBlockAlign();
 
         // initialize other stuff
-        m_nBufferTail = 0;
-        m_bDecompressorInitialized = false;
-        m_nCurrentFrame = 0;
-        m_nCurrentBlock = 0;
+        bufferTail = 0;
+        decompressorInitialized = false;
+        currentFrame = 0;
+        currentBlock = 0;
 
         // set the "real" start and finish blocks
-        m_nStartBlock = (nStartBlock < 0) ? 0 : Math.min(nStartBlock, getApeInfoTotalBlocks());
-        m_nFinishBlock = (nFinishBlock < 0) ? getApeInfoTotalBlocks() : Math.min(nFinishBlock, getApeInfoTotalBlocks());
-        m_bIsRanged = (m_nStartBlock != 0) || (m_nFinishBlock != getApeInfoTotalBlocks());
+        this.startBlock = (startBlock < 0) ? 0 : Math.min(startBlock, getApeInfoTotalBlocks());
+        this.finishBlock = (finishBlock < 0) ? getApeInfoTotalBlocks() : Math.min(finishBlock, getApeInfoTotalBlocks());
+        isRanged = (this.startBlock != 0) || (this.finishBlock != getApeInfoTotalBlocks());
     }
 
-    public int GetData(byte[] pBuffer, int nBlocks) throws IOException {
-        InitializeDecompressor();
+    @Override
+    public int getData(byte[] buffer, int blocks) throws IOException {
+        initializeDecompressor();
 
         // cap
-        int nBlocksUntilFinish = m_nFinishBlock - m_nCurrentBlock;
-        nBlocks = Math.min(nBlocks, nBlocksUntilFinish);
+        int blocksUntilFinish = finishBlock - currentBlock;
+        blocks = Math.min(blocks, blocksUntilFinish);
 
-        int nBlocksRetrieved = 0;
+        int blocksRetrieved = 0;
 
-        //fulfill as much of the request as possible
-        int nTotalBytesNeeded = nBlocks * m_nBlockAlign;
-        int nBytesLeft = nTotalBytesNeeded;
-        int nBlocksDecoded = 1;
+        // fulfill as much of the request as possible
+        int totalBytesNeeded = blocks * blockAlign;
+        int bytesLeft = totalBytesNeeded;
+        int blocksDecoded = 1;
 
-        while (nBytesLeft > 0 && nBlocksDecoded > 0) {
-            //empty the buffer
-            int nBytesAvailable = m_nBufferTail;
-            int nIntialBytes = Math.min(nBytesLeft, nBytesAvailable);
-            if (nIntialBytes > 0) {
-                System.arraycopy(m_spBuffer, 0, pBuffer, nTotalBytesNeeded - nBytesLeft, nIntialBytes);
+        while (bytesLeft > 0 && blocksDecoded > 0) {
+            // empty the buffer
+            int bytesAvailable = bufferTail;
+            int intialBytes = Math.min(bytesLeft, bytesAvailable);
+            if (intialBytes > 0) {
+                System.arraycopy(this.buffer, 0, buffer, totalBytesNeeded - bytesLeft, intialBytes);
 
-                if ((m_nBufferTail - nIntialBytes) > 0)
-                    System.arraycopy(m_spBuffer, nIntialBytes, m_spBuffer, 0, m_nBufferTail - nIntialBytes);
+                if ((bufferTail - intialBytes) > 0)
+                    System.arraycopy(this.buffer, intialBytes, this.buffer, 0, bufferTail - intialBytes);
 
-                nBytesLeft -= nIntialBytes;
-                m_nBufferTail -= nIntialBytes;
+                bytesLeft -= intialBytes;
+                bufferTail -= intialBytes;
 
             }
 
-            //decode more
-            if (nBytesLeft > 0) {
-                output.reset(m_spBuffer, m_nBufferTail);
-                nBlocksDecoded = m_UnMAC.DecompressFrame(output, m_nCurrentFrame++);
-                m_nBufferTail += (nBlocksDecoded * m_nBlockAlign);
+            // decode more
+            if (bytesLeft > 0) {
+                output.reset(this.buffer, bufferTail);
+                blocksDecoded = unMAC.decompressFrame(output, currentFrame++);
+                bufferTail += (blocksDecoded * blockAlign);
             }
         }
 
-        nBlocksRetrieved = (nTotalBytesNeeded - nBytesLeft) / m_nBlockAlign;
+        blocksRetrieved = (totalBytesNeeded - bytesLeft) / blockAlign;
 
         // update the position
-        m_nCurrentBlock += nBlocksRetrieved;
+        currentBlock += blocksRetrieved;
 
-        return nBlocksRetrieved;
+        return blocksRetrieved;
     }
 
-    public void Seek(int nBlockOffset) throws IOException {
-        InitializeDecompressor();
+    @Override
+    public void seek(int blockOffset) throws IOException {
+        initializeDecompressor();
 
         // use the offset
-        nBlockOffset += m_nStartBlock;
+        blockOffset += startBlock;
 
         // cap (to prevent seeking too far)
-        if (nBlockOffset >= m_nFinishBlock)
-            nBlockOffset = m_nFinishBlock - 1;
-        if (nBlockOffset < m_nStartBlock)
-            nBlockOffset = m_nStartBlock;
+        if (blockOffset >= finishBlock)
+            blockOffset = finishBlock - 1;
+        if (blockOffset < startBlock)
+            blockOffset = startBlock;
 
         // flush the buffer
-        m_nBufferTail = 0;
+        bufferTail = 0;
 
         // seek to the perfect location
-        int nBaseFrame = nBlockOffset / getApeInfoBlocksPerFrame();
-        int nBlocksToSkip = nBlockOffset % getApeInfoBlocksPerFrame();
-        int nBytesToSkip = nBlocksToSkip * m_nBlockAlign;
+        int baseFrame = blockOffset / getApeInfoBlocksPerFrame();
+        int blocksToSkip = blockOffset % getApeInfoBlocksPerFrame();
+        int bytesToSkip = blocksToSkip * blockAlign;
 
         // skip necessary blocks
-        int nMaximumDecompressedFrameBytes = m_nBlockAlign * getApeInfoBlocksPerFrame();
-        byte[] pTempBuffer = new byte[nMaximumDecompressedFrameBytes + 16];
-        Arrays.fill(pTempBuffer, (byte) 0);
+        int maximumDecompressedFrameBytes = blockAlign * getApeInfoBlocksPerFrame();
+        byte[] tempBuffer = new byte[maximumDecompressedFrameBytes + 16];
+        Arrays.fill(tempBuffer, (byte) 0);
 
-        m_nCurrentFrame = nBaseFrame;
+        currentFrame = baseFrame;
 
-        output.reset(pTempBuffer);
-        int nBlocksDecoded = m_UnMAC.DecompressFrame(output, m_nCurrentFrame++);
+        output.reset(tempBuffer);
+        int blocksDecoded = unMAC.decompressFrame(output, currentFrame++);
 
-        if (nBlocksDecoded == -1)
+        if (blocksDecoded == -1)
             throw new JMACException("Error While Decoding");
 
-        int nBytesToKeep = (nBlocksDecoded * m_nBlockAlign) - nBytesToSkip;
-        System.arraycopy(pTempBuffer, nBytesToSkip, m_spBuffer, m_nBufferTail, nBytesToKeep);
-        m_nBufferTail += nBytesToKeep;
+        int bytesToKeep = (blocksDecoded * blockAlign) - bytesToSkip;
+        System.arraycopy(tempBuffer, bytesToSkip, buffer, bufferTail, bytesToKeep);
+        bufferTail += bytesToKeep;
 
-        m_nCurrentBlock = nBlockOffset;
+        currentBlock = blockOffset;
     }
 
     // buffer
-    protected byte[] m_spBuffer;
-    protected int m_nBufferTail;
-    protected ByteBuffer output = new ByteBuffer();
+    protected byte[] buffer;
+    protected int bufferTail;
+    protected final ByteBuffer output = new ByteBuffer();
 
     // file info
-    protected int m_nBlockAlign;
-    protected int m_nCurrentFrame;
+    protected int blockAlign;
+    protected int currentFrame;
 
     // start / finish information
-    protected int m_nStartBlock;
-    protected int m_nFinishBlock;
-    protected int m_nCurrentBlock;
-    protected boolean m_bIsRanged;
+    protected int startBlock;
+    protected int finishBlock;
+    protected int currentBlock;
+    protected boolean isRanged;
 
     // decoding tools
-    protected UnMAC m_UnMAC = new UnMAC();
-    protected APEInfo m_spAPEInfo;
+    protected final UnMAC unMAC = new UnMAC();
+    protected final APEInfo apeInfo;
 
-    protected boolean m_bDecompressorInitialized;
+    protected boolean decompressorInitialized;
 
-    protected void InitializeDecompressor() throws IOException {
+    protected void initializeDecompressor() throws IOException {
         // check if we have anything to do
-        if (m_bDecompressorInitialized)
+        if (decompressorInitialized)
             return;
 
         // initialize the core
-        m_UnMAC.Initialize(this);
+        unMAC.initialize(this);
 
-        int nMaximumDecompressedFrameBytes = m_nBlockAlign * getApeInfoBlocksPerFrame();
-        int nTotalBufferBytes = Math.max(65536, (nMaximumDecompressedFrameBytes + 16) * 2);
-        m_spBuffer = new byte[nTotalBufferBytes];
+        int maximumDecompressedFrameBytes = blockAlign * getApeInfoBlocksPerFrame();
+        int totalBufferBytes = Math.max(65536, (maximumDecompressedFrameBytes + 16) * 2);
+        buffer = new byte[totalBufferBytes];
 
         // update the initialized flag
-        m_bDecompressorInitialized = true;
+        decompressorInitialized = true;
 
         // seek to the beginning
-        Seek(0);
+        seek(0);
     }
 
+    @Override
     public int getApeInfoDecompressCurrentBlock() {
-        return m_nCurrentBlock - m_nStartBlock;
+        return currentBlock - startBlock;
     }
 
+    @Override
     public int getApeInfoDecompressCurrentMS() {
-        int nSampleRate = m_spAPEInfo.getApeInfoSampleRate();
-        if (nSampleRate > 0)
-            return (int) ((m_nCurrentBlock * 1000L) / nSampleRate);
+        int sampleRate = apeInfo.getApeInfoSampleRate();
+        if (sampleRate > 0)
+            return (int) ((currentBlock * 1000L) / sampleRate);
         return 0;
     }
 
+    @Override
     public int getApeInfoDecompressTotalBlocks() {
-        return m_nFinishBlock - m_nStartBlock;
+        return finishBlock - startBlock;
     }
 
+    @Override
     public int getApeInfoDecompressLengthMS() {
-        int nSampleRate = m_spAPEInfo.getApeInfoSampleRate();
-        if (nSampleRate > 0)
-            return (int) (((m_nFinishBlock - m_nStartBlock) * 1000L) / nSampleRate);
+        int sampleRate = apeInfo.getApeInfoSampleRate();
+        if (sampleRate > 0)
+            return (int) (((finishBlock - startBlock) * 1000L) / sampleRate);
         return 0;
     }
 
+    @Override
     public int getApeInfoDecompressCurrentBitRate() throws IOException {
-        return m_spAPEInfo.getApeInfoFrameBitrate(m_nCurrentFrame);
+        return apeInfo.getApeInfoFrameBitrate(currentFrame);
     }
 
+    @Override
     public int getApeInfoDecompressAverageBitrate() throws IOException {
-        if (m_bIsRanged) {
+        if (isRanged) {
             // figure the frame range
-            int nBlocksPerFrame = m_spAPEInfo.getApeInfoBlocksPerFrame();
-            int nStartFrame = m_nStartBlock / nBlocksPerFrame;
-            int nFinishFrame = (m_nFinishBlock + nBlocksPerFrame - 1) / nBlocksPerFrame;
+            int blocksPerFrame = apeInfo.getApeInfoBlocksPerFrame();
+            int startFrame = startBlock / blocksPerFrame;
+            int finishFrame = (finishBlock + blocksPerFrame - 1) / blocksPerFrame;
 
             // get the number of bytes in the first and last frame
-            int nTotalBytes = (m_spAPEInfo.getApeInfoFrameBytes(nStartFrame) * (m_nStartBlock % nBlocksPerFrame)) / nBlocksPerFrame;
-            if (nFinishFrame != nStartFrame)
-                nTotalBytes += (m_spAPEInfo.getApeInfoFrameBytes(nFinishFrame) * (m_nFinishBlock % nBlocksPerFrame)) / nBlocksPerFrame;
+            int totalBytes = (apeInfo.getApeInfoFrameBytes(startFrame) * (startBlock % blocksPerFrame)) / blocksPerFrame;
+            if (finishFrame != startFrame)
+                totalBytes += (apeInfo.getApeInfoFrameBytes(finishFrame) * (finishBlock % blocksPerFrame)) / blocksPerFrame;
 
             // get the number of bytes in between
-            int nTotalFrames = m_spAPEInfo.getApeInfoTotalFrames();
-            for (int nFrame = nStartFrame + 1; (nFrame < nFinishFrame) && (nFrame < nTotalFrames); nFrame++)
-                nTotalBytes += m_spAPEInfo.getApeInfoFrameBytes(nFrame);
+            int totalFrames = apeInfo.getApeInfoTotalFrames();
+            for (int frame = startFrame + 1; (frame < finishFrame) && (frame < totalFrames); frame++)
+                totalBytes += apeInfo.getApeInfoFrameBytes(frame);
 
             // figure the bitrate
-            int nTotalMS = (int) (((m_nFinishBlock - m_nStartBlock) * 1000L) / m_spAPEInfo.getApeInfoSampleRate());
-            if (nTotalMS != 0)
-                return (nTotalBytes * 8) / nTotalMS;
+            int totalMS = (int) (((finishBlock - startBlock) * 1000L) / apeInfo.getApeInfoSampleRate());
+            if (totalMS != 0)
+                return (totalBytes * 8) / totalMS;
         } else {
-            return m_spAPEInfo.getApeInfoAverageBitrate();
+            return apeInfo.getApeInfoAverageBitrate();
         }
         return 0;
     }
 
+    @Override
     public int getApeInfoWavHeaderBytes() {
-        if (m_bIsRanged)
+        if (isRanged)
             return WaveHeader.WAVE_HEADER_BYTES;
-        return m_spAPEInfo.getApeInfoWavHeaderBytes();
+        return apeInfo.getApeInfoWavHeaderBytes();
     }
 
-    public byte[] getApeInfoWavHeaderData(int nMaxBytes) {
-        if (m_bIsRanged) {
-            if (WaveHeader.WAVE_HEADER_BYTES > nMaxBytes)
+    @Override
+    public byte[] getApeInfoWavHeaderData(int maxBytes) {
+        if (isRanged) {
+            if (WaveHeader.WAVE_HEADER_BYTES > maxBytes)
                 return null;
             else {
-                WaveFormat wfeFormat = m_spAPEInfo.getApeInfoWaveFormatEx();
+                WaveFormat wfeFormat = apeInfo.getApeInfoWaveFormatEx();
                 WaveHeader WAVHeader = new WaveHeader();
-                WaveHeader.FillWaveHeader(WAVHeader, (m_nFinishBlock - m_nStartBlock) * m_spAPEInfo.getApeInfoBlockAlign(), wfeFormat, 0);
+                WaveHeader.fillWaveHeader(WAVHeader, (finishBlock - startBlock) * apeInfo.getApeInfoBlockAlign(), wfeFormat, 0);
                 return WAVHeader.write();
             }
         }
-        return m_spAPEInfo.getApeInfoWavHeaderData(nMaxBytes);
+        return apeInfo.getApeInfoWavHeaderData(maxBytes);
     }
 
+    @Override
     public int getApeInfoWavTerminatingBytes() {
-        if (m_bIsRanged)
+        if (isRanged)
             return 0;
         else
-            return m_spAPEInfo.getApeInfoWavTerminatingBytes();
+            return apeInfo.getApeInfoWavTerminatingBytes();
     }
 
-    public byte[] getApeInfoWavTerminatingData(int nMaxBytes) throws IOException {
-        if (m_bIsRanged)
+    @Override
+    public byte[] getApeInfoWavTerminatingData(int maxBytes) throws IOException {
+        if (isRanged)
             return null;
         else
-            return m_spAPEInfo.getApeInfoWavTerminatingData(nMaxBytes);
+            return apeInfo.getApeInfoWavTerminatingData(maxBytes);
     }
 
+    @Override
     public WaveFormat getApeInfoWaveFormatEx() {
-        return m_spAPEInfo.getApeInfoWaveFormatEx();
+        return apeInfo.getApeInfoWaveFormatEx();
     }
 
+    @Override
     public File getApeInfoIoSource() {
-        return m_spAPEInfo.getApeInfoIoSource();
+        return apeInfo.getApeInfoIoSource();
     }
 
+    @Override
     public int getApeInfoBlocksPerFrame() {
-        return m_spAPEInfo.getApeInfoBlocksPerFrame();
+        return apeInfo.getApeInfoBlocksPerFrame();
     }
 
+    @Override
     public int getApeInfoFileVersion() {
-        return m_spAPEInfo.getApeInfoFileVersion();
+        return apeInfo.getApeInfoFileVersion();
     }
 
+    @Override
     public int getApeInfoCompressionLevel() {
-        return m_spAPEInfo.getApeInfoCompressionLevel();
+        return apeInfo.getApeInfoCompressionLevel();
     }
 
+    @Override
     public int getApeInfoFormatFlags() {
-        return m_spAPEInfo.getApeInfoFormatFlags();
+        return apeInfo.getApeInfoFormatFlags();
     }
 
+    @Override
     public int getApeInfoSampleRate() {
-        return m_spAPEInfo.getApeInfoSampleRate();
+        return apeInfo.getApeInfoSampleRate();
     }
 
+    @Override
     public int getApeInfoBitsPerSample() {
-        return m_spAPEInfo.getApeInfoBitsPerSample();
+        return apeInfo.getApeInfoBitsPerSample();
     }
 
+    @Override
     public int getApeInfoBytesPerSample() {
-        return m_spAPEInfo.getApeInfoBytesPerSample();
+        return apeInfo.getApeInfoBytesPerSample();
     }
 
+    @Override
     public int getApeInfoChannels() {
-        return m_spAPEInfo.getApeInfoChannels();
+        return apeInfo.getApeInfoChannels();
     }
 
+    @Override
     public int getApeInfoBlockAlign() {
-        return m_spAPEInfo.getApeInfoBlockAlign();
+        return apeInfo.getApeInfoBlockAlign();
     }
 
+    @Override
     public int getApeInfoFinalFrameBlocks() {
-        return m_spAPEInfo.getApeInfoFinalFrameBlocks();
+        return apeInfo.getApeInfoFinalFrameBlocks();
     }
 
+    @Override
     public int getApeInfoTotalFrames() {
-        return m_spAPEInfo.getApeInfoTotalFrames();
+        return apeInfo.getApeInfoTotalFrames();
     }
 
+    @Override
     public int getApeInfoWavDataBytes() {
-        return m_spAPEInfo.getApeInfoWavDataBytes();
+        return apeInfo.getApeInfoWavDataBytes();
     }
 
+    @Override
     public int getApeInfoWavTotalBytes() {
-        return m_spAPEInfo.getApeInfoWavTotalBytes();
+        return apeInfo.getApeInfoWavTotalBytes();
     }
 
+    @Override
     public int getApeInfoApeTotalBytes() {
-        return m_spAPEInfo.getApeInfoApeTotalBytes();
+        return apeInfo.getApeInfoApeTotalBytes();
     }
 
+    @Override
     public int getApeInfoTotalBlocks() {
-        return m_spAPEInfo.getApeInfoTotalBlocks();
+        return apeInfo.getApeInfoTotalBlocks();
     }
 
+    @Override
     public int getApeInfoLengthMs() {
-        return m_spAPEInfo.getApeInfoLengthMs();
+        return apeInfo.getApeInfoLengthMs();
     }
 
+    @Override
     public int getApeInfoAverageBitrate() {
-        return m_spAPEInfo.getApeInfoAverageBitrate();
+        return apeInfo.getApeInfoAverageBitrate();
     }
 
-    public int getApeInfoSeekByte(int nFrame) {
-        return m_spAPEInfo.getApeInfoSeekByte(nFrame);
+    @Override
+    public int getApeInfoSeekByte(int frame) {
+        return apeInfo.getApeInfoSeekByte(frame);
     }
 
-    public int getApeInfoFrameBytes(int nFrame) throws IOException {
-        return m_spAPEInfo.getApeInfoFrameBytes(nFrame);
+    @Override
+    public int getApeInfoFrameBytes(int frame) throws IOException {
+        return apeInfo.getApeInfoFrameBytes(frame);
     }
 
-    public int getApeInfoFrameBlocks(int nFrame) {
-        return m_spAPEInfo.getApeInfoFrameBlocks(nFrame);
+    @Override
+    public int getApeInfoFrameBlocks(int frame) {
+        return apeInfo.getApeInfoFrameBlocks(frame);
     }
 
-    public int getApeInfoFrameBitrate(int nFrame) throws IOException {
-        return m_spAPEInfo.getApeInfoFrameBitrate(nFrame);
+    @Override
+    public int getApeInfoFrameBitrate(int frame) throws IOException {
+        return apeInfo.getApeInfoFrameBitrate(frame);
     }
 
+    @Override
     public int getApeInfoDecompressedBitrate() {
-        return m_spAPEInfo.getApeInfoDecompressedBitrate();
+        return apeInfo.getApeInfoDecompressedBitrate();
     }
 
+    @Override
     public int getApeInfoPeakLevel() {
-        return m_spAPEInfo.getApeInfoPeakLevel();
+        return apeInfo.getApeInfoPeakLevel();
     }
 
-    public int getApeInfoSeekBit(int nFrame) {
-        return m_spAPEInfo.getApeInfoSeekBit(nFrame);
+    @Override
+    public int getApeInfoSeekBit(int frame) {
+        return apeInfo.getApeInfoSeekBit(frame);
     }
 
+    @Override
     public APETag getApeInfoTag() {
-        return m_spAPEInfo.getApeInfoTag();
+        return apeInfo.getApeInfoTag();
     }
 
+    @Override
     public APEFileInfo getApeInfoInternalInfo() {
-        return m_spAPEInfo.getApeInfoInternalInfo();
+        return apeInfo.getApeInfoInternalInfo();
     }
 }

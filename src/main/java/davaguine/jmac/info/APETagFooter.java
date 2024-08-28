@@ -20,6 +20,7 @@ package davaguine.jmac.info;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import davaguine.jmac.tools.ByteArrayReader;
 import davaguine.jmac.tools.ByteArrayWriter;
@@ -33,11 +34,16 @@ import davaguine.jmac.tools.JMACException;
  */
 public class APETagFooter {
 
-    public String m_cID;                // should equal 'APETAGEX' (char[8])
-    public int m_nVersion;            // equals CURRENT_APE_TAG_VERSION (int)
-    public int m_nSize;                // the complete size of the tag, including this footer (int)
-    public int m_nFields;                // the number of fields in the tag (int)
-    public int m_nFlags;                // the tag flags (none currently defined) (int)
+    /** should equal 'APETAGEX' (char[8]) */
+    public String id;
+    /** equals CURRENT_APE_TAG_VERSION (int) */
+    public int version;
+    /** the complete size of the tag, including this footer (int) */
+    public int size;
+    /** the number of fields in the tag (int) */
+    public int fields;
+    /** the tag flags (none currently defined) (int) */
+    public int flags;
 
     public final static int APE_TAG_FOOTER_BYTES = 32;
 
@@ -47,81 +53,81 @@ public class APETagFooter {
         this(0, 0);
     }
 
-    APETagFooter(int nFields) {
-        this(nFields, 0);
+    APETagFooter(int fields) {
+        this(fields, 0);
     }
 
-    APETagFooter(int nFields, int nFieldBytes) {
-        m_cID = "APETAGEX";
-        m_nFields = nFields;
-        m_nFlags = APETag.APE_TAG_FLAGS_DEFAULT;
-        m_nSize = nFieldBytes + APE_TAG_FOOTER_BYTES;
-        m_nVersion = CURRENT_APE_TAG_VERSION;
+    APETagFooter(int fields, int fieldBytes) {
+        id = "APETAGEX";
+        this.fields = fields;
+        flags = APETag.APE_TAG_FLAGS_DEFAULT;
+        size = fieldBytes + APE_TAG_FOOTER_BYTES;
+        version = CURRENT_APE_TAG_VERSION;
     }
 
-    public int GetTotalTagBytes() {
-        return m_nSize + (GetHasHeader() ? APE_TAG_FOOTER_BYTES : 0);
+    public int getTotalTagBytes() {
+        return size + (hasHeader() ? APE_TAG_FOOTER_BYTES : 0);
     }
 
-    public int GetFieldBytes() {
-        return m_nSize - APE_TAG_FOOTER_BYTES;
+    public int getFieldBytes() {
+        return size - APE_TAG_FOOTER_BYTES;
     }
 
-    public int GetFieldsOffset() {
-        return GetHasHeader() ? APE_TAG_FOOTER_BYTES : 0;
+    public int getFieldsOffset() {
+        return hasHeader() ? APE_TAG_FOOTER_BYTES : 0;
     }
 
-    public int GetNumberFields() {
-        return m_nFields;
+    public int getNumberFields() {
+        return fields;
     }
 
-    public boolean GetHasHeader() {
-        return (m_nFlags & APETag.APE_TAG_FLAG_CONTAINS_HEADER) > 0;
+    public boolean hasHeader() {
+        return (flags & APETag.APE_TAG_FLAG_CONTAINS_HEADER) > 0;
     }
 
-    public boolean GetIsHeader() {
-        return (m_nFlags & APETag.APE_TAG_FLAG_IS_HEADER) > 0;
+    public boolean isHeader() {
+        return (flags & APETag.APE_TAG_FLAG_IS_HEADER) > 0;
     }
 
-    public int GetVersion() {
-        return m_nVersion;
+    public int getVersion() {
+        return version;
     }
 
-    public boolean GetIsValid(boolean bAllowHeader) {
-        boolean bValid = m_cID.equals("APETAGEX") &&
-                (m_nVersion <= CURRENT_APE_TAG_VERSION) &&
-                (m_nFields <= 65536) &&
-                (GetFieldBytes() <= (1024 * 1024 * 16));
+    public boolean isValid(boolean allowHeader) {
+        boolean valid = id.equals("APETAGEX") &&
+                (version <= CURRENT_APE_TAG_VERSION) &&
+                (fields <= 65536) &&
+                (getFieldBytes() <= (1024 * 1024 * 16));
 
-        if (bValid && !bAllowHeader && GetIsHeader())
-            bValid = false;
+        if (valid && !allowHeader && isHeader())
+            valid = false;
 
-        return bValid;
+        return valid;
     }
 
 
-    public static APETagFooter read(final File file) throws IOException {
+    public static APETagFooter read(File file) throws IOException {
         file.seek(file.length() - APE_TAG_FOOTER_BYTES);
         APETagFooter tag = new APETagFooter();
         try {
-            final ByteArrayReader reader = new ByteArrayReader(file, APE_TAG_FOOTER_BYTES);
-            tag.m_cID = reader.readString(8, "US-ASCII");
-            tag.m_nVersion = reader.readInt();
-            tag.m_nSize = reader.readInt();
-            tag.m_nFields = reader.readInt();
-            tag.m_nFlags = reader.readInt();
+            ByteArrayReader reader = new ByteArrayReader(file, APE_TAG_FOOTER_BYTES);
+            tag.id = reader.readString(8, StandardCharsets.US_ASCII.name());
+            tag.version = reader.readInt();
+            tag.size = reader.readInt();
+            tag.fields = reader.readInt();
+            tag.flags = reader.readInt();
             return tag;
         } catch (EOFException e) {
             throw new JMACException("Unsupported Format");
         }
     }
 
-    public void write(final ByteArrayWriter writer) {
-        writer.writeString(m_cID, 8, "US-ASCII");
-        writer.writeInt(m_nVersion);
-        writer.writeInt(m_nSize);
-        writer.writeInt(m_nFields);
-        writer.writeInt(m_nFlags);
+    public void write(ByteArrayWriter writer) {
+        writer.writeString(id, 8, StandardCharsets.US_ASCII.name());
+        writer.writeInt(version);
+        writer.writeInt(size);
+        writer.writeInt(fields);
+        writer.writeInt(flags);
         writer.writeInt(0);
         writer.writeInt(0);
     }

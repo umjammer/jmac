@@ -18,8 +18,8 @@
 
 package davaguine.jmac.player;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -38,8 +38,7 @@ public class FactoryRegistry extends AudioDeviceFactory {
         return instance;
     }
 
-
-    protected Hashtable factories = new Hashtable();
+    protected final Map<Class<?>, AudioDeviceFactory> factories = new HashMap<>();
 
     /**
      * Registers an <code>AudioDeviceFactory</code> instance
@@ -49,7 +48,7 @@ public class FactoryRegistry extends AudioDeviceFactory {
         factories.put(factory.getClass(), factory);
     }
 
-    public void removeFactoryType(Class cls) {
+    public void removeFactoryType(Class<?> cls) {
         factories.remove(cls);
     }
 
@@ -57,6 +56,7 @@ public class FactoryRegistry extends AudioDeviceFactory {
         factories.remove(factory.getClass());
     }
 
+    @Override
     public AudioDevice createAudioDevice() {
         AudioDevice device = null;
         AudioDeviceFactory[] factories = getFactoriesPriority();
@@ -85,13 +85,7 @@ public class FactoryRegistry extends AudioDeviceFactory {
         synchronized (factories) {
             int size = factories.size();
             if (size != 0) {
-                fa = new AudioDeviceFactory[size];
-                int idx = 0;
-                Enumeration e = factories.elements();
-                while (e.hasMoreElements()) {
-                    AudioDeviceFactory factory = (AudioDeviceFactory) e.nextElement();
-                    fa[idx++] = factory;
-                }
+                fa = factories.values().toArray(AudioDeviceFactory[]::new);
             }
         }
         return fa;
