@@ -47,8 +47,16 @@ public class InputStreamFile extends File {
         this.name = name;
     }
 
+    public int available() throws IOException {
+        return stream.available();
+    }
+
+    public boolean markSupported() {
+        return stream.markSupported();
+    }
+
     @Override
-    public void mark(int readlimit) throws IOException {
+    public void mark(int readlimit) {
         stream.mark(readlimit);
     }
 

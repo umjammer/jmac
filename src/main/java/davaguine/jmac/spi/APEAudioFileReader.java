@@ -111,10 +111,24 @@ public class APEAudioFileReader extends AudioFileReader {
     public AudioFileFormat getAudioFileFormat(InputStream stream) throws UnsupportedAudioFileException, IOException {
         logger.log(Level.TRACE, "APEAudioFileReader.getAudioFileFormat( InputStream )");
         IAPEDecompress decoder;
+        InputStreamFile is = new InputStreamFile(stream);
+logger.log(Level.DEBUG, "IN: available: " + is.available());
+        if (!is.markSupported()) {
+            throw new IllegalArgumentException("input stream not supported mark");
+        }
         try {
-            decoder = IAPEDecompress.createAPEDecompress(new InputStreamFile(stream));
+            is.mark(8192);
+            decoder = IAPEDecompress.createAPEDecompress(is);
         } catch (JMACException | EOFException e) {
+logger.log(Level.DEBUG, e.toString());
             throw new UnsupportedAudioFileException("Unsupported audio file");
+        } finally {
+            try {
+                is.reset();
+            } catch (IOException e) {
+                logger.log(Level.DEBUG, e);
+            }
+logger.log(Level.DEBUG, "OUT: available: " + is.available());
         }
 
         Map<String, Object> fileProperties = new HashMap<>();
@@ -125,6 +139,7 @@ public class APEAudioFileReader extends AudioFileReader {
                 decoder.getApeInfoBitsPerSample(),
                 decoder.getApeInfoChannels(),
                 AudioSystem.NOT_SPECIFIED, AudioSystem.NOT_SPECIFIED, false, formatProperties);
+logger.log(Level.DEBUG, "OUT2: available: " + is.available());
 
         return new APEAudioFileFormat(APEAudioFileFormatType.APE, format, AudioSystem.NOT_SPECIFIED, fileProperties);
     }
@@ -140,10 +155,16 @@ public class APEAudioFileReader extends AudioFileReader {
     @Override
     public AudioInputStream getAudioInputStream(InputStream stream) throws UnsupportedAudioFileException, IOException {
         // Save byte header since this method must return the stream opened at byte 0.
-        BufferedInputStream in = new BufferedInputStream(stream);
-        in.mark(MAX_HEADER_SIZE);
-        AudioFileFormat format = getAudioFileFormat(in);
-        in.reset();
+        BufferedInputStream in = new BufferedInputStream(stream, MAX_HEADER_SIZE);
+        AudioFileFormat format;
+        try {
+logger.log(Level.DEBUG, "IN3: available: " + stream.available());
+            in.mark(MAX_HEADER_SIZE);
+            format = getAudioFileFormat(in);
+        } finally {
+            in.reset();
+logger.log(Level.DEBUG, "OUT3: available: " + stream.available() + ", " + in);
+        }
         return new AudioInputStream(in, format.getFormat(), format.getFrameLength());
     }
 
