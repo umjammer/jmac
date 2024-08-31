@@ -20,17 +20,17 @@
 #ifndef JMAC_APEDECOMPRESS_H
 #define JMAC_APEDECOMPRESS_H
 
-class CUnBitArray;
-class CPrepare;
-class CAPEInfo;
-class IPredictorDecompress;
+//class CUnBitArray;
+//class CPrepare;
+//class CAPEInfo;
+//class IPredictorDecompress;
 #include <UnBitArrayBase.h>
 #include <MACLib.h>
 #include <Prepare.h>
 #include <CircleBuffer.h>
 #include "UnBitArrayJMAC.h"
 
-class CAPEDecompressJMAC : public IAPEDecompress {
+class CAPEDecompressJMAC : public APE::IAPEDecompress {
   public:
     CAPEDecompressJMAC(JNIEnv* aenv, jobject athisObject, jobject aioObject, int nVersion, int nCompressionLevel, int nStartBlock,
                        int nFinishBlock, int nTotalBlocks, int nBlockAlign, int nBlocksPerFrame, int nSampleRate, int nBitsPerSample,
@@ -46,10 +46,10 @@ class CAPEDecompressJMAC : public IAPEDecompress {
     int getApeInfoFrameBlocks(int nFrameIndex);
     int getApeInfoSeekByte(int nFrameIndex);
 
-    int GetData(char* pBuffer, int nBlocks, int* pBlocksRetrieved);
-    int Seek(int nBlockOffset);
+    int GetData(unsigned char* pBuffer, APE::int64 nBlocks, APE::int64* pBlocksRetrieved, APE_GET_DATA_PROCESSING * pProcessing = APE_NULL);
+    int Seek(APE::int64 nBlockOffset);
 
-    int GetInfo(APE_DECOMPRESS_FIELDS Field, int nParam1 = 0, int nParam2 = 0);
+    APE::int64 GetInfo(APE_DECOMPRESS_FIELDS Field, APE::int64 nParam1 = 0, APE::int64 nParam2 = 0);
 
   protected:
 
@@ -66,8 +66,8 @@ class CAPEDecompressJMAC : public IAPEDecompress {
     BOOL m_bDecompressorInitialized;
 
     // decoding tools    
-    CPrepare m_Prepare;
-    WAVEFORMATEX m_wfeInput;
+    APE::CPrepare m_Prepare;
+    APE::WAVEFORMATEX m_wfeInput;
     unsigned int m_nCRC;
     unsigned int m_nStoredCRC;
     int m_nSpecialCodes;
@@ -80,13 +80,13 @@ class CAPEDecompressJMAC : public IAPEDecompress {
     int InitializeDecompressor();
 
     // more decoding components
-    CSmartPtr<CAPEInfo> m_spAPEInfo;
-    CSmartPtr<CUnBitArrayBase> m_spUnBitArray;
-    UNBIT_ARRAY_STATE m_BitArrayStateX;
-    UNBIT_ARRAY_STATE m_BitArrayStateY;
+    APE::CSmartPtr<APE::CAPEInfo> m_spAPEInfo;
+    APE::CSmartPtr<APE::CUnBitArrayBase> m_spUnBitArray;
+    APE::UNBIT_ARRAY_STATE m_BitArrayStateX;
+    APE::UNBIT_ARRAY_STATE m_BitArrayStateY;
 
-    CSmartPtr<IPredictorDecompress> m_spNewPredictorX;
-    CSmartPtr<IPredictorDecompress> m_spNewPredictorY;
+    APE::CSmartPtr<APE::IPredictorDecompress> m_spNewPredictorX;
+    APE::CSmartPtr<APE::IPredictorDecompress> m_spNewPredictorY;
 
     int m_nLastX;
 
@@ -94,7 +94,7 @@ class CAPEDecompressJMAC : public IAPEDecompress {
     BOOL m_bErrorDecodingCurrentFrame;
     int m_nCurrentFrameBufferBlock;
     int m_nFrameBufferFinishedBlocks;
-    CCircleBuffer m_cbFrameBuffer;
+    APE::CCircleBuffer m_cbFrameBuffer;
 
     int m_nVersion;
     int m_nCompressionLevel;

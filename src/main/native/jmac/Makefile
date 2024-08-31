@@ -1,16 +1,16 @@
 TARGET   = jmac
-INCLUDES = -I/usr/local/java/include -I/usr/local/java/include/linux -I../mac/Source/MACLib -I../mac/Source/Shared
-CPPOPT   = -s -O3 -D__GNUC_IA32__ -DBUILD_CROSS_PLATFORM
+MAC_SDK=/usr/local/src/MAC_1076_SDK
+INCLUDES = -I${JAVA_HOME}/include -I${JAVA_HOME}/include/darwin -I${MAC_SDK}/Source/MACLib -I${MAC_SDK}/Source/Shared
+CPPOPT   = -O3 -D__GNUC_IA32__ -DBUILD_CROSS_PLATFORM -DPLATFORM_APPLE -DAPE_ENABLE_CIRCLE_BUFFER_WRITE
 COMPILER = gcc
 
 SOURCEFILES = 			\
 APEDecompressJMAC.o		\
 jmac.o				\
-UnBitArrayJMAC.o		\
-../mac/Shared/libmac.a
+UnBitArrayJMAC.o
 
 $(TARGET): $(SOURCEFILES)
-	$(COMPILER) -lstdc++ -shared $(CPPOPT) $(INCLUDES) -o lib$(TARGET).so $(SOURCEFILES)
+	$(COMPILER) -lstdc++ -dynamiclib -L/usr/local/lib -lMAC $(CPPOPT) $(INCLUDES) -o lib$(TARGET).dylib $(SOURCEFILES)
 
 APEDecompressJMAC.o: APEDecompressJMAC.cpp
 	$(COMPILER) -c $(CPPOPT) $(INCLUDES) -o APEDecompressJMAC.o       APEDecompressJMAC.cpp			

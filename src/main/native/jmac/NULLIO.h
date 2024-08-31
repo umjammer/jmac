@@ -20,7 +20,7 @@
 #ifndef JMAC_NULLIO_H
 #define JMAC_NULLIO_H
 
-class CNULLIO : public CIO {
+class CNULLIO : public APE::CIO {
   public:
 
     // construction / destruction
@@ -30,7 +30,7 @@ class CNULLIO : public CIO {
     };
 
     // open / close
-    int Open(const wchar_t* pName) {
+    int Open(const wchar_t* pName, bool bOpenReadOnly = false) {
         return 0;
     };
     int Close() {
@@ -46,7 +46,7 @@ class CNULLIO : public CIO {
     };
 
     // seek
-    int Seek(int nDistance, unsigned int nMoveMode) {
+    int Seek(APE::int64 nDistance, APE::SeekMethod nMethod) {
         return 0;
     };
 
@@ -64,15 +64,18 @@ class CNULLIO : public CIO {
     };
 
     // attributes
-    int GetPosition() {
+    APE::int64 GetPosition() {
         return 0;
     };
-    int GetSize() {
+    APE::int64 GetSize() {
         return 0;
     };
     int GetName(wchar_t* pBuffer) {
         return 0;
     };
+    unsigned char * GetBuffer(int * pnBufferBytes) {
+        return NULL;
+    }
 };
 
 #endif //JMAC_NULLIO_H

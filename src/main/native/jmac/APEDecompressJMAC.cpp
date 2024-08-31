@@ -40,7 +40,7 @@ CAPEDecompressJMAC::CAPEDecompressJMAC(JNIEnv* aenv, jobject athisObject, jobjec
     m_nBlocksPerFrame = nBlocksPerFrame;
     m_nBitsPerSample = nBitsPerSample;
 
-    FillWaveFormatEx(&m_wfeInput, nSampleRate, nBitsPerSample, nChannels);
+    FillWaveFormatEx(&m_wfeInput, 0, nSampleRate, nBitsPerSample, nChannels);
 
     // initialize other stuff
     m_bDecompressorInitialized = FALSE;
@@ -52,15 +52,15 @@ CAPEDecompressJMAC::CAPEDecompressJMAC(JNIEnv* aenv, jobject athisObject, jobjec
     m_bErrorDecodingCurrentFrame = FALSE;
 
     // set the "real" start and finish blocks
-    m_nStartBlock = (nStartBlock < 0) ? 0 : min(nStartBlock, nTotalBlocks);
-    m_nFinishBlock = (nFinishBlock < 0) ? nTotalBlocks : min(nFinishBlock, nTotalBlocks);
+    m_nStartBlock = (nStartBlock < 0) ? 0 : fmin(nStartBlock, nTotalBlocks);
+    m_nFinishBlock = (nFinishBlock < 0) ? nTotalBlocks : fmin(nFinishBlock, nTotalBlocks);
     m_bIsRanged = (m_nStartBlock != 0) || (m_nFinishBlock != nTotalBlocks);
 }
 
 CAPEDecompressJMAC::~CAPEDecompressJMAC() {
 }
 
-int CAPEDecompressJMAC::GetData(char* pBuffer, int nBlocks, int* pBlocksRetrieved) {
+int CAPEDecompressJMAC::GetData(unsigned char* pBuffer, APE::int64 nBlocks, APE::int64* pBlocksRetrieved, APE_GET_DATA_PROCESSING * pProcessing) {
     int nRetVal = ERROR_SUCCESS;
     if (pBlocksRetrieved)
         *pBlocksRetrieved = 0;
@@ -70,7 +70,7 @@ int CAPEDecompressJMAC::GetData(char* pBuffer, int nBlocks, int* pBlocksRetrieve
 
     // cap
     int nBlocksUntilFinish = m_nFinishBlock - m_nCurrentBlock;
-    const int nBlocksToRetrieve = min(nBlocks, nBlocksUntilFinish);
+    const int nBlocksToRetrieve = fmin(nBlocks, nBlocksUntilFinish);
 
     // get the data
     unsigned char * pOutputBuffer = (unsigned char *) pBuffer;
@@ -83,7 +83,7 @@ int CAPEDecompressJMAC::GetData(char* pBuffer, int nBlocks, int* pBlocksRetrieve
 
         // analyze how much to remove from the buffer
         const int nFrameBufferBlocks = m_nFrameBufferFinishedBlocks;
-        nBlocksThisPass = min(nBlocksLeft, nFrameBufferBlocks);
+        nBlocksThisPass = fmin(nBlocksLeft, nFrameBufferBlocks);
 
         // remove as much as possible
         if (nBlocksThisPass > 0) {
@@ -105,7 +105,7 @@ int CAPEDecompressJMAC::GetData(char* pBuffer, int nBlocks, int* pBlocksRetrieve
     return nRetVal;
 }
 
-int CAPEDecompressJMAC::Seek(int nBlockOffset) {
+int CAPEDecompressJMAC::Seek(APE::int64 nBlockOffset) {
     RETURN_ON_ERROR(InitializeDecompressor())
 
     // use the offset
@@ -130,12 +130,12 @@ int CAPEDecompressJMAC::Seek(int nBlockOffset) {
     RETURN_ON_ERROR(SeekToFrame(m_nCurrentFrame));
 
     // skip necessary blocks
-    CSmartPtr<char> spTempBuffer(new char [nBytesToSkip], TRUE);
+    APE::CSmartPtr<char> spTempBuffer(new char [nBytesToSkip], TRUE);
     if (spTempBuffer == NULL)
         return ERROR_INSUFFICIENT_MEMORY;
 
-    int nBlocksRetrieved = 0;
-    GetData(spTempBuffer, nBlocksToSkip, &nBlocksRetrieved);
+    APE::int64 nBlocksRetrieved = 0;
+    GetData((unsigned char *)spTempBuffer.GetPtr(), nBlocksToSkip, &nBlocksRetrieved);
     if (nBlocksRetrieved != nBlocksToSkip)
         return ERROR_UNDEFINED;
 
@@ -154,14 +154,16 @@ int CAPEDecompressJMAC::InitializeDecompressor() {
     m_cbFrameBuffer.CreateBuffer((m_nBlocksPerFrame + DECODE_BLOCK_SIZE) * m_nBlockAlign, m_nBlockAlign * 64);
 
     // create decoding components
-    m_spUnBitArray.Assign((CUnBitArrayBase *)  new CUnBitArrayJMAC(this, m_nVersion));
+    m_spUnBitArray.Assign((APE::CUnBitArrayBase *)  new CUnBitArrayJMAC(this, m_nVersion));
+
+    const int nBitsPerSample = static_cast<int>(GetInfo(APE_INFO_BITS_PER_SAMPLE));
 
     if (m_nVersion >= 3950) {
-        m_spNewPredictorX.Assign(new CPredictorDecompress3950toCurrent(m_nCompressionLevel, m_nVersion));
-        m_spNewPredictorY.Assign(new CPredictorDecompress3950toCurrent(m_nCompressionLevel, m_nVersion));
+        m_spNewPredictorX.Assign(new APE::CPredictorDecompress3950toCurrent<int, short>(m_nCompressionLevel, m_nVersion, nBitsPerSample));
+        m_spNewPredictorY.Assign(new APE::CPredictorDecompress3950toCurrent<int, short>(m_nCompressionLevel, m_nVersion, nBitsPerSample));
     } else {
-        m_spNewPredictorX.Assign(new CPredictorDecompressNormal3930to3950(m_nCompressionLevel, m_nVersion));
-        m_spNewPredictorY.Assign(new CPredictorDecompressNormal3930to3950(m_nCompressionLevel, m_nVersion));
+        m_spNewPredictorX.Assign(new APE::CPredictorDecompressNormal3930to3950(m_nCompressionLevel, m_nVersion));
+        m_spNewPredictorY.Assign(new APE::CPredictorDecompressNormal3930to3950(m_nCompressionLevel, m_nVersion));
     }
 
     // seek to the beginning
@@ -190,7 +192,7 @@ int CAPEDecompressJMAC::FillFrameBuffer() {
 
         int nFrameOffsetBlocks = m_nCurrentFrameBufferBlock % m_nBlocksPerFrame;
         int nFrameBlocksLeft = nFrameBlocks - nFrameOffsetBlocks;
-        int nBlocksThisPass = min(nFrameBlocksLeft, nBlocksLeft);
+        int nBlocksThisPass = fmin(nFrameBlocksLeft, nBlocksLeft);
 
         // start the frame if we need to
         if (nFrameOffsetBlocks == 0)
@@ -238,13 +240,14 @@ void CAPEDecompressJMAC::DecodeBlocksToFrameBuffer(int nBlocks) {
         if (m_wfeInput.nChannels == 2) {
             if ((m_nSpecialCodes & SPECIAL_FRAME_LEFT_SILENCE) && (m_nSpecialCodes & SPECIAL_FRAME_RIGHT_SILENCE))
                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++) {
-                    m_Prepare.Unprepare(0, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                    int aryValues[2] = { 0, 0 };
+                    m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                     m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                 }
             else if (m_nSpecialCodes & SPECIAL_FRAME_PSEUDO_STEREO)
                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++) {
-                    int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
-                    m_Prepare.Unprepare(X, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                    int aryValues[2] = { m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX)), 0 };
+                    m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                     m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                 }
             else {
@@ -256,7 +259,8 @@ void CAPEDecompressJMAC::DecodeBlocksToFrameBuffer(int nBlocks) {
                         int X = m_spNewPredictorX->DecompressValue(nX, Y);
                         m_nLastX = X;
 
-                        m_Prepare.Unprepare(X, Y, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                        int aryValues[2] = { X, Y };
+                        m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                         m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                     }
                 else
@@ -264,20 +268,22 @@ void CAPEDecompressJMAC::DecodeBlocksToFrameBuffer(int nBlocks) {
                         int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
                         int Y = m_spNewPredictorY->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateY));
 
-                        m_Prepare.Unprepare(X, Y, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                        int aryValues[2] = { X, Y };
+                        m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                         m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                     }
             }
         } else {
             if (m_nSpecialCodes & SPECIAL_FRAME_MONO_SILENCE)
                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++) {
-                    m_Prepare.Unprepare(0, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                    int aryValues[2] = { 0, 0 };
+                    m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                     m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                 }
             else
                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++) {
-                    int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
-                    m_Prepare.Unprepare(X, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+                    int aryValues[2] = { m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX)), 0 };
+                    m_Prepare.Unprepare(aryValues, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer());
                     m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
                 }
         }
@@ -292,14 +298,14 @@ void CAPEDecompressJMAC::StartFrame() {
     m_nCRC = 0xFFFFFFFF;
 
     // get the frame header
-    m_nStoredCRC = m_spUnBitArray->DecodeValue(DECODE_VALUE_METHOD_UNSIGNED_INT);
+    m_nStoredCRC = m_spUnBitArray->DecodeValue(CUnBitArrayJMAC::DECODE_VALUE_METHOD_UNSIGNED_INT);
     m_bErrorDecodingCurrentFrame = FALSE;
 
     // get any 'special' codes if the file uses them (for silence, FALSE stereo, etc.)
     m_nSpecialCodes = 0;
     if (m_nVersion > 3820) {
         if (m_nStoredCRC & 0x80000000)
-            m_nSpecialCodes = m_spUnBitArray->DecodeValue(DECODE_VALUE_METHOD_UNSIGNED_INT);
+            m_nSpecialCodes = m_spUnBitArray->DecodeValue(CUnBitArrayJMAC::DECODE_VALUE_METHOD_UNSIGNED_INT);
         m_nStoredCRC &= 0x7FFFFFFF;
     }
 
@@ -366,6 +372,6 @@ int CAPEDecompressJMAC::SeekToFrame(int nFrameIndex) {
     return retVal;
 }
 
-int CAPEDecompressJMAC::GetInfo(APE_DECOMPRESS_FIELDS Field, int nParam1, int nParam2) {
+APE::int64 CAPEDecompressJMAC::GetInfo(APE_DECOMPRESS_FIELDS Field, APE::int64 nParam1, APE::int64 nParam2) {
     return -1;
 }

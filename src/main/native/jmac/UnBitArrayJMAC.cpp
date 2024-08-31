@@ -29,7 +29,7 @@ CNULLIO m_IO;
 /***********************************************************************************
 Construction
 ***********************************************************************************/
-CUnBitArrayJMAC::CUnBitArrayJMAC(CAPEDecompressJMAC* decoder, int nVersion) : CUnBitArray(&m_IO, nVersion) {
+CUnBitArrayJMAC::CUnBitArrayJMAC(CAPEDecompressJMAC* decoder, int nVersion, APE::int64 nFurthestReadByte) : CUnBitArray(&m_IO, nVersion, nFurthestReadByte) {
     m_APEDecompress = decoder;
     JNIEnv* env = m_APEDecompress->env;
     jbyteArray ba = env->NewByteArray(m_nBytes);
@@ -107,7 +107,7 @@ int CUnBitArrayJMAC::FillAndResetBitArray(int nFileLocation, int nNewBitIndex) {
 
     // read the new data into the bit array
     unsigned int nBytesRead = 0;
-    if (Read(((unsigned char *) m_pBitArray), m_nBytes, &nBytesRead) != ERROR_SUCCESS)
+    if (Read(((unsigned char *) APE::CUnBitArray::m_pBitArray), m_nBytes, &nBytesRead) != ERROR_SUCCESS)
         return ERROR_IO_READ;
 
     return ERROR_SUCCESS;
@@ -115,7 +115,7 @@ int CUnBitArrayJMAC::FillAndResetBitArray(int nFileLocation, int nNewBitIndex) {
 
 int CUnBitArrayJMAC::FillBitArray() {
     // get the bit array index
-    uint32 nBitArrayIndex = m_nCurrentBitIndex >> 5;
+    APE::uint32 nBitArrayIndex = m_nCurrentBitIndex >> 5;
 
     // move the remaining data to the front
     memmove((void *) (m_pBitArray), (const void *) (m_pBitArray + nBitArrayIndex), m_nBytes - (nBitArrayIndex * 4));

@@ -35,7 +35,27 @@ typedef struct MAC_ERROR {
 
 #define NUM_MAC_ERRORS 23
 MAC_ERROR MAC_ERRORS[NUM_MAC_ERRORS] = {
-  ERROR_EXPLANATION
+    { ERROR_IO_READ                               , "I/O read error" },                        
+    { ERROR_IO_WRITE                              , "I/O write error" },                       
+    { ERROR_INVALID_INPUT_FILE                    , "invalid input file" },                    
+    { ERROR_INVALID_OUTPUT_FILE                   , "invalid output file" },                   
+    { ERROR_INPUT_FILE_TOO_LARGE                  , "input file file too large" },             
+    { ERROR_INPUT_FILE_UNSUPPORTED_BIT_DEPTH      , "input file unsupported bit depth" },      
+    { ERROR_INPUT_FILE_UNSUPPORTED_SAMPLE_RATE    , "input file unsupported sample rate" },    
+    { ERROR_INPUT_FILE_UNSUPPORTED_CHANNEL_COUNT  , "input file unsupported channel count" },  
+    { ERROR_INPUT_FILE_TOO_SMALL                  , "input file too small" },                  
+    { ERROR_INVALID_CHECKSUM                      , "invalid checksum" },                      
+    { ERROR_DECOMPRESSING_FRAME                   , "decompressing frame" },                   
+    { ERROR_INITIALIZING_UNMAC                    , "initializing unmac" },                    
+    { ERROR_INVALID_FUNCTION_PARAMETER            , "invalid function parameter" },            
+    { ERROR_UNSUPPORTED_FILE_TYPE                 , "unsupported file type" },                 
+    { ERROR_INSUFFICIENT_MEMORY                   , "insufficient memory" },                   
+    { ERROR_LOADING_UNMAC_DLL                     , "loading UnMAC.dll" },
+    { ERROR_USER_STOPPED_PROCESSING               , "user stopped processing" },               
+    { ERROR_SKIPPED                               , "skipped" },                               
+    { ERROR_BAD_PARAMETER                         , "bad parameter" },                         
+    { ERROR_APE_COMPRESS_TOO_MUCH_DATA            , "APE compress too much data" },            
+    { ERROR_UNDEFINED                             , "undefined" },                             
 };
 
 void ThrowError(JNIEnv* env, int nErrorCode) {
@@ -93,8 +113,8 @@ JNIEXPORT jint JNICALL Java_davaguine_jmac_decoder_APEDecompressNative_GetData(J
         decoders[ID]->SetRefs(env, athisObject, aioObject);
         jbyte* elements = env->GetByteArrayElements(pBuffer, NULL);
         if (elements != NULL) {
-            int nBlocksRetrieved;
-            int retValue = decoders[ID]->GetData((char*) elements, nBlocks, &nBlocksRetrieved);
+            APE::int64 nBlocksRetrieved;
+            int retValue = decoders[ID]->GetData((unsigned char *) elements, nBlocks, &nBlocksRetrieved);
             env->ReleaseByteArrayElements(pBuffer, elements, 0);
             if (retValue != ERROR_SUCCESS)
                 ThrowError(env, retValue);

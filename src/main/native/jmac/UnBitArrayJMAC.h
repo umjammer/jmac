@@ -25,11 +25,11 @@
 
 class CAPEDecompressJMAC;
 
-class CUnBitArrayJMAC : public CUnBitArray {
+class CUnBitArrayJMAC : public APE::CUnBitArray {
   public:
 
     // construction/destruction
-    CUnBitArrayJMAC(CAPEDecompressJMAC* decoder, int nVersion);
+    CUnBitArrayJMAC(CAPEDecompressJMAC* decoder, int nVersion, APE::int64 nFurthestReadByte);
     ~CUnBitArrayJMAC();
 
     virtual int FillBitArray();
