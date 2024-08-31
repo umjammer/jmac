@@ -1,14 +1,25 @@
+[![Release](https://jitpack.io/v/umjammer/jmac.svg)](https://jitpack.io/#umjammer/jmac)
+[![Java CI](https://github.com/umjammer/jmac/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/jmac/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/jmac/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/jmac/actions/workflows/codeql-analysis.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
+
 # JMAC
 
- mavenized Java Monkey Audio
+ mavenized Java Monkey's Audio Encoder/Decider
+
+## References
+
+* https://www.monkeysaudio.com/
 
 ## TODO
 
 * ~~use jdk15 source~~
+* spi combination w/ other spis
+* native part
 
 ---
 
-# [Original]()
+# [Original](https://jmac.sourceforge.net/)
 
 =====================================================
 version 1.74, June 30, 2006
