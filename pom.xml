@@ -5,7 +5,7 @@
 
   <groupId>davaguine</groupId>
   <artifactId>jmac</artifactId>
-  <version>1.7.5v-SNAPSHOT</version>
+  <version>1.7.5v</version>
 
   <build>
     <plugins>
