@@ -208,7 +208,6 @@ Debug.println("OUT: " + outAudioFormat);
     }
 
     @Test
-    @Disabled("doesn't work well") // TODO
     @DisplayName("when unsupported file coming")
     void test5() throws Exception {
         InputStream is = TestCase.class.getResourceAsStream("/test.caf");
