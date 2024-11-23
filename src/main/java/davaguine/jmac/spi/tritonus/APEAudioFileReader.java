@@ -45,6 +45,8 @@ import org.tritonus.share.sampled.file.TAudioFileReader;
 /**
  * Provider for MAC audio file reading.
  *
+ * TODO check around buffered input stream
+ *
  * @author Dmitry Vaguine
  * @version 12.03.2004 13:35:13
  */

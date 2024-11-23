@@ -94,7 +94,7 @@ public class APEAudioFileReader extends AudioFileReader {
      */
     @Override
     public AudioFileFormat getAudioFileFormat(URL url) throws UnsupportedAudioFileException, IOException {
-        try (InputStream inputStream = url.openStream()) {
+        try (InputStream inputStream = new BufferedInputStream(url.openStream())) {
             return getAudioFileFormat(inputStream);
         }
     }
@@ -102,7 +102,7 @@ public class APEAudioFileReader extends AudioFileReader {
     /**
      * Obtains the audio file format of the input stream provided. The stream must point to valid MAC audio file data.
      *
-     * @param stream the input stream from which file format information should be extracted
+     * @param stream the input stream from which file format information should be extracted, required markable and has enough buffer
      * @return an APEAudioFileFormat object describing the MAC audio file format
      * @throws UnsupportedAudioFileException if the stream does not point to valid MAC audio file
      * @throws IOException                   if an I/O exception occurs
@@ -110,25 +110,26 @@ public class APEAudioFileReader extends AudioFileReader {
     @Override
     public AudioFileFormat getAudioFileFormat(InputStream stream) throws UnsupportedAudioFileException, IOException {
         logger.log(Level.TRACE, "APEAudioFileReader.getAudioFileFormat( InputStream )");
-        IAPEDecompress decoder;
-        InputStreamFile is = new InputStreamFile(stream);
-logger.log(Level.DEBUG, "IN: available: " + is.available());
-        if (!is.markSupported()) {
+        if (!stream.markSupported()) {
             throw new IllegalArgumentException("input stream not supported mark");
         }
+logger.log(Level.TRACE, "IN: available: " + stream.available() + ", " + stream);
+        IAPEDecompress decoder;
+        InputStreamFile is = new InputStreamFile(stream);
         try {
-            is.mark(8192);
+            stream.mark(MAX_HEADER_SIZE);
             decoder = IAPEDecompress.createAPEDecompress(is);
         } catch (JMACException | EOFException e) {
 logger.log(Level.DEBUG, e.toString());
+logger.log(Level.TRACE, e.getMessage(), e);
             throw new UnsupportedAudioFileException("Unsupported audio file");
         } finally {
             try {
-                is.reset();
+                stream.reset();
             } catch (IOException e) {
-                logger.log(Level.DEBUG, e);
+                logger.log(Level.TRACE, e.toString());
             }
-logger.log(Level.DEBUG, "OUT: available: " + is.available());
+logger.log(Level.TRACE, "OUT: available: " + stream.available() + ", " + stream);
         }
 
         Map<String, Object> fileProperties = new HashMap<>();
@@ -147,7 +148,7 @@ logger.log(Level.DEBUG, "OUT2: available: " + is.available());
     /**
      * Obtains an audio input stream from the input stream provided. The stream must point to valid MAC audio file data.
      *
-     * @param stream the input stream from which the AudioInputStream should be constructed
+     * @param stream the input stream from which the AudioInputStream should be constructed, required markable and has enough buffer
      * @return an AudioInputStream object based on the audio file data contained in the input stream.
      * @throws UnsupportedAudioFileException if the stream does not point to valid MAC audio file data recognized by the system
      * @throws IOException                   if an I/O exception occurs
@@ -155,17 +156,8 @@ logger.log(Level.DEBUG, "OUT2: available: " + is.available());
     @Override
     public AudioInputStream getAudioInputStream(InputStream stream) throws UnsupportedAudioFileException, IOException {
         // Save byte header since this method must return the stream opened at byte 0.
-        BufferedInputStream in = new BufferedInputStream(stream, MAX_HEADER_SIZE);
-        AudioFileFormat format;
-        try {
-logger.log(Level.DEBUG, "IN3: available: " + stream.available());
-            in.mark(MAX_HEADER_SIZE);
-            format = getAudioFileFormat(in);
-        } finally {
-            in.reset();
-logger.log(Level.DEBUG, "OUT3: available: " + stream.available() + ", " + in);
-        }
-        return new AudioInputStream(in, format.getFormat(), format.getFrameLength());
+        AudioFileFormat format = getAudioFileFormat(stream);
+        return new AudioInputStream(stream, format.getFormat(), format.getFrameLength());
     }
 
     /**
@@ -178,7 +170,7 @@ logger.log(Level.DEBUG, "OUT3: available: " + stream.available() + ", " + in);
      */
     @Override
     public AudioInputStream getAudioInputStream(File file) throws UnsupportedAudioFileException, IOException {
-        InputStream inputStream = new FileInputStream(file);
+        InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
         try {
             return getAudioInputStream(inputStream);
         } catch (UnsupportedAudioFileException | IOException e) {
@@ -197,7 +189,7 @@ logger.log(Level.DEBUG, "OUT3: available: " + stream.available() + ", " + in);
      */
     @Override
     public AudioInputStream getAudioInputStream(URL url) throws UnsupportedAudioFileException, IOException {
-        InputStream inputStream = url.openStream();
+        InputStream inputStream = new BufferedInputStream(url.openStream());
         try {
             return getAudioInputStream(inputStream);
         } catch (UnsupportedAudioFileException | IOException e) {

@@ -14,7 +14,7 @@
 ## TODO
 
 * ~~use jdk15 source~~
-* spi combination w/ other spis
+* ~~spi combination w/ other spis~~
 * native part
 
 ---
