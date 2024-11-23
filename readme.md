@@ -5,7 +5,20 @@
 
 # JMAC
 
- mavenized Java Monkey's Audio Encoder/Decider
+ mavenized Java Monkey's Audio Encoder/Decoder
+
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/jmac)
+
+## Usage
+
+```java
+AudioInputStream ais = AudioSystem.getAudioInputStream(Paths.get(ape).toFile());
+Clip clip = AudioSystem.getClip();
+clip.open(AudioSystem.getAudioInputStream(new AudioFormat(Encoding.PCM_SIGNED, 44100, 16, 1, 2, 44100, false), ais));
+clip.loop(Clip.LOOP_CONTINUOUSLY);
+```
 
 ## References
 
